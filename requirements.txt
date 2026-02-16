@@ -1,0 +1,45 @@
+# VPG Intelligence Digest - Python Dependencies
+
+# Core
+python-dotenv>=1.0.0
+click>=8.1.0
+
+# Database
+# (sqlite3 is in Python stdlib)
+
+# Web scraping & RSS
+feedparser>=6.0.0
+beautifulsoup4>=4.12.0
+requests>=2.31.0
+playwright>=1.40.0
+lxml>=5.0.0
+
+# AI Analysis
+anthropic>=0.40.0
+
+# Email
+google-api-python-client>=2.100.0
+google-auth-httplib2>=0.2.0
+google-auth-oauthlib>=1.2.0
+
+# HTML templating
+jinja2>=3.1.0
+
+# Image handling
+Pillow>=10.0.0
+
+# Scheduling
+schedule>=1.2.0
+
+# Config API server
+fastapi>=0.110.0
+uvicorn>=0.27.0
+pydantic>=2.5.0
+
+# Testing
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+pytest-cov>=4.1.0
+
+# Utilities
+python-dateutil>=2.8.0
