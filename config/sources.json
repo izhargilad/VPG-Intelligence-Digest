@@ -1,0 +1,278 @@
+{
+  "source_tiers": {
+    "tier_1": {
+      "label": "Industry Authorities & Official Sources",
+      "description": "High-reliability primary sources including standards bodies, government agencies, and company filings",
+      "check_frequency": "daily",
+      "trust_weight": 1.0
+    },
+    "tier_2": {
+      "label": "Industry News & Trade Publications",
+      "description": "Reputable news outlets and trade publications covering relevant industries",
+      "check_frequency": "daily",
+      "trust_weight": 0.8
+    },
+    "tier_3": {
+      "label": "Social, Patents & Job Signals",
+      "description": "LinkedIn, patent filings, job postings, and other indirect signal sources",
+      "check_frequency": "weekly",
+      "trust_weight": 0.5
+    }
+  },
+  "sources": [
+    {
+      "id": "aist-news",
+      "name": "AIST - Association for Iron & Steel Technology",
+      "url": "https://www.aist.org/news",
+      "type": "rss",
+      "tier": 1,
+      "relevant_bus": ["kelk", "blh-nobel"],
+      "keywords": ["steel", "rolling mill", "metals processing"],
+      "active": true,
+      "last_check": null,
+      "error_count": 0
+    },
+    {
+      "id": "sae-news",
+      "name": "SAE International News",
+      "url": "https://www.sae.org/news",
+      "type": "rss",
+      "tier": 1,
+      "relevant_bus": ["dts", "micro-measurements", "vpg-force-sensors"],
+      "keywords": ["automotive", "crash test", "structural testing"],
+      "active": true,
+      "last_check": null,
+      "error_count": 0
+    },
+    {
+      "id": "ieee-spectrum",
+      "name": "IEEE Spectrum",
+      "url": "https://spectrum.ieee.org/feeds/feed.rss",
+      "type": "rss",
+      "tier": 1,
+      "relevant_bus": ["vpg-force-sensors", "vpg-foil-resistors", "pacific-instruments"],
+      "keywords": ["sensors", "robotics", "instrumentation", "precision"],
+      "active": true,
+      "last_check": null,
+      "error_count": 0
+    },
+    {
+      "id": "nhtsa-recalls",
+      "name": "NHTSA Recalls & Safety",
+      "url": "https://www.nhtsa.gov/feeds",
+      "type": "rss",
+      "tier": 1,
+      "relevant_bus": ["dts", "vpg-onboard-weighing"],
+      "keywords": ["vehicle safety", "crash test", "recall", "regulation"],
+      "active": true,
+      "last_check": null,
+      "error_count": 0
+    },
+    {
+      "id": "sec-filings",
+      "name": "SEC EDGAR Company Filings",
+      "url": "https://www.sec.gov/cgi-bin/browse-edgar",
+      "type": "api",
+      "tier": 1,
+      "relevant_bus": ["all"],
+      "keywords": ["acquisition", "merger", "quarterly report"],
+      "active": true,
+      "last_check": null,
+      "error_count": 0
+    },
+    {
+      "id": "metalminer",
+      "name": "MetalMiner",
+      "url": "https://agmetalminer.com/feed/",
+      "type": "rss",
+      "tier": 2,
+      "relevant_bus": ["kelk", "blh-nobel", "gleeble"],
+      "keywords": ["steel price", "aluminum", "metals market", "tariff"],
+      "active": true,
+      "last_check": null,
+      "error_count": 0
+    },
+    {
+      "id": "robotics-biz-review",
+      "name": "Robotics Business Review",
+      "url": "https://www.roboticsbusinessreview.com/feed/",
+      "type": "rss",
+      "tier": 2,
+      "relevant_bus": ["vpg-force-sensors"],
+      "keywords": ["robot", "cobot", "humanoid", "automation", "force sensing"],
+      "active": true,
+      "last_check": null,
+      "error_count": 0
+    },
+    {
+      "id": "ee-times",
+      "name": "EE Times",
+      "url": "https://www.eetimes.com/feed/",
+      "type": "rss",
+      "tier": 2,
+      "relevant_bus": ["vpg-foil-resistors", "pacific-instruments", "dts"],
+      "keywords": ["semiconductor", "test equipment", "precision", "electronics"],
+      "active": true,
+      "last_check": null,
+      "error_count": 0
+    },
+    {
+      "id": "sensors-magazine",
+      "name": "Sensors Magazine",
+      "url": "https://www.sensorsmag.com/rss",
+      "type": "rss",
+      "tier": 2,
+      "relevant_bus": ["vpg-force-sensors", "micro-measurements", "dts"],
+      "keywords": ["sensor", "strain", "force", "measurement", "IoT"],
+      "active": true,
+      "last_check": null,
+      "error_count": 0
+    },
+    {
+      "id": "assembly-magazine",
+      "name": "Assembly Magazine",
+      "url": "https://www.assemblymag.com/rss",
+      "type": "rss",
+      "tier": 2,
+      "relevant_bus": ["vpg-force-sensors", "blh-nobel"],
+      "keywords": ["automation", "assembly", "manufacturing", "robotics"],
+      "active": true,
+      "last_check": null,
+      "error_count": 0
+    },
+    {
+      "id": "quality-magazine",
+      "name": "Quality Magazine",
+      "url": "https://www.qualitymag.com/rss",
+      "type": "rss",
+      "tier": 2,
+      "relevant_bus": ["micro-measurements", "vpg-force-sensors", "dts"],
+      "keywords": ["quality", "testing", "inspection", "measurement"],
+      "active": true,
+      "last_check": null,
+      "error_count": 0
+    },
+    {
+      "id": "tt-electronics-news",
+      "name": "TT Electronics - Competitor",
+      "url": "https://www.ttelectronics.com/news",
+      "type": "scrape",
+      "tier": 2,
+      "relevant_bus": ["vpg-foil-resistors", "micro-measurements"],
+      "keywords": ["TT Electronics", "resistor", "sensor"],
+      "is_competitor": true,
+      "active": true,
+      "last_check": null,
+      "error_count": 0
+    },
+    {
+      "id": "hbk-news",
+      "name": "HBK (Hottinger Bruel & Kjaer) - Competitor",
+      "url": "https://www.hbkworld.com/en/news",
+      "type": "scrape",
+      "tier": 2,
+      "relevant_bus": ["vpg-force-sensors", "micro-measurements", "blh-nobel"],
+      "keywords": ["HBK", "Hottinger", "load cell", "strain"],
+      "is_competitor": true,
+      "active": true,
+      "last_check": null,
+      "error_count": 0
+    },
+    {
+      "id": "kistler-news",
+      "name": "Kistler - Competitor",
+      "url": "https://www.kistler.com/en/newsroom/",
+      "type": "scrape",
+      "tier": 2,
+      "relevant_bus": ["vpg-force-sensors", "dts"],
+      "keywords": ["Kistler", "force", "torque", "sensor"],
+      "is_competitor": true,
+      "active": true,
+      "last_check": null,
+      "error_count": 0
+    },
+    {
+      "id": "rice-lake-news",
+      "name": "Rice Lake Weighing - Competitor",
+      "url": "https://www.ricelake.com/en-us/about/news",
+      "type": "scrape",
+      "tier": 2,
+      "relevant_bus": ["vpg-onboard-weighing", "blh-nobel"],
+      "keywords": ["Rice Lake", "weighing", "load cell", "scale"],
+      "is_competitor": true,
+      "active": true,
+      "last_check": null,
+      "error_count": 0
+    },
+    {
+      "id": "figure-ai-news",
+      "name": "Figure AI - Competitor/Partner",
+      "url": "https://www.figure.ai/news",
+      "type": "scrape",
+      "tier": 2,
+      "relevant_bus": ["vpg-force-sensors"],
+      "keywords": ["Figure AI", "humanoid", "robot"],
+      "is_competitor": true,
+      "active": true,
+      "last_check": null,
+      "error_count": 0
+    },
+    {
+      "id": "boston-dynamics-blog",
+      "name": "Boston Dynamics - Competitor/Partner",
+      "url": "https://bostondynamics.com/blog/",
+      "type": "scrape",
+      "tier": 2,
+      "relevant_bus": ["vpg-force-sensors"],
+      "keywords": ["Boston Dynamics", "robot", "Atlas", "Spot"],
+      "is_competitor": true,
+      "active": true,
+      "last_check": null,
+      "error_count": 0
+    },
+    {
+      "id": "uspto-patents",
+      "name": "USPTO Patent Search",
+      "url": "https://patft.uspto.gov/",
+      "type": "api",
+      "tier": 3,
+      "relevant_bus": ["all"],
+      "keywords": ["load cell", "force sensor", "strain gage", "resistor", "weighing"],
+      "active": true,
+      "last_check": null,
+      "error_count": 0
+    },
+    {
+      "id": "ustr-trade",
+      "name": "USTR Trade Policy Updates",
+      "url": "https://ustr.gov/about-us/policy-offices/press-office/press-releases",
+      "type": "scrape",
+      "tier": 1,
+      "relevant_bus": ["all"],
+      "keywords": ["tariff", "China", "India", "trade", "import duty"],
+      "active": true,
+      "last_check": null,
+      "error_count": 0
+    },
+    {
+      "id": "defense-gov",
+      "name": "Department of Defense Contracts",
+      "url": "https://www.defense.gov/News/Contracts/",
+      "type": "scrape",
+      "tier": 1,
+      "relevant_bus": ["vpg-foil-resistors", "pacific-instruments", "dts"],
+      "keywords": ["contract", "defense", "instrumentation", "sensor", "test"],
+      "active": true,
+      "last_check": null,
+      "error_count": 0
+    }
+  ],
+  "blacklist": [],
+  "scrape_config": {
+    "user_agent": "VPG-Intelligence-Agent/1.0",
+    "request_delay_ms": 2000,
+    "max_concurrent": 3,
+    "timeout_ms": 30000,
+    "retry_attempts": 3
+  }
+}

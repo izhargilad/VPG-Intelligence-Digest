@@ -1,0 +1,336 @@
+{
+  "business_units": [
+    {
+      "id": "vpg-force-sensors",
+      "name": "VPG Force Sensors",
+      "short_name": "Force Sensors",
+      "description": "Load cells, force transducers, and torque sensors for precision measurement applications",
+      "key_products": [
+        "Load cells",
+        "Force transducers",
+        "Torque sensors"
+      ],
+      "core_industries": [
+        "Robotics",
+        "Automation",
+        "Aerospace",
+        "Medical devices",
+        "Industrial weighing"
+      ],
+      "monitoring_keywords": [
+        "load cell",
+        "force transducer",
+        "torque sensor",
+        "humanoid robot",
+        "cobot",
+        "force measurement",
+        "robotic gripper",
+        "collaborative robot",
+        "surgical robot",
+        "force sensing"
+      ],
+      "key_competitors": [
+        "HBK",
+        "Kistler",
+        "Zemic",
+        "Flintec",
+        "Rice Lake"
+      ],
+      "color": "#2E75B6",
+      "icon": "force-sensors",
+      "active": true
+    },
+    {
+      "id": "vpg-foil-resistors",
+      "name": "VPG Foil Resistors",
+      "short_name": "Foil Resistors",
+      "description": "Z1-Foil precision resistors and current sensing solutions for high-reliability applications",
+      "key_products": [
+        "Z1-Foil precision resistors",
+        "Current sensing resistors",
+        "High-precision voltage dividers"
+      ],
+      "core_industries": [
+        "Aerospace/defense",
+        "Semiconductor test",
+        "Precision instrumentation"
+      ],
+      "monitoring_keywords": [
+        "foil resistor",
+        "current sense",
+        "Z1-Foil",
+        "precision measurement",
+        "mil-spec",
+        "precision resistor",
+        "current sensing",
+        "voltage divider",
+        "high-reliability resistor"
+      ],
+      "key_competitors": [
+        "TT Electronics",
+        "Novanta"
+      ],
+      "color": "#1B2A4A",
+      "icon": "foil-resistors",
+      "active": true
+    },
+    {
+      "id": "micro-measurements",
+      "name": "Micro-Measurements",
+      "short_name": "Micro-Measurements",
+      "description": "Strain gages and stress analysis systems for structural testing and R&D",
+      "key_products": [
+        "Strain gages",
+        "Stress analysis systems",
+        "Strain gage accessories"
+      ],
+      "core_industries": [
+        "Structural testing",
+        "Aerospace",
+        "Automotive R&D",
+        "Civil engineering"
+      ],
+      "monitoring_keywords": [
+        "strain gage",
+        "strain gauge",
+        "stress analysis",
+        "experimental mechanics",
+        "structural health monitoring",
+        "SHM",
+        "fatigue testing",
+        "residual stress"
+      ],
+      "key_competitors": [
+        "HBK",
+        "Kyowa",
+        "TT Electronics"
+      ],
+      "color": "#E8792F",
+      "icon": "micro-measurements",
+      "active": true
+    },
+    {
+      "id": "vpg-onboard-weighing",
+      "name": "VPG Onboard Weighing",
+      "short_name": "Onboard Weighing",
+      "description": "Vehicle-mounted weighing systems for fleet compliance and payload optimization",
+      "key_products": [
+        "VanWeigh",
+        "TruckWeigh",
+        "BulkWeigh"
+      ],
+      "core_industries": [
+        "Heavy vehicles",
+        "Mining",
+        "Logistics",
+        "Waste management"
+      ],
+      "monitoring_keywords": [
+        "onboard weighing",
+        "payload monitoring",
+        "VanWeigh",
+        "TruckWeigh",
+        "BulkWeigh",
+        "fleet compliance",
+        "overload prevention",
+        "vehicle weighing",
+        "axle load"
+      ],
+      "key_competitors": [
+        "Rice Lake",
+        "Sunrise Instruments"
+      ],
+      "color": "#4CAF50",
+      "icon": "onboard-weighing",
+      "active": true
+    },
+    {
+      "id": "blh-nobel",
+      "name": "BLH Nobel",
+      "short_name": "BLH Nobel",
+      "description": "Process weighing solutions for heavy industry including steel, chemicals, and food & beverage",
+      "key_products": [
+        "KIS load cells",
+        "Process weighing systems",
+        "Batch weighing controllers"
+      ],
+      "core_industries": [
+        "Steel",
+        "Chemicals",
+        "Food & beverage",
+        "Process industries"
+      ],
+      "monitoring_keywords": [
+        "process weighing",
+        "KIS load cell",
+        "industrial automation",
+        "batch weighing",
+        "belt weigher",
+        "hopper scale",
+        "process control weighing"
+      ],
+      "key_competitors": [
+        "HBK",
+        "Rice Lake",
+        "Flintec"
+      ],
+      "color": "#795548",
+      "icon": "blh-nobel",
+      "active": true
+    },
+    {
+      "id": "kelk",
+      "name": "KELK",
+      "short_name": "KELK",
+      "description": "Rolling mill measurement systems and Nokra laser measurement technology for metals processing",
+      "key_products": [
+        "Rolling mill systems",
+        "Nokra laser measurement",
+        "alpha.ti laser thickness measurement"
+      ],
+      "core_industries": [
+        "Steel mills",
+        "Aluminum rolling",
+        "Metals processing"
+      ],
+      "monitoring_keywords": [
+        "rolling mill",
+        "thickness measurement",
+        "Nokra",
+        "laser gauge",
+        "alpha.ti",
+        "hot strip mill",
+        "cold rolling",
+        "flatness measurement",
+        "metals processing"
+      ],
+      "key_competitors": [
+        "Zemic",
+        "NMB"
+      ],
+      "color": "#607D8B",
+      "icon": "kelk",
+      "active": true
+    },
+    {
+      "id": "gleeble",
+      "name": "Gleeble",
+      "short_name": "Gleeble",
+      "description": "Thermal-mechanical simulation systems for materials research and testing",
+      "key_products": [
+        "Gleeble thermal-mechanical simulators",
+        "Hot torsion systems",
+        "Nil-strength testing systems"
+      ],
+      "core_industries": [
+        "Materials research",
+        "Metals R&D",
+        "University labs",
+        "Foundries"
+      ],
+      "monitoring_keywords": [
+        "thermal-mechanical simulation",
+        "Gleeble",
+        "materials testing",
+        "metallurgy",
+        "physical simulation",
+        "hot ductility",
+        "CCT diagram",
+        "weld simulation"
+      ],
+      "key_competitors": [],
+      "color": "#9C27B0",
+      "icon": "gleeble",
+      "active": true
+    },
+    {
+      "id": "pacific-instruments",
+      "name": "Pacific Instruments",
+      "short_name": "Pacific Instruments",
+      "description": "High-performance data acquisition systems for extreme environment testing",
+      "key_products": [
+        "High-channel DAQ systems",
+        "Signal conditioning modules",
+        "Precision measurement systems"
+      ],
+      "core_industries": [
+        "Aerospace testing",
+        "Defense",
+        "Nuclear",
+        "Extreme environments"
+      ],
+      "monitoring_keywords": [
+        "data acquisition",
+        "high-channel DAQ",
+        "signal conditioning",
+        "aerospace testing",
+        "wind tunnel instrumentation",
+        "nuclear instrumentation"
+      ],
+      "key_competitors": [
+        "NMB",
+        "Omega"
+      ],
+      "color": "#00BCD4",
+      "icon": "pacific-instruments",
+      "active": true
+    },
+    {
+      "id": "dts",
+      "name": "DTS",
+      "short_name": "DTS",
+      "description": "Miniature data acquisition and crash test sensing solutions",
+      "key_products": [
+        "Miniature data acquisition systems",
+        "Crash test sensors",
+        "SLICE Nano data recorders"
+      ],
+      "core_industries": [
+        "Automotive crash test",
+        "Defense ballistics",
+        "Biomechanics"
+      ],
+      "monitoring_keywords": [
+        "miniature DAQ",
+        "crash test",
+        "accelerometer",
+        "data recorder",
+        "SLICE Nano",
+        "crash test dummy",
+        "ballistic testing",
+        "impact testing"
+      ],
+      "key_competitors": [
+        "Kyowa",
+        "NMB"
+      ],
+      "color": "#FF5722",
+      "icon": "dts",
+      "active": true
+    }
+  ],
+  "strategic_context": {
+    "production_hub": "India",
+    "india_advantage": "Competitive advantage vs China-dependent competitors in cost and supply chain resilience",
+    "target_accounts": [
+      "Caterpillar",
+      "Humanetics",
+      "Saronic Technologies"
+    ],
+    "current_initiatives": [
+      {
+        "name": "KELK-Nokra alpha.ti",
+        "description": "Laser thickness measurement system",
+        "launch_event": "AISTech 2026",
+        "relevant_bus": ["kelk"]
+      }
+    ],
+    "monitoring_priorities": [
+      "US-China trade dynamics",
+      "India manufacturing policy",
+      "Reshoring trends",
+      "Humanoid robotics growth",
+      "EV/battery manufacturing expansion"
+    ]
+  }
+}
