@@ -109,7 +109,7 @@ def build_signal_prompt(signal: dict) -> str:
 **URL:** {signal.get('url', 'N/A')}
 **Published:** {signal.get('published_at', 'Unknown')}
 **Summary:** {signal.get('summary', 'No summary available')}
-**Full Content:** {signal.get('raw_content', 'Not available')[:3000]}
+**Full Content:** {(signal.get('raw_content') or 'Not available')[:3000]}
 
 ## Scoring Dimensions
 
@@ -177,7 +177,7 @@ def build_batch_prompt(signals: list[dict]) -> str:
             f"**Title:** {signal.get('title', 'N/A')}\n"
             f"**Source:** {signal.get('source_name', 'Unknown')} (Tier {signal.get('source_tier', '?')})\n"
             f"**URL:** {signal.get('url', 'N/A')}\n"
-            f"**Summary:** {signal.get('summary', 'No summary')[:500]}\n"
+            f"**Summary:** {(signal.get('summary') or 'No summary')[:500]}\n"
         )
     signals_block = "\n".join(signal_blocks)
 
