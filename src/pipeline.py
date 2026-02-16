@@ -7,11 +7,11 @@ Collection -> Validation -> Analysis -> Scoring -> Composition -> Delivery
 import logging
 import sys
 from datetime import datetime
-from pathlib import Path
 
+from src.analyzer.client import AnalysisClient
+from src.analyzer.scorer import score_batch_ai, score_signal
 from src.collector.rss_collector import collect_all_rss
 from src.collector.web_scraper import collect_all_scraped
-from src.analyzer.scorer import score_signal
 from src.composer.composer import build_digest_context, render_digest, save_digest_html
 from src.config import (
     DELIVERY_MODE,
@@ -20,20 +20,26 @@ from src.config import (
     MOCK_OUTPUT_DIR,
     get_business_units,
     get_recipients,
+    get_scoring_weights,
 )
 from src.db import (
     complete_pipeline_run,
     get_connection,
     get_signals_by_status,
     init_db,
+    insert_analysis,
     insert_pipeline_run,
     insert_signal,
+    save_signal_bus,
     update_signal_status,
 )
 from src.delivery.gmail import send_email
 from src.validator.validator import validate_signal
 
 logger = logging.getLogger(__name__)
+
+# Batch size for AI analysis (balance cost vs. reliability)
+AI_BATCH_SIZE = 10
 
 
 def setup_logging() -> None:
@@ -78,7 +84,7 @@ def stage_validate(conn) -> int:
     validated = 0
 
     for signal in new_signals:
-        result = validate_signal(conn, signal)
+        validate_signal(conn, signal)
         update_signal_status(conn, signal["id"], "validated")
         validated += 1
 
@@ -87,21 +93,67 @@ def stage_validate(conn) -> int:
 
 
 def stage_score(conn) -> list[dict]:
-    """Stage 3 & 4: Score and analyze validated signals."""
-    logger.info("=== Stage 3-4: Scoring & Analysis ===")
+    """Stage 3 & 4: Score and analyze validated signals with AI.
+
+    Uses Anthropic API for analysis when available, with heuristic fallback.
+    Processes signals in batches for cost efficiency.
+    """
+    logger.info("=== Stage 3-4: AI Scoring & Analysis ===")
 
     validated_signals = get_signals_by_status(conn, "validated")
+    if not validated_signals:
+        return []
+
+    # Initialize the AI client
+    client = AnalysisClient()
+    if client.available:
+        logger.info("Anthropic API available — using AI scoring")
+    else:
+        logger.warning("Anthropic API unavailable — using heuristic fallback")
+
+    # Get scoring thresholds
+    thresholds = get_scoring_weights().get("thresholds", {})
+    min_score = thresholds.get("include_in_digest", 4.0)
+
     scored_signals = []
 
-    for signal in validated_signals:
-        analysis = score_signal(signal)
-        signal.update(analysis)
-        signal["composite_score"] = analysis["composite"]
-        update_signal_status(conn, signal["id"], "scored")
-        scored_signals.append(signal)
+    # Process in batches for API efficiency
+    for i in range(0, len(validated_signals), AI_BATCH_SIZE):
+        batch = validated_signals[i:i + AI_BATCH_SIZE]
+
+        if client.available and len(batch) > 1:
+            # Batch AI scoring
+            results = score_batch_ai(batch, client)
+        else:
+            # Individual scoring (AI with fallback)
+            results = [score_signal(s, client) for s in batch]
+
+        for signal, analysis in zip(batch, results):
+            signal.update(analysis)
+            signal["composite_score"] = analysis["composite"]
+
+            # Persist analysis to DB
+            insert_analysis(conn, signal["id"], analysis)
+            save_signal_bus(conn, signal["id"], analysis.get("bu_matches", []))
+            update_signal_status(conn, signal["id"], "scored")
+
+            # Only include signals above the threshold
+            if analysis["composite"] >= min_score:
+                scored_signals.append(signal)
+            else:
+                logger.debug(
+                    "Signal below threshold (%.1f < %.1f): %s",
+                    analysis["composite"], min_score, signal.get("title", "?")[:50],
+                )
 
     scored_signals.sort(key=lambda s: s["composite_score"], reverse=True)
-    logger.info("Scored %d signals", len(scored_signals))
+
+    ai_count = sum(1 for s in scored_signals if s.get("analysis_method", "").startswith("ai"))
+    logger.info(
+        "Scored %d signals (%d AI, %d heuristic), %d above threshold",
+        len(validated_signals), ai_count, len(validated_signals) - ai_count,
+        len(scored_signals),
+    )
     return scored_signals
 
 
@@ -116,7 +168,7 @@ def stage_compose(scored_signals: list[dict]) -> tuple[str, str]:
     subject = context["subject"]
 
     # Always save a local copy
-    output_path = save_digest_html(html, MOCK_OUTPUT_DIR)
+    save_digest_html(html, MOCK_OUTPUT_DIR)
     logger.info("Digest composed: %s (%d chars)", subject, len(html))
 
     return html, subject
@@ -139,9 +191,7 @@ def stage_deliver(html: str, subject: str) -> list[dict]:
             html_content=html,
         )
         results.append(result)
-        logger.info(
-            "Delivery to %s: %s", recipient["email"], result["status"]
-        )
+        logger.info("Delivery to %s: %s", recipient["email"], result["status"])
 
     sent = sum(1 for r in results if r["status"] == "sent")
     logger.info("Delivered to %d/%d recipients", sent, len(results))
@@ -165,18 +215,18 @@ def run_full_pipeline() -> dict:
         # Stage 2: Validate
         validated = stage_validate(conn)
 
-        # Stage 3-4: Score
+        # Stage 3-4: AI Score
         scored_signals = stage_score(conn)
 
         if not scored_signals:
-            logger.warning("No signals to include in digest")
+            logger.warning("No signals above threshold for digest")
             complete_pipeline_run(
                 conn, run_id, "completed",
                 signals_collected=collected,
                 signals_validated=validated,
                 signals_scored=0,
             )
-            return {"status": "completed", "signals": 0, "message": "No signals found"}
+            return {"status": "completed", "signals": 0, "message": "No signals above threshold"}
 
         # Stage 5: Compose
         html, subject = stage_compose(scored_signals)

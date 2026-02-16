@@ -111,6 +111,52 @@ def insert_pipeline_run(conn: sqlite3.Connection, run_type: str) -> int:
     return cursor.lastrowid
 
 
+def insert_analysis(conn: sqlite3.Connection, signal_id: int, analysis: dict) -> int:
+    """Insert or update the AI analysis for a signal."""
+    cursor = conn.execute(
+        """INSERT OR REPLACE INTO signal_analysis
+           (signal_id, signal_type, headline, what_summary, why_it_matters,
+            quick_win, suggested_owner, estimated_impact, outreach_template,
+            score_revenue_impact, score_time_sensitivity,
+            score_strategic_alignment, score_competitive_pressure,
+            score_composite, validation_level, source_count, model_used, raw_ai_response)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        (
+            signal_id,
+            analysis.get("signal_type", "market-shift"),
+            analysis.get("headline", ""),
+            analysis.get("what_summary", ""),
+            analysis.get("why_it_matters", ""),
+            analysis.get("quick_win", ""),
+            analysis.get("suggested_owner", ""),
+            analysis.get("estimated_impact", ""),
+            analysis.get("outreach_template"),
+            analysis["scores"].get("revenue_impact", 0),
+            analysis["scores"].get("time_sensitivity", 0),
+            analysis["scores"].get("strategic_alignment", 0),
+            analysis["scores"].get("competitive_pressure", 0),
+            analysis.get("composite", 0),
+            analysis.get("validation_level", "unverified"),
+            analysis.get("source_count", 1),
+            analysis.get("analysis_method", "heuristic"),
+            None,
+        ),
+    )
+    conn.commit()
+    return cursor.lastrowid
+
+
+def save_signal_bus(conn: sqlite3.Connection, signal_id: int, bu_matches: list[dict]) -> None:
+    """Save business unit associations for a signal."""
+    for match in bu_matches:
+        conn.execute(
+            """INSERT OR IGNORE INTO signal_bus (signal_id, bu_id, relevance_score)
+               VALUES (?, ?, ?)""",
+            (signal_id, match["bu_id"], match.get("relevance_score", 0)),
+        )
+    conn.commit()
+
+
 def complete_pipeline_run(
     conn: sqlite3.Connection, run_id: int, status: str = "completed", **kwargs
 ) -> None:
