@@ -1,0 +1,47 @@
+{
+  "recipient_groups": [
+    {
+      "id": "executive-team",
+      "name": "Executive Team",
+      "description": "C-suite and VP-level executives receiving full digest"
+    },
+    {
+      "id": "sales-team",
+      "name": "Sales Team",
+      "description": "Sales leaders receiving BU-specific signals and action items"
+    },
+    {
+      "id": "marketing-team",
+      "name": "Marketing Team",
+      "description": "Marketing team receiving market trends and content opportunities"
+    },
+    {
+      "id": "engineering-team",
+      "name": "Engineering Team",
+      "description": "Technical leaders receiving technology trend signals"
+    }
+  ],
+  "recipients": [
+    {
+      "id": "pilot-001",
+      "name": "Pilot Recipient",
+      "email": "pilot@example.com",
+      "role": "Strategic Initiatives",
+      "groups": ["executive-team"],
+      "bu_filter": ["all"],
+      "signal_type_filter": ["all"],
+      "status": "active",
+      "created_at": "2026-02-16T00:00:00Z",
+      "notes": "Pilot recipient for testing - replace with real address"
+    }
+  ],
+  "delivery_settings": {
+    "send_day": "monday",
+    "send_time_et": "07:00",
+    "timezone": "America/New_York",
+    "max_recipients_per_batch": 50,
+    "batch_delay_seconds": 5,
+    "include_unsubscribe_link": true,
+    "feedback_base_url": "/api/feedback"
+  }
+}

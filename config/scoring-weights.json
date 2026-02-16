@@ -1,0 +1,135 @@
+{
+  "scoring_dimensions": {
+    "revenue_impact": {
+      "weight": 0.35,
+      "label": "Revenue Impact",
+      "description": "Direct revenue opportunity size estimate",
+      "scale": {
+        "10": ">$1M opportunity",
+        "7": "$500K-$1M opportunity",
+        "4": "$100K-$500K opportunity",
+        "1": "<$100K opportunity"
+      }
+    },
+    "time_sensitivity": {
+      "weight": 0.25,
+      "label": "Time Sensitivity",
+      "description": "How quickly action is needed to capture the opportunity",
+      "scale": {
+        "10": "Action needed this week",
+        "7": "Action needed this month",
+        "4": "Action needed this quarter",
+        "1": "6+ months runway"
+      }
+    },
+    "strategic_alignment": {
+      "weight": 0.25,
+      "label": "Strategic Alignment",
+      "description": "Alignment with VPG priorities, current initiatives, target accounts, and key verticals",
+      "scale": {
+        "10": "Directly supports current initiative or target account",
+        "7": "Strong fit with strategic direction",
+        "4": "Moderate relevance to VPG strategy",
+        "1": "Tangential relevance"
+      }
+    },
+    "competitive_pressure": {
+      "weight": 0.15,
+      "label": "Competitive Pressure",
+      "description": "Risk of competitor gaining advantage if VPG does not act",
+      "scale": {
+        "10": "Competitor actively pursuing - immediate threat",
+        "7": "Competitor likely aware - window closing",
+        "4": "No known competitor activity",
+        "1": "Low competitive relevance"
+      }
+    }
+  },
+  "thresholds": {
+    "include_in_digest": 4.0,
+    "highlight_signal": 7.5,
+    "signal_of_week_minimum": 8.0,
+    "unverified_minimum": 8.0
+  },
+  "signal_types": [
+    {
+      "id": "competitive-threat",
+      "label": "Competitive Threat",
+      "icon": "warning",
+      "emoji": "⚠",
+      "color": "#E53935",
+      "action_template": "Defensive positioning brief + talking points"
+    },
+    {
+      "id": "revenue-opportunity",
+      "label": "Revenue Opportunity",
+      "icon": "dollar",
+      "emoji": "💰",
+      "color": "#43A047",
+      "action_template": "Prospect brief + suggested outreach approach"
+    },
+    {
+      "id": "market-shift",
+      "label": "Market Shift",
+      "icon": "target",
+      "emoji": "🎯",
+      "color": "#1E88E5",
+      "action_template": "Impact assessment + BU response recommendation"
+    },
+    {
+      "id": "partnership-signal",
+      "label": "Partnership Signal",
+      "icon": "handshake",
+      "emoji": "🤝",
+      "color": "#8E24AA",
+      "action_template": "Partnership evaluation + contact suggestion"
+    },
+    {
+      "id": "customer-intelligence",
+      "label": "Customer Intelligence",
+      "icon": "chart",
+      "emoji": "📊",
+      "color": "#FB8C00",
+      "action_template": "Account review trigger + talking points"
+    },
+    {
+      "id": "technology-trend",
+      "label": "Technology Trend",
+      "icon": "rocket",
+      "emoji": "🚀",
+      "color": "#00ACC1",
+      "action_template": "Capability mapping + content opportunity"
+    },
+    {
+      "id": "trade-tariff",
+      "label": "Trade & Tariff",
+      "icon": "globe",
+      "emoji": "🌍",
+      "color": "#6D4C41",
+      "action_template": "Supply chain impact + India production advantage talking points"
+    }
+  ],
+  "validation_levels": [
+    {
+      "id": "verified",
+      "label": "VERIFIED",
+      "min_sources": 3,
+      "badge_color": "#43A047",
+      "description": "Confirmed by 3+ independent sources"
+    },
+    {
+      "id": "likely",
+      "label": "LIKELY",
+      "min_sources": 2,
+      "badge_color": "#FB8C00",
+      "description": "Supported by 2 sources - use with context"
+    },
+    {
+      "id": "unverified",
+      "label": "UNVERIFIED",
+      "min_sources": 1,
+      "badge_color": "#E53935",
+      "description": "Single source only - included due to high impact score"
+    }
+  ]
+}

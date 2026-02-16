@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>{{ subject }}</title>
+  <style type="text/css">
+    /* Reset */
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+    body { margin: 0; padding: 0; width: 100% !important; height: 100% !important; }
+
+    /* Base */
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background-color: #f4f4f7;
+      color: #333333;
+    }
+
+    .email-wrapper {
+      width: 100%;
+      background-color: #f4f4f7;
+      padding: 20px 0;
+    }
+
+    .email-content {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+    }
+
+    /* Header */
+    .header {
+      background-color: {{ colors.navy }};
+      padding: 30px 40px;
+      text-align: center;
+    }
+
+    .header h1 {
+      color: #ffffff;
+      font-size: 24px;
+      margin: 0 0 5px 0;
+      font-weight: bold;
+    }
+
+    .header .subtitle {
+      color: {{ colors.accent }};
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .header .date {
+      color: #aab4c6;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+
+    /* Executive Summary */
+    .exec-summary {
+      background-color: #f8f9fb;
+      padding: 25px 40px;
+      border-bottom: 3px solid {{ colors.blue }};
+    }
+
+    .exec-summary h2 {
+      color: {{ colors.navy }};
+      font-size: 18px;
+      margin: 0 0 15px 0;
+    }
+
+    .exec-summary ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .exec-summary li {
+      color: #333333;
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+
+    .score-badge {
+      display: inline-block;
+      background-color: {{ colors.accent }};
+      color: #ffffff;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    .bu-tag {
+      display: inline-block;
+      background-color: {{ colors.blue }};
+      color: #ffffff;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+
+    /* BU Section */
+    .bu-section {
+      padding: 25px 40px;
+      border-bottom: 1px solid #e8e8e8;
+    }
+
+    .bu-section-header {
+      padding: 10px 15px;
+      margin-bottom: 15px;
+      border-left: 4px solid;
+    }
+
+    .bu-section-header h2 {
+      margin: 0;
+      font-size: 16px;
+      color: {{ colors.navy }};
+    }
+
+    /* Action Card */
+    .action-card {
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 12px 15px;
+      background-color: #f8f9fb;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .card-header .signal-type {
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .card-header .headline {
+      font-size: 15px;
+      font-weight: bold;
+      color: {{ colors.navy }};
+      margin: 5px 0 0 0;
+    }
+
+    .card-body {
+      padding: 15px;
+    }
+
+    .card-body .field-label {
+      font-size: 11px;
+      font-weight: bold;
+      color: {{ colors.blue }};
+      text-transform: uppercase;
+      margin: 10px 0 3px 0;
+    }
+
+    .card-body .field-label:first-child {
+      margin-top: 0;
+    }
+
+    .card-body .field-value {
+      font-size: 13px;
+      color: #333333;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .card-footer {
+      padding: 10px 15px;
+      background-color: #fafafa;
+      border-top: 1px solid #e0e0e0;
+      font-size: 11px;
+      color: #666666;
+    }
+
+    .card-footer a {
+      color: {{ colors.blue }};
+      text-decoration: none;
+    }
+
+    .card-footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Validation badges */
+    .badge-verified {
+      background-color: #43A047;
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .badge-likely {
+      background-color: #FB8C00;
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .badge-unverified {
+      background-color: #E53935;
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    /* Footer */
+    .footer {
+      background-color: {{ colors.navy }};
+      padding: 25px 40px;
+      text-align: center;
+    }
+
+    .footer p {
+      color: #aab4c6;
+      font-size: 11px;
+      line-height: 1.6;
+      margin: 0 0 5px 0;
+    }
+
+    .footer a {
+      color: {{ colors.accent }};
+      text-decoration: none;
+    }
+
+    /* Stats bar */
+    .stats-bar {
+      background-color: {{ colors.blue }};
+      padding: 12px 40px;
+      text-align: center;
+      color: #ffffff;
+      font-size: 13px;
+    }
+
+    .stats-bar span {
+      margin: 0 15px;
+    }
+
+    /* Responsive */
+    @media screen and (max-width: 480px) {
+      .email-content {
+        width: 100% !important;
+      }
+      .header, .exec-summary, .bu-section, .footer {
+        padding-left: 20px !important;
+        padding-right: 20px !important;
+      }
+      .header h1 { font-size: 20px !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="email-wrapper">
+    <table class="email-content" align="center" cellpadding="0" cellspacing="0" width="600">
+
+      <!-- Header -->
+      <tr>
+        <td class="header">
+          <h1>VPG Intelligence Digest</h1>
+          <p class="subtitle">Weekly Strategic Intelligence Report</p>
+          <p class="date">Week {{ week_number }}, {{ year }} | {{ date_range }}</p>
+        </td>
+      </tr>
+
+      <!-- Stats Bar -->
+      <tr>
+        <td class="stats-bar">
+          <span>{{ total_signals }} Signals</span>
+          <span>|</span>
+          <span>{{ bu_sections|length }} Business Units</span>
+        </td>
+      </tr>
+
+      <!-- Executive Summary -->
+      {% if top_signals %}
+      <tr>
+        <td class="exec-summary">
+          <h2>Top Signals This Week</h2>
+          <ul>
+            {% for signal in top_signals %}
+            <li>
+              <span class="score-badge">{{ signal.composite_score }}</span>
+              {{ signal.headline }}
+              {% for bu in signal.bu_matches[:2] %}
+              <span class="bu-tag">{{ bu.bu_id }}</span>
+              {% endfor %}
+            </li>
+            {% endfor %}
+          </ul>
+        </td>
+      </tr>
+      {% endif %}
+
+      <!-- Signal of the Week -->
+      {% if signal_of_week %}
+      <tr>
+        <td class="bu-section" style="background-color: #fffbf5;">
+          <div style="text-align: center; margin-bottom: 10px;">
+            <span style="background-color: {{ colors.accent }}; color: #fff; padding: 4px 12px; border-radius: 3px; font-size: 12px; font-weight: bold;">SIGNAL OF THE WEEK</span>
+          </div>
+          <div class="action-card" style="border-color: {{ colors.accent }}; border-width: 2px;">
+            <div class="card-header" style="background-color: #fff5eb;">
+              <div class="signal-type" style="color: {{ colors.accent }};">{{ signal_of_week.signal_type | replace('-', ' ') | upper }}</div>
+              <div class="headline">{{ signal_of_week.headline }}</div>
+              <span class="score-badge">Score: {{ signal_of_week.composite_score }}</span>
+            </div>
+            <div class="card-body">
+              <div class="field-label">What</div>
+              <p class="field-value">{{ signal_of_week.what_summary }}</p>
+              <div class="field-label">Why It Matters</div>
+              <p class="field-value">{{ signal_of_week.why_it_matters }}</p>
+              <div class="field-label">Quick Win</div>
+              <p class="field-value">{{ signal_of_week.quick_win }}</p>
+              <div class="field-label">Owner</div>
+              <p class="field-value">{{ signal_of_week.suggested_owner }}</p>
+            </div>
+          </div>
+        </td>
+      </tr>
+      {% endif %}
+
+      <!-- BU Sections -->
+      {% for section in bu_sections %}
+      <tr>
+        <td class="bu-section">
+          <div class="bu-section-header" style="border-color: {{ section.bu_color }};">
+            <h2>{{ section.bu_name }}</h2>
+          </div>
+
+          {% for signal in section.signals %}
+          <div class="action-card">
+            <div class="card-header">
+              <div class="signal-type">{{ signal.signal_type | replace('-', ' ') | upper }}</div>
+              <div class="headline">{{ signal.headline }}</div>
+              <span class="score-badge">{{ signal.composite_score }}</span>
+              {% if signal.validation_level is defined %}
+              <span class="badge-{{ signal.validation_level }}">{{ signal.validation_level | upper }}</span>
+              {% endif %}
+            </div>
+            <div class="card-body">
+              <div class="field-label">What</div>
+              <p class="field-value">{{ signal.what_summary }}</p>
+
+              <div class="field-label">Why It Matters</div>
+              <p class="field-value">{{ signal.why_it_matters }}</p>
+
+              <div class="field-label">Quick Win</div>
+              <p class="field-value">{{ signal.quick_win }}</p>
+
+              {% if signal.suggested_owner %}
+              <div class="field-label">Owner</div>
+              <p class="field-value">{{ signal.suggested_owner }}</p>
+              {% endif %}
+
+              {% if signal.estimated_impact %}
+              <div class="field-label">Est. Impact</div>
+              <p class="field-value">{{ signal.estimated_impact }}</p>
+              {% endif %}
+            </div>
+            <div class="card-footer">
+              Sources:
+              {% if signal.url %}
+              <a href="{{ signal.url }}" target="_blank">[Primary]</a>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+
+        </td>
+      </tr>
+      {% endfor %}
+
+      <!-- Footer -->
+      <tr>
+        <td class="footer">
+          <p>Powered by VPG Strategic Intelligence</p>
+          <p>This digest is auto-generated from {{ total_signals }} validated industry signals.</p>
+          <p><a href="#">Unsubscribe</a> | <a href="#">View in Browser</a> | <a href="#">Archive</a></p>
+        </td>
+      </tr>
+
+    </table>
+  </div>
+</body>
+</html>
