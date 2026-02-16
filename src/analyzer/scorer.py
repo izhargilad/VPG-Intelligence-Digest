@@ -1,15 +1,33 @@
-"""Signal scoring and analysis engine.
+"""Signal scoring and analysis engine for VPG Intelligence Digest.
 
-Scores signals on 4 dimensions and generates action cards.
-Phase 1: keyword-based heuristic scoring.
-Phase 2: Anthropic API-powered scoring and action generation.
+Uses the Anthropic API for AI-powered signal classification, scoring,
+BU matching, and action card generation. Falls back to keyword-based
+heuristics when the API is unavailable.
 """
 
 import logging
 
+from src.analyzer.client import AnalysisClient
+from src.analyzer.prompts import (
+    VALID_SIGNAL_TYPES,
+    build_batch_prompt,
+    build_signal_prompt,
+    build_system_prompt,
+)
 from src.config import get_business_units, get_scoring_weights
 
 logger = logging.getLogger(__name__)
+
+# Module-level client instance (lazy-initialized)
+_client: AnalysisClient | None = None
+
+
+def _get_client() -> AnalysisClient:
+    """Get or create the shared AnalysisClient instance."""
+    global _client
+    if _client is None:
+        _client = AnalysisClient()
+    return _client
 
 
 def calculate_composite_score(scores: dict) -> float:
@@ -36,8 +54,11 @@ def calculate_composite_score(scores: dict) -> float:
 def match_signal_to_bus(signal: dict) -> list[dict]:
     """Match a signal to relevant business units based on keywords.
 
+    Used as a fallback when AI analysis is unavailable, and as a
+    pre-filter to validate AI BU assignments.
+
     Args:
-        signal: Signal dict with 'title', 'summary', 'source_id'.
+        signal: Signal dict with 'title', 'summary'.
 
     Returns:
         List of dicts with 'bu_id' and 'relevance_score'.
@@ -73,10 +94,99 @@ def match_signal_to_bus(signal: dict) -> list[dict]:
     return matches
 
 
-def score_signal(signal: dict) -> dict:
-    """Score a signal using keyword-based heuristics (Phase 1).
+def _validate_ai_result(result: dict) -> dict | None:
+    """Validate and normalize the AI analysis result.
 
-    Will be replaced by Anthropic API scoring in Phase 2.
+    Ensures all required fields are present and values are within expected ranges.
+
+    Returns:
+        Validated result dict, or None if critically invalid.
+    """
+    if not isinstance(result, dict):
+        return None
+
+    # Validate signal_type
+    signal_type = result.get("signal_type", "")
+    if signal_type not in VALID_SIGNAL_TYPES:
+        logger.warning("Invalid signal_type '%s', defaulting to 'market-shift'", signal_type)
+        result["signal_type"] = "market-shift"
+
+    # Validate relevant_bus
+    bus = result.get("relevant_bus", [])
+    if not bus or not isinstance(bus, list):
+        return None  # Critical: every signal must map to a BU
+
+    for bu_match in bus:
+        bu_match["relevance_score"] = max(0.0, min(1.0, float(bu_match.get("relevance_score", 0.5))))
+
+    # Validate scores
+    scores = result.get("scores", {})
+    required_dims = ["revenue_impact", "time_sensitivity", "strategic_alignment", "competitive_pressure"]
+    for dim in required_dims:
+        val = scores.get(dim, 5)
+        scores[dim] = max(1, min(10, int(round(float(val)))))
+    result["scores"] = scores
+
+    # Ensure required text fields have defaults
+    result.setdefault("headline", "Industry Signal Detected")
+    result.setdefault("what_summary", "Signal details pending review.")
+    result.setdefault("why_it_matters", "Relevance assessment in progress.")
+    result.setdefault("quick_win", "Review signal and assess BU impact.")
+    result.setdefault("suggested_owner", "BU Manager")
+    result.setdefault("estimated_impact", "TBD")
+    result.setdefault("outreach_template", None)
+
+    return result
+
+
+def score_signal_ai(signal: dict, client: AnalysisClient | None = None) -> dict | None:
+    """Score a signal using the Anthropic API.
+
+    Args:
+        signal: Signal dict with title, summary, url, source info.
+        client: Optional AnalysisClient instance (uses shared instance if None).
+
+    Returns:
+        Analysis result dict with scores, BU matches, and action card fields,
+        or None if AI analysis fails.
+    """
+    client = client or _get_client()
+    if not client.available:
+        return None
+
+    system_prompt = build_system_prompt()
+    user_prompt = build_signal_prompt(signal)
+
+    raw_result = client.analyze(system_prompt, user_prompt)
+    if raw_result is None:
+        return None
+
+    result = _validate_ai_result(raw_result)
+    if result is None:
+        logger.error("AI result validation failed for signal: %s", signal.get("title", "?")[:60])
+        return None
+
+    # Calculate composite score from the AI-provided dimension scores
+    result["composite"] = calculate_composite_score(result["scores"])
+
+    # Map relevant_bus to the standard bu_matches format
+    result["bu_matches"] = [
+        {"bu_id": bu["bu_id"], "relevance_score": bu["relevance_score"]}
+        for bu in result["relevant_bus"]
+    ]
+
+    result["analysis_method"] = "ai"
+    logger.info(
+        "AI scored signal: %.1f - %s [%s]",
+        result["composite"],
+        result["headline"][:50],
+        result["signal_type"],
+    )
+    return result
+
+
+def score_signal_heuristic(signal: dict) -> dict:
+    """Score a signal using keyword-based heuristics (fallback).
 
     Args:
         signal: Signal dict.
@@ -87,10 +197,10 @@ def score_signal(signal: dict) -> dict:
     bu_matches = match_signal_to_bus(signal)
 
     scores = {
-        "revenue_impact": 5.0,
-        "time_sensitivity": 5.0,
-        "strategic_alignment": min(bu_matches[0]["relevance_score"] * 10, 10.0) if bu_matches else 2.0,
-        "competitive_pressure": 5.0,
+        "revenue_impact": 5,
+        "time_sensitivity": 5,
+        "strategic_alignment": min(int(bu_matches[0]["relevance_score"] * 10), 10) if bu_matches else 2,
+        "competitive_pressure": 5,
     }
 
     composite = calculate_composite_score(scores)
@@ -99,11 +209,87 @@ def score_signal(signal: dict) -> dict:
         "scores": scores,
         "composite": composite,
         "bu_matches": bu_matches,
-        "signal_type": "market-shift",  # Default; AI will classify in Phase 2
+        "signal_type": "market-shift",
         "headline": signal.get("title", ""),
         "what_summary": signal.get("summary", ""),
-        "why_it_matters": "Relevance analysis pending (Phase 2 - AI integration)",
-        "quick_win": "Review signal and assess BU impact",
+        "why_it_matters": "Automated analysis unavailable — manual review recommended.",
+        "quick_win": "Review signal and assess BU impact.",
         "suggested_owner": "BU Manager",
         "estimated_impact": "TBD",
+        "outreach_template": None,
+        "analysis_method": "heuristic",
     }
+
+
+def score_signal(signal: dict, client: AnalysisClient | None = None) -> dict:
+    """Score a signal, using AI when available with heuristic fallback.
+
+    This is the main entry point for signal scoring. It tries AI analysis
+    first, and falls back to keyword heuristics if the API is unavailable
+    or returns an error.
+
+    Args:
+        signal: Signal dict.
+        client: Optional AnalysisClient instance.
+
+    Returns:
+        Analysis result dict with all action card fields populated.
+    """
+    # Try AI scoring first
+    result = score_signal_ai(signal, client)
+    if result is not None:
+        return result
+
+    # Fallback to heuristics
+    logger.info("Falling back to heuristic scoring for: %s", signal.get("title", "?")[:60])
+    return score_signal_heuristic(signal)
+
+
+def score_batch_ai(signals: list[dict], client: AnalysisClient | None = None) -> list[dict]:
+    """Score a batch of signals in a single API call for efficiency.
+
+    Falls back to individual scoring if batch parsing fails.
+
+    Args:
+        signals: List of signal dicts.
+        client: Optional AnalysisClient instance.
+
+    Returns:
+        List of analysis result dicts in the same order as input.
+    """
+    client = client or _get_client()
+    if not client.available or not signals:
+        return [score_signal_heuristic(s) for s in signals]
+
+    system_prompt = build_system_prompt()
+    user_prompt = build_batch_prompt(signals)
+
+    raw_result = client.analyze(system_prompt, user_prompt)
+
+    if raw_result is None or not isinstance(raw_result, list):
+        logger.warning("Batch analysis failed, falling back to individual scoring")
+        return [score_signal(s, client) for s in signals]
+
+    if len(raw_result) != len(signals):
+        logger.warning(
+            "Batch result count mismatch (%d vs %d), falling back to individual",
+            len(raw_result), len(signals),
+        )
+        return [score_signal(s, client) for s in signals]
+
+    results = []
+    for i, (signal, raw) in enumerate(zip(signals, raw_result)):
+        validated = _validate_ai_result(raw)
+        if validated is None:
+            logger.warning("Batch result %d invalid, scoring individually", i)
+            validated = score_signal(signal, client)
+        else:
+            validated["composite"] = calculate_composite_score(validated["scores"])
+            validated["bu_matches"] = [
+                {"bu_id": bu["bu_id"], "relevance_score": bu["relevance_score"]}
+                for bu in validated.get("relevant_bus", [])
+            ]
+            validated["analysis_method"] = "ai-batch"
+        results.append(validated)
+
+    return results
