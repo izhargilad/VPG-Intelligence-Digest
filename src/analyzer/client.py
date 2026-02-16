@@ -6,6 +6,7 @@ and structured JSON response parsing for signal analysis.
 
 import json
 import logging
+import os
 import time
 
 import anthropic
@@ -18,6 +19,18 @@ from src.config import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _read_auth_token() -> str | None:
+    """Read a Bearer auth token from CLAUDE_SESSION_INGRESS_TOKEN_FILE if available."""
+    token_file = os.getenv("CLAUDE_SESSION_INGRESS_TOKEN_FILE", "")
+    if not token_file:
+        return None
+    try:
+        with open(token_file) as f:
+            return f.read().strip() or None
+    except OSError:
+        return None
 
 
 class AnalysisClient:
@@ -35,11 +48,16 @@ class AnalysisClient:
         self.temperature = temperature if temperature is not None else ANTHROPIC_TEMPERATURE
         self.max_tokens = max_tokens or ANTHROPIC_MAX_TOKENS
 
-        if not self.api_key:
-            logger.warning("No Anthropic API key configured — AI analysis unavailable")
-            self._client = None
-        else:
+        self._client = None
+        if self.api_key:
             self._client = anthropic.Anthropic(api_key=self.api_key)
+        else:
+            # Fall back to Bearer auth token (e.g. managed environments)
+            auth_token = _read_auth_token()
+            if auth_token:
+                self._client = anthropic.Anthropic(auth_token=auth_token)
+            else:
+                logger.warning("No Anthropic API key configured — AI analysis unavailable")
 
     @property
     def available(self) -> bool:
