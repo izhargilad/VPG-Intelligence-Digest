@@ -109,8 +109,9 @@ class TestPrompts:
 
 class TestAnalysisClient:
     def test_client_unavailable_without_key(self):
-        client = AnalysisClient(api_key="")
-        assert not client.available
+        with patch("src.analyzer.client._read_auth_token", return_value=None):
+            client = AnalysisClient(api_key="")
+            assert not client.available
 
     def test_client_available_with_key(self):
         with patch("src.analyzer.client.anthropic.Anthropic"):
@@ -118,7 +119,8 @@ class TestAnalysisClient:
             assert client.available
 
     def test_analyze_returns_none_when_unavailable(self):
-        client = AnalysisClient(api_key="")
+        with patch("src.analyzer.client._read_auth_token", return_value=None):
+            client = AnalysisClient(api_key="")
         result = client.analyze("system", "user")
         assert result is None
 
