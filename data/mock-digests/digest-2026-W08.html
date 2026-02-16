@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>VPG Intel [Week 8]: Humanetics DAQ Partner Search for THOR-50M Gen 3 Matches DTS/Pacific Instruments Capabilities Exactly + 7 more signals</title>
+  <style type="text/css">
+    /* Reset */
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+    body { margin: 0; padding: 0; width: 100% !important; height: 100% !important; }
+
+    /* Base */
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background-color: #f4f4f7;
+      color: #333333;
+    }
+
+    .email-wrapper {
+      width: 100%;
+      background-color: #f4f4f7;
+      padding: 20px 0;
+    }
+
+    .email-content {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+    }
+
+    /* Header */
+    .header {
+      background-color: #1B2A4A;
+      padding: 30px 40px;
+      text-align: center;
+    }
+
+    .header h1 {
+      color: #ffffff;
+      font-size: 24px;
+      margin: 0 0 5px 0;
+      font-weight: bold;
+    }
+
+    .header .subtitle {
+      color: #E8792F;
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .header .date {
+      color: #aab4c6;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+
+    /* Executive Summary */
+    .exec-summary {
+      background-color: #f8f9fb;
+      padding: 25px 40px;
+      border-bottom: 3px solid #2E75B6;
+    }
+
+    .exec-summary h2 {
+      color: #1B2A4A;
+      font-size: 18px;
+      margin: 0 0 15px 0;
+    }
+
+    .exec-summary ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .exec-summary li {
+      color: #333333;
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+
+    .score-badge {
+      display: inline-block;
+      background-color: #E8792F;
+      color: #ffffff;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    .bu-tag {
+      display: inline-block;
+      background-color: #2E75B6;
+      color: #ffffff;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+
+    /* BU Section */
+    .bu-section {
+      padding: 25px 40px;
+      border-bottom: 1px solid #e8e8e8;
+    }
+
+    .bu-section-header {
+      padding: 10px 15px;
+      margin-bottom: 15px;
+      border-left: 4px solid;
+    }
+
+    .bu-section-header h2 {
+      margin: 0;
+      font-size: 16px;
+      color: #1B2A4A;
+    }
+
+    /* Action Card */
+    .action-card {
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 12px 15px;
+      background-color: #f8f9fb;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .card-header .signal-type {
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .card-header .headline {
+      font-size: 15px;
+      font-weight: bold;
+      color: #1B2A4A;
+      margin: 5px 0 0 0;
+    }
+
+    .card-body {
+      padding: 15px;
+    }
+
+    .card-body .field-label {
+      font-size: 11px;
+      font-weight: bold;
+      color: #2E75B6;
+      text-transform: uppercase;
+      margin: 10px 0 3px 0;
+    }
+
+    .card-body .field-label:first-child {
+      margin-top: 0;
+    }
+
+    .card-body .field-value {
+      font-size: 13px;
+      color: #333333;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .card-footer {
+      padding: 10px 15px;
+      background-color: #fafafa;
+      border-top: 1px solid #e0e0e0;
+      font-size: 11px;
+      color: #666666;
+    }
+
+    .card-footer a {
+      color: #2E75B6;
+      text-decoration: none;
+    }
+
+    .card-footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Validation badges */
+    .badge-verified {
+      background-color: #43A047;
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .badge-likely {
+      background-color: #FB8C00;
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .badge-unverified {
+      background-color: #E53935;
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    /* Footer */
+    .footer {
+      background-color: #1B2A4A;
+      padding: 25px 40px;
+      text-align: center;
+    }
+
+    .footer p {
+      color: #aab4c6;
+      font-size: 11px;
+      line-height: 1.6;
+      margin: 0 0 5px 0;
+    }
+
+    .footer a {
+      color: #E8792F;
+      text-decoration: none;
+    }
+
+    /* Stats bar */
+    .stats-bar {
+      background-color: #2E75B6;
+      padding: 12px 40px;
+      text-align: center;
+      color: #ffffff;
+      font-size: 13px;
+    }
+
+    .stats-bar span {
+      margin: 0 15px;
+    }
+
+    /* Responsive */
+    @media screen and (max-width: 480px) {
+      .email-content {
+        width: 100% !important;
+      }
+      .header, .exec-summary, .bu-section, .footer {
+        padding-left: 20px !important;
+        padding-right: 20px !important;
+      }
+      .header h1 { font-size: 20px !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="email-wrapper">
+    <table class="email-content" align="center" cellpadding="0" cellspacing="0" width="600">
+
+      <!-- Header -->
+      <tr>
+        <td class="header">
+          <h1>VPG Intelligence Digest</h1>
+          <p class="subtitle">Weekly Strategic Intelligence Report</p>
+          <p class="date">Week 8, 2026 | February 16, 2026</p>
+        </td>
+      </tr>
+
+      <!-- Stats Bar -->
+      <tr>
+        <td class="stats-bar">
+          <span>8 Signals</span>
+          <span>|</span>
+          <span>7 Business Units</span>
+        </td>
+      </tr>
+
+      <!-- Executive Summary -->
+      
+      <tr>
+        <td class="exec-summary">
+          <h2>Top Signals This Week</h2>
+          <ul>
+            
+            <li>
+              <span class="score-badge">9.2</span>
+              Humanetics DAQ Partner Search for THOR-50M Gen 3 Matches DTS/Pacific Instruments Capabilities Exactly
+              
+              <span class="bu-tag">dts</span>
+              
+              <span class="bu-tag">pacific-instruments</span>
+              
+            </li>
+            
+            <li>
+              <span class="score-badge">9.15</span>
+              50% China Tariffs Create Immediate Competitive Advantage for VPG&#39;s India Manufacturing Hub
+              
+              <span class="bu-tag">vpg-force-sensors</span>
+              
+              <span class="bu-tag">vpg-foil-resistors</span>
+              
+            </li>
+            
+            <li>
+              <span class="score-badge">9.1</span>
+              Figure AI&#39;s $30M Sensor Order Reveals Humanoid Robotics Mega-Opportunity for VPG Force Sensors
+              
+              <span class="bu-tag">vpg-force-sensors</span>
+              
+            </li>
+            
+            <li>
+              <span class="score-badge">8.8</span>
+              Caterpillar&#39;s 200+ Autonomous Truck RFI Represents $15M+ Opportunity for VPG Onboard Weighing
+              
+              <span class="bu-tag">vpg-onboard-weighing</span>
+              
+            </li>
+            
+            <li>
+              <span class="score-badge">8.45</span>
+              18% ATE Market Surge Creates Supply Constraint Opportunity for VPG Z1-Foil Resistors
+              
+              <span class="bu-tag">vpg-foil-resistors</span>
+              
+            </li>
+            
+          </ul>
+        </td>
+      </tr>
+      
+
+      <!-- Signal of the Week -->
+      
+      <tr>
+        <td class="bu-section" style="background-color: #fffbf5;">
+          <div style="text-align: center; margin-bottom: 10px;">
+            <span style="background-color: #E8792F; color: #fff; padding: 4px 12px; border-radius: 3px; font-size: 12px; font-weight: bold;">SIGNAL OF THE WEEK</span>
+          </div>
+          <div class="action-card" style="border-color: #E8792F; border-width: 2px;">
+            <div class="card-header" style="background-color: #fff5eb;">
+              <div class="signal-type" style="color: #E8792F;">CUSTOMER INTELLIGENCE</div>
+              <div class="headline">Humanetics DAQ Partner Search for THOR-50M Gen 3 Matches DTS/Pacific Instruments Capabilities Exactly</div>
+              <span class="score-badge">Score: 9.2</span>
+            </div>
+            <div class="card-body">
+              <div class="field-label">What</div>
+              <p class="field-value">Humanetics, a VPG strategic target account and the world&#39;s largest crash test dummy manufacturer, is evaluating data acquisition systems for its THOR-50M Gen 3 dummy. Requirements specify 256+ channels of miniaturized, shock-rated DAQ capable of surviving 150g impacts. Partner selection process is currently active.</p>
+              <div class="field-label">Why It Matters</div>
+              <p class="field-value">Humanetics is an explicitly named VPG target account. The technical requirements (256+ channels, miniaturized, 150g shock rating) perfectly match DTS&#39;s miniature data acquisition systems and Pacific Instruments&#39; high-channel DAQ capabilities. This represents a major design-in opportunity with a strategic customer. Winning this program would establish VPG as the DAQ standard for next-generation crash test dummies and create recurring revenue as Humanetics scales THOR-50M Gen 3 production.</p>
+              <div class="field-label">Quick Win</div>
+              <p class="field-value">BU Manager - DTS to contact Humanetics engineering team by Tuesday to submit technical qualification package combining DTS SLICE Nano capabilities with Pacific Instruments high-channel architecture, emphasizing VPG&#39;s unique ability to deliver both miniaturization and channel density.</p>
+              <div class="field-label">Owner</div>
+              <p class="field-value">BU Manager - DTS</p>
+            </div>
+          </div>
+        </td>
+      </tr>
+      
+
+      <!-- BU Sections -->
+      
+      <tr>
+        <td class="bu-section">
+          <div class="bu-section-header" style="border-color: #FF5722;">
+            <h2>DTS</h2>
+          </div>
+
+          
+          <div class="action-card">
+            <div class="card-header">
+              <div class="signal-type">CUSTOMER INTELLIGENCE</div>
+              <div class="headline">Humanetics DAQ Partner Search for THOR-50M Gen 3 Matches DTS/Pacific Instruments Capabilities Exactly</div>
+              <span class="score-badge">9.2</span>
+              
+            </div>
+            <div class="card-body">
+              <div class="field-label">What</div>
+              <p class="field-value">Humanetics, a VPG strategic target account and the world&#39;s largest crash test dummy manufacturer, is evaluating data acquisition systems for its THOR-50M Gen 3 dummy. Requirements specify 256+ channels of miniaturized, shock-rated DAQ capable of surviving 150g impacts. Partner selection process is currently active.</p>
+
+              <div class="field-label">Why It Matters</div>
+              <p class="field-value">Humanetics is an explicitly named VPG target account. The technical requirements (256+ channels, miniaturized, 150g shock rating) perfectly match DTS&#39;s miniature data acquisition systems and Pacific Instruments&#39; high-channel DAQ capabilities. This represents a major design-in opportunity with a strategic customer. Winning this program would establish VPG as the DAQ standard for next-generation crash test dummies and create recurring revenue as Humanetics scales THOR-50M Gen 3 production.</p>
+
+              <div class="field-label">Quick Win</div>
+              <p class="field-value">BU Manager - DTS to contact Humanetics engineering team by Tuesday to submit technical qualification package combining DTS SLICE Nano capabilities with Pacific Instruments high-channel architecture, emphasizing VPG&#39;s unique ability to deliver both miniaturization and channel density.</p>
+
+              
+              <div class="field-label">Owner</div>
+              <p class="field-value">BU Manager - DTS</p>
+              
+
+              
+              <div class="field-label">Est. Impact</div>
+              <p class="field-value">$12M-20M over 5 years (design-in + production)</p>
+              
+            </div>
+            <div class="card-footer">
+              Sources:
+              
+              <a href="https://www.humanetics.com/news/daq-partner-search-2026" target="_blank">[Primary]</a>
+              
+            </div>
+          </div>
+          
+          <div class="action-card">
+            <div class="card-header">
+              <div class="signal-type">TRADE TARIFF</div>
+              <div class="headline">50% China Tariffs Create Immediate Competitive Advantage for VPG&#39;s India Manufacturing Hub</div>
+              <span class="score-badge">9.15</span>
+              
+            </div>
+            <div class="card-body">
+              <div class="field-label">What</div>
+              <p class="field-value">USTR raised tariffs on Chinese electronic components including resistors, sensors, and DAQ modules from 25% to 50%, effective April 1, 2026. India, Vietnam, and Mexico are explicitly exempted. This creates immediate cost disadvantages for China-dependent competitors like Zemic, Sunrise Instruments, and potentially portions of HBK&#39;s supply chain.</p>
+
+              <div class="field-label">Why It Matters</div>
+              <p class="field-value">VPG&#39;s India production hub now has a structural 50% cost advantage versus China-sourced competitors across Force Sensors, Foil Resistors, and DAQ products. This is a transformational competitive advantage that must be immediately leveraged in sales messaging, pricing strategy, and customer communications. Competitors like Zemic (China-based) and Sunrise Instruments face immediate margin pressure or price increases, creating a window to capture market share before they can relocate production.</p>
+
+              <div class="field-label">Quick Win</div>
+              <p class="field-value">VP Marketing to draft &#39;India Advantage&#39; sales messaging and competitive positioning materials by Thursday for immediate deployment across all affected BUs, emphasizing supply chain resilience and tariff-exempt pricing stability.</p>
+
+              
+              <div class="field-label">Owner</div>
+              <p class="field-value">VP Marketing - Corporate</p>
+              
+
+              
+              <div class="field-label">Est. Impact</div>
+              <p class="field-value">$10M-20M incremental revenue opportunity across affected BUs</p>
+              
+            </div>
+            <div class="card-footer">
+              Sources:
+              
+              <a href="https://ustr.gov/tariff-update-2026-electronics" target="_blank">[Primary]</a>
+              
+            </div>
+          </div>
+          
+
+        </td>
+      </tr>
+      
+      <tr>
+        <td class="bu-section">
+          <div class="bu-section-header" style="border-color: #00BCD4;">
+            <h2>Pacific Instruments</h2>
+          </div>
+
+          
+          <div class="action-card">
+            <div class="card-header">
+              <div class="signal-type">CUSTOMER INTELLIGENCE</div>
+              <div class="headline">Humanetics DAQ Partner Search for THOR-50M Gen 3 Matches DTS/Pacific Instruments Capabilities Exactly</div>
+              <span class="score-badge">9.2</span>
+              
+            </div>
+            <div class="card-body">
+              <div class="field-label">What</div>
+              <p class="field-value">Humanetics, a VPG strategic target account and the world&#39;s largest crash test dummy manufacturer, is evaluating data acquisition systems for its THOR-50M Gen 3 dummy. Requirements specify 256+ channels of miniaturized, shock-rated DAQ capable of surviving 150g impacts. Partner selection process is currently active.</p>
+
+              <div class="field-label">Why It Matters</div>
+              <p class="field-value">Humanetics is an explicitly named VPG target account. The technical requirements (256+ channels, miniaturized, 150g shock rating) perfectly match DTS&#39;s miniature data acquisition systems and Pacific Instruments&#39; high-channel DAQ capabilities. This represents a major design-in opportunity with a strategic customer. Winning this program would establish VPG as the DAQ standard for next-generation crash test dummies and create recurring revenue as Humanetics scales THOR-50M Gen 3 production.</p>
+
+              <div class="field-label">Quick Win</div>
+              <p class="field-value">BU Manager - DTS to contact Humanetics engineering team by Tuesday to submit technical qualification package combining DTS SLICE Nano capabilities with Pacific Instruments high-channel architecture, emphasizing VPG&#39;s unique ability to deliver both miniaturization and channel density.</p>
+
+              
+              <div class="field-label">Owner</div>
+              <p class="field-value">BU Manager - DTS</p>
+              
+
+              
+              <div class="field-label">Est. Impact</div>
+              <p class="field-value">$12M-20M over 5 years (design-in + production)</p>
+              
+            </div>
+            <div class="card-footer">
+              Sources:
+              
+              <a href="https://www.humanetics.com/news/daq-partner-search-2026" target="_blank">[Primary]</a>
+              
+            </div>
+          </div>
+          
+          <div class="action-card">
+            <div class="card-header">
+              <div class="signal-type">TRADE TARIFF</div>
+              <div class="headline">50% China Tariffs Create Immediate Competitive Advantage for VPG&#39;s India Manufacturing Hub</div>
+              <span class="score-badge">9.15</span>
+              
+            </div>
+            <div class="card-body">
+              <div class="field-label">What</div>
+              <p class="field-value">USTR raised tariffs on Chinese electronic components including resistors, sensors, and DAQ modules from 25% to 50%, effective April 1, 2026. India, Vietnam, and Mexico are explicitly exempted. This creates immediate cost disadvantages for China-dependent competitors like Zemic, Sunrise Instruments, and potentially portions of HBK&#39;s supply chain.</p>
+
+              <div class="field-label">Why It Matters</div>
+              <p class="field-value">VPG&#39;s India production hub now has a structural 50% cost advantage versus China-sourced competitors across Force Sensors, Foil Resistors, and DAQ products. This is a transformational competitive advantage that must be immediately leveraged in sales messaging, pricing strategy, and customer communications. Competitors like Zemic (China-based) and Sunrise Instruments face immediate margin pressure or price increases, creating a window to capture market share before they can relocate production.</p>
+
+              <div class="field-label">Quick Win</div>
+              <p class="field-value">VP Marketing to draft &#39;India Advantage&#39; sales messaging and competitive positioning materials by Thursday for immediate deployment across all affected BUs, emphasizing supply chain resilience and tariff-exempt pricing stability.</p>
+
+              
+              <div class="field-label">Owner</div>
+              <p class="field-value">VP Marketing - Corporate</p>
+              
+
+              
+              <div class="field-label">Est. Impact</div>
+              <p class="field-value">$10M-20M incremental revenue opportunity across affected BUs</p>
+              
+            </div>
+            <div class="card-footer">
+              Sources:
+              
+              <a href="https://ustr.gov/tariff-update-2026-electronics" target="_blank">[Primary]</a>
+              
+            </div>
+          </div>
+          
+
+        </td>
+      </tr>
+      
+      <tr>
+        <td class="bu-section">
+          <div class="bu-section-header" style="border-color: #2E75B6;">
+            <h2>VPG Force Sensors</h2>
+          </div>
+
+          
+          <div class="action-card">
+            <div class="card-header">
+              <div class="signal-type">TRADE TARIFF</div>
+              <div class="headline">50% China Tariffs Create Immediate Competitive Advantage for VPG&#39;s India Manufacturing Hub</div>
+              <span class="score-badge">9.15</span>
+              
+            </div>
+            <div class="card-body">
+              <div class="field-label">What</div>
+              <p class="field-value">USTR raised tariffs on Chinese electronic components including resistors, sensors, and DAQ modules from 25% to 50%, effective April 1, 2026. India, Vietnam, and Mexico are explicitly exempted. This creates immediate cost disadvantages for China-dependent competitors like Zemic, Sunrise Instruments, and potentially portions of HBK&#39;s supply chain.</p>
+
+              <div class="field-label">Why It Matters</div>
+              <p class="field-value">VPG&#39;s India production hub now has a structural 50% cost advantage versus China-sourced competitors across Force Sensors, Foil Resistors, and DAQ products. This is a transformational competitive advantage that must be immediately leveraged in sales messaging, pricing strategy, and customer communications. Competitors like Zemic (China-based) and Sunrise Instruments face immediate margin pressure or price increases, creating a window to capture market share before they can relocate production.</p>
+
+              <div class="field-label">Quick Win</div>
+              <p class="field-value">VP Marketing to draft &#39;India Advantage&#39; sales messaging and competitive positioning materials by Thursday for immediate deployment across all affected BUs, emphasizing supply chain resilience and tariff-exempt pricing stability.</p>
+
+              
+              <div class="field-label">Owner</div>
+              <p class="field-value">VP Marketing - Corporate</p>
+              
+
+              
+              <div class="field-label">Est. Impact</div>
+              <p class="field-value">$10M-20M incremental revenue opportunity across affected BUs</p>
+              
+            </div>
+            <div class="card-footer">
+              Sources:
+              
+              <a href="https://ustr.gov/tariff-update-2026-electronics" target="_blank">[Primary]</a>
+              
+            </div>
+          </div>
+          
+          <div class="action-card">
+            <div class="card-header">
+              <div class="signal-type">PARTNERSHIP SIGNAL</div>
+              <div class="headline">Figure AI&#39;s $30M Sensor Order Reveals Humanoid Robotics Mega-Opportunity for VPG Force Sensors</div>
+              <span class="score-badge">9.1</span>
+              
+            </div>
+            <div class="card-body">
+              <div class="field-label">What</div>
+              <p class="field-value">Figure AI placed a $30M order for miniature 6-axis force/torque sensors for its Figure 02 humanoid robot hands and wrists over 18 months. The supplier was not disclosed, representing both a competitive threat (if awarded to a rival) and a massive partnership opportunity. This is one of the largest single sensor procurements in robotics history.</p>
+
+              <div class="field-label">Why It Matters</div>
+              <p class="field-value">VPG Force Sensors produces miniature force and torque sensors suitable for robotic applications. The humanoid robotics market is exploding with Figure AI, Boston Dynamics, and others scaling production. This $30M order demonstrates the scale of single-customer opportunities in this segment. If VPG was not the supplier, immediate action is needed to position for Figure AI&#39;s next procurement cycle and other humanoid manufacturers. If VPG won this order, it validates the product-market fit and should trigger expansion plans.</p>
+
+              <div class="field-label">Quick Win</div>
+              <p class="field-value">VP Sales - Force Sensors to determine by Wednesday if VPG was the supplier for this Figure AI order. If not, initiate contact with Figure AI procurement and engineering teams to qualify VPG&#39;s miniature force/torque sensors for future humanoid robot programs.</p>
+
+              
+              <div class="field-label">Owner</div>
+              <p class="field-value">VP Sales - VPG Force Sensors</p>
+              
+
+              
+              <div class="field-label">Est. Impact</div>
+              <p class="field-value">$20M-40M potential annual revenue in humanoid robotics segment</p>
+              
+            </div>
+            <div class="card-footer">
+              Sources:
+              
+              <a href="https://www.figure.ai/blog/sensor-procurement-2026" target="_blank">[Primary]</a>
+              
+            </div>
+          </div>
+          
+          <div class="action-card">
+            <div class="card-header">
+              <div class="signal-type">COMPETITIVE THREAT</div>
+              <div class="headline">Kistler&#39;s Cobot Force Sensor Launch Threatens VPG&#39;s Robotics Integration Pipeline</div>
+              <span class="score-badge">7.3</span>
+              
+            </div>
+            <div class="card-body">
+              <div class="field-label">What</div>
+              <p class="field-value">Kistler launched the 9175B piezoelectric force sensor with ±0.1% linearity and integrated digital interface, specifically targeting collaborative robot end-effectors. The product directly competes with VPG Force Sensors&#39; load cell offerings in the $12B cobot market projected for 2028. This represents Kistler&#39;s strategic push into the high-growth robotics automation segment.</p>
+
+              <div class="field-label">Why It Matters</div>
+              <p class="field-value">VPG Force Sensors competes head-to-head with Kistler in robotics and automation applications. The 9175B&#39;s digital interface and cobot-specific design could capture market share in VPG&#39;s key growth segment. The cobot market&#39;s rapid expansion makes this a critical competitive battleground where product differentiation and integration partnerships will determine winners.</p>
+
+              <div class="field-label">Quick Win</div>
+              <p class="field-value">VP Sales - Force Sensors to conduct competitive teardown analysis of Kistler 9175B specifications and pricing by Friday, then brief engineering on differentiation gaps in VPG&#39;s current cobot-compatible load cell portfolio.</p>
+
+              
+              <div class="field-label">Owner</div>
+              <p class="field-value">VP Sales - VPG Force Sensors</p>
+              
+
+              
+              <div class="field-label">Est. Impact</div>
+              <p class="field-value">$2M-5M annual revenue at risk</p>
+              
+            </div>
+            <div class="card-footer">
+              Sources:
+              
+              <a href="https://www.kistler.com/en/newsroom/piezo-9175b-launch" target="_blank">[Primary]</a>
+              
+            </div>
+          </div>
+          
+
+        </td>
+      </tr>
+      
+      <tr>
+        <td class="bu-section">
+          <div class="bu-section-header" style="border-color: #1B2A4A;">
+            <h2>VPG Foil Resistors</h2>
+          </div>
+
+          
+          <div class="action-card">
+            <div class="card-header">
+              <div class="signal-type">TRADE TARIFF</div>
+              <div class="headline">50% China Tariffs Create Immediate Competitive Advantage for VPG&#39;s India Manufacturing Hub</div>
+              <span class="score-badge">9.15</span>
+              
+            </div>
+            <div class="card-body">
+              <div class="field-label">What</div>
+              <p class="field-value">USTR raised tariffs on Chinese electronic components including resistors, sensors, and DAQ modules from 25% to 50%, effective April 1, 2026. India, Vietnam, and Mexico are explicitly exempted. This creates immediate cost disadvantages for China-dependent competitors like Zemic, Sunrise Instruments, and potentially portions of HBK&#39;s supply chain.</p>
+
+              <div class="field-label">Why It Matters</div>
+              <p class="field-value">VPG&#39;s India production hub now has a structural 50% cost advantage versus China-sourced competitors across Force Sensors, Foil Resistors, and DAQ products. This is a transformational competitive advantage that must be immediately leveraged in sales messaging, pricing strategy, and customer communications. Competitors like Zemic (China-based) and Sunrise Instruments face immediate margin pressure or price increases, creating a window to capture market share before they can relocate production.</p>
+
+              <div class="field-label">Quick Win</div>
+              <p class="field-value">VP Marketing to draft &#39;India Advantage&#39; sales messaging and competitive positioning materials by Thursday for immediate deployment across all affected BUs, emphasizing supply chain resilience and tariff-exempt pricing stability.</p>
+
+              
+              <div class="field-label">Owner</div>
+              <p class="field-value">VP Marketing - Corporate</p>
+              
+
+              
+              <div class="field-label">Est. Impact</div>
+              <p class="field-value">$10M-20M incremental revenue opportunity across affected BUs</p>
+              
+            </div>
+            <div class="card-footer">
+              Sources:
+              
+              <a href="https://ustr.gov/tariff-update-2026-electronics" target="_blank">[Primary]</a>
+              
+            </div>
+          </div>
+          
+          <div class="action-card">
+            <div class="card-header">
+              <div class="signal-type">MARKET SHIFT</div>
+              <div class="headline">18% ATE Market Surge Creates Supply Constraint Opportunity for VPG Z1-Foil Resistors</div>
+              <span class="score-badge">8.45</span>
+              
+            </div>
+            <div class="card-body">
+              <div class="field-label">What</div>
+              <p class="field-value">The semiconductor automated test equipment (ATE) market grew 18% year-over-year in Q4 2025, driven by AI chip testing demand. ATE manufacturers are reporting supply constraints on ultra-precision foil resistors used in test measurement circuits. This creates strong demand for VPG Foil Resistors&#39; Z1-Foil product line, which targets precision instrumentation and semiconductor test applications.</p>
+
+              <div class="field-label">Why It Matters</div>
+              <p class="field-value">VPG Foil Resistors&#39; Z1-Foil precision resistors are specifically designed for semiconductor test equipment applications. The 18% market growth combined with competitor supply constraints creates a perfect storm for VPG to capture market share and potentially raise prices. ATE manufacturers are actively seeking alternative suppliers, making this a time-sensitive opportunity to establish new customer relationships and expand wallet share with existing accounts.</p>
+
+              <div class="field-label">Quick Win</div>
+              <p class="field-value">VP Sales - Foil Resistors to identify top 10 ATE manufacturers by Wednesday and initiate outreach emphasizing VPG&#39;s Z1-Foil inventory availability, India manufacturing capacity, and ability to support rapid volume ramps for AI chip testing applications.</p>
+
+              
+              <div class="field-label">Owner</div>
+              <p class="field-value">VP Sales - VPG Foil Resistors</p>
+              
+
+              
+              <div class="field-label">Est. Impact</div>
+              <p class="field-value">$5M-10M incremental annual revenue in ATE segment</p>
+              
+            </div>
+            <div class="card-footer">
+              Sources:
+              
+              <a href="https://www.eetimes.com/semiconductor-test-market-2026-outlook" target="_blank">[Primary]</a>
+              
+            </div>
+          </div>
+          
+
+        </td>
+      </tr>
+      
+      <tr>
+        <td class="bu-section">
+          <div class="bu-section-header" style="border-color: #E8792F;">
+            <h2>Micro-Measurements</h2>
+          </div>
+
+          
+          <div class="action-card">
+            <div class="card-header">
+              <div class="signal-type">TRADE TARIFF</div>
+              <div class="headline">50% China Tariffs Create Immediate Competitive Advantage for VPG&#39;s India Manufacturing Hub</div>
+              <span class="score-badge">9.15</span>
+              
+            </div>
+            <div class="card-body">
+              <div class="field-label">What</div>
+              <p class="field-value">USTR raised tariffs on Chinese electronic components including resistors, sensors, and DAQ modules from 25% to 50%, effective April 1, 2026. India, Vietnam, and Mexico are explicitly exempted. This creates immediate cost disadvantages for China-dependent competitors like Zemic, Sunrise Instruments, and potentially portions of HBK&#39;s supply chain.</p>
+
+              <div class="field-label">Why It Matters</div>
+              <p class="field-value">VPG&#39;s India production hub now has a structural 50% cost advantage versus China-sourced competitors across Force Sensors, Foil Resistors, and DAQ products. This is a transformational competitive advantage that must be immediately leveraged in sales messaging, pricing strategy, and customer communications. Competitors like Zemic (China-based) and Sunrise Instruments face immediate margin pressure or price increases, creating a window to capture market share before they can relocate production.</p>
+
+              <div class="field-label">Quick Win</div>
+              <p class="field-value">VP Marketing to draft &#39;India Advantage&#39; sales messaging and competitive positioning materials by Thursday for immediate deployment across all affected BUs, emphasizing supply chain resilience and tariff-exempt pricing stability.</p>
+
+              
+              <div class="field-label">Owner</div>
+              <p class="field-value">VP Marketing - Corporate</p>
+              
+
+              
+              <div class="field-label">Est. Impact</div>
+              <p class="field-value">$10M-20M incremental revenue opportunity across affected BUs</p>
+              
+            </div>
+            <div class="card-footer">
+              Sources:
+              
+              <a href="https://ustr.gov/tariff-update-2026-electronics" target="_blank">[Primary]</a>
+              
+            </div>
+          </div>
+          
+          <div class="action-card">
+            <div class="card-header">
+              <div class="signal-type">COMPETITIVE THREAT</div>
+              <div class="headline">HBK&#39;s €45M StrainSense Acquisition Signals IoT-Connected SHM Push Against Micro-Measurements</div>
+              <span class="score-badge">6.55</span>
+              
+            </div>
+            <div class="card-body">
+              <div class="field-label">What</div>
+              <p class="field-value">HBK acquired UK-based StrainSense Labs for €45M, gaining wireless strain gage network technology for structural health monitoring of bridges and buildings. This acquisition strengthens HBK&#39;s competitive position in structural testing and represents a strategic move into IoT-connected monitoring applications. The deal signals HBK&#39;s intent to expand beyond traditional strain gage sales into recurring SHM service revenue.</p>
+
+              <div class="field-label">Why It Matters</div>
+              <p class="field-value">Micro-Measurements competes directly with HBK in strain gages and structural testing applications. HBK&#39;s acquisition creates a wireless, IoT-enabled product advantage that Micro-Measurements currently lacks. The structural health monitoring market is shifting toward continuous wireless monitoring rather than one-time installations, threatening Micro-Measurements&#39; traditional business model and creating pressure to develop connected product capabilities.</p>
+
+              <div class="field-label">Quick Win</div>
+              <p class="field-value">VP Product Management - Micro-Measurements to assess current wireless/IoT strain gage roadmap gaps versus HBK&#39;s new StrainSense capabilities and present competitive response options to leadership by Friday.</p>
+
+              
+              <div class="field-label">Owner</div>
+              <p class="field-value">VP Product Management - Micro-Measurements</p>
+              
+
+              
+              <div class="field-label">Est. Impact</div>
+              <p class="field-value">$3M-6M annual revenue at risk in SHM segment</p>
+              
+            </div>
+            <div class="card-footer">
+              Sources:
+              
+              <a href="https://www.hbkworld.com/en/news/hbk-strainsense-acquisition" target="_blank">[Primary]</a>
+              
+            </div>
+          </div>
+          
+
+        </td>
+      </tr>
+      
+      <tr>
+        <td class="bu-section">
+          <div class="bu-section-header" style="border-color: #4CAF50;">
+            <h2>VPG Onboard Weighing</h2>
+          </div>
+
+          
+          <div class="action-card">
+            <div class="card-header">
+              <div class="signal-type">REVENUE OPPORTUNITY</div>
+              <div class="headline">Caterpillar&#39;s 200+ Autonomous Truck RFI Represents $15M+ Opportunity for VPG Onboard Weighing</div>
+              <span class="score-badge">8.8</span>
+              
+            </div>
+            <div class="card-body">
+              <div class="field-label">What</div>
+              <p class="field-value">Caterpillar issued an RFI for integrated onboard weighing systems across 200+ autonomous 794 AC haul trucks at three Australian mine sites. Partner selection is expected by Q3 2026. This is a named target account opportunity perfectly aligned with VPG&#39;s TruckWeigh and BulkWeigh product capabilities.</p>
+
+              <div class="field-label">Why It Matters</div>
+              <p class="field-value">Caterpillar is VPG&#39;s identified strategic target account, and this RFI represents one of the largest single onboard weighing opportunities in the mining sector. Winning this program would establish VPG as the standard for autonomous mining fleet weighing and create a reference account for global mining expansion. The Q3 2026 timeline requires immediate response to the RFI process.</p>
+
+              <div class="field-label">Quick Win</div>
+              <p class="field-value">BU Manager - VPG Onboard Weighing to contact Caterpillar Mining &amp; Technology procurement lead by Wednesday to request RFI documents and schedule technical qualification meeting before week&#39;s end.</p>
+
+              
+              <div class="field-label">Owner</div>
+              <p class="field-value">BU Manager - VPG Onboard Weighing</p>
+              
+
+              
+              <div class="field-label">Est. Impact</div>
+              <p class="field-value">$15M-25M over 3 years</p>
+              
+            </div>
+            <div class="card-footer">
+              Sources:
+              
+              <a href="https://www.caterpillar.com/en/news/2026/autonomous-mining-expansion.html" target="_blank">[Primary]</a>
+              
+            </div>
+          </div>
+          
+
+        </td>
+      </tr>
+      
+      <tr>
+        <td class="bu-section">
+          <div class="bu-section-header" style="border-color: #607D8B;">
+            <h2>KELK</h2>
+          </div>
+
+          
+          <div class="action-card">
+            <div class="card-header">
+              <div class="signal-type">REVENUE OPPORTUNITY</div>
+              <div class="headline">ArcelorMittal&#39;s $2B Smart Mill Program Validates KELK-Nokra alpha.ti Launch Timing</div>
+              <span class="score-badge">7.8</span>
+              
+            </div>
+            <div class="card-body">
+              <div class="field-label">What</div>
+              <p class="field-value">ArcelorMittal announced a $2B global modernization program for AI-driven quality control in flat steel rolling mills across Europe and North America. The program includes real-time laser thickness and profile measurement systems, with multiple vendors in early-stage trials. This directly aligns with KELK&#39;s rolling mill systems and the upcoming Nokra alpha.ti laser thickness measurement launch planned for AISTech 2026.</p>
+
+              <div class="field-label">Why It Matters</div>
+              <p class="field-value">KELK specializes in rolling mill systems and laser measurement technology. ArcelorMittal&#39;s $2B investment validates the market demand for exactly the capabilities KELK&#39;s alpha.ti system will deliver at AISTech 2026. The &#39;multiple vendors in early-stage trials&#39; language indicates ArcelorMittal is actively evaluating solutions now, creating an immediate opportunity to position KELK-Nokra for the trials and establish early-mover advantage before the formal product launch.</p>
+
+              <div class="field-label">Quick Win</div>
+              <p class="field-value">BU Manager - KELK to contact ArcelorMittal&#39;s rolling mill technology group by Thursday to request inclusion in laser measurement trials, leveraging KELK&#39;s existing rolling mill customer base and Nokra&#39;s proven laser measurement technology.</p>
+
+              
+              <div class="field-label">Owner</div>
+              <p class="field-value">BU Manager - KELK</p>
+              
+
+              
+              <div class="field-label">Est. Impact</div>
+              <p class="field-value">$8M-15M potential revenue from ArcelorMittal program</p>
+              
+            </div>
+            <div class="card-footer">
+              Sources:
+              
+              <a href="https://corporate.arcelormittal.com/media/press-releases/smart-mill-2026" target="_blank">[Primary]</a>
+              
+            </div>
+          </div>
+          
+
+        </td>
+      </tr>
+      
+
+      <!-- Footer -->
+      <tr>
+        <td class="footer">
+          <p>Powered by VPG Strategic Intelligence</p>
+          <p>This digest is auto-generated from 8 validated industry signals.</p>
+          <p><a href="#">Unsubscribe</a> | <a href="#">View in Browser</a> | <a href="#">Archive</a></p>
+        </td>
+      </tr>
+
+    </table>
+  </div>
+</body>
+</html>
