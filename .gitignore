@@ -16,6 +16,8 @@ env/
 
 # Environment variables
 .env
+.env.*
+!.env.example
 
 # Database
 *.db
@@ -50,6 +52,7 @@ src/ui/dist/
 
 # Gmail OAuth2 (sensitive — never commit these)
 token.json
+*.token
 config/token.json
 credentials.json
 config/credentials.json
