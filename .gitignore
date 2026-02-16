@@ -48,9 +48,11 @@ node_modules/
 src/ui/build/
 src/ui/dist/
 
-# Gmail tokens (sensitive)
+# Gmail OAuth2 (sensitive — never commit these)
 token.json
+config/token.json
 credentials.json
+config/credentials.json
 
 # Test artifacts
 .pytest_cache/
