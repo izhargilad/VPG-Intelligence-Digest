@@ -35,44 +35,45 @@
     /* ── Header ─────────────────────────────────── */
     .header {
       background-color: #1B2A4A;
-      padding: 48px 40px 38px;
+      padding: 56px 40px 48px;
       text-align: center;
     }
 
     .header img.logo {
-      max-height: 48px;
-      margin-bottom: 20px;
+      max-height: 64px;
+      max-width: 220px;
+      margin-bottom: 24px;
     }
 
     .header .logo-text {
       font-family: 'Segoe UI', Calibri, Arial, sans-serif;
-      font-size: 13px;
+      font-size: 14px;
       color: #6B82A6;
-      letter-spacing: 4px;
+      letter-spacing: 5px;
       text-transform: uppercase;
-      margin: 0 0 18px;
+      margin: 0 0 22px;
     }
 
     .header h1 {
       color: #ffffff;
       font-family: Georgia, 'Times New Roman', serif;
-      font-size: 32px;
+      font-size: 38px;
       font-weight: 700;
-      margin: 0 0 8px;
+      margin: 0 0 10px;
       letter-spacing: 0.3px;
     }
 
     .header .subtitle {
       color: #8BA3C7;
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 400;
       margin: 0;
     }
 
     .header .date {
       color: #6B82A6;
-      font-size: 13px;
-      margin-top: 12px;
+      font-size: 14px;
+      margin-top: 14px;
     }
 
     /* ── Stats Bar ──────────────────────────────── */
@@ -152,10 +153,20 @@
       display: inline-block;
       background-color: #2E75B6;
       color: #ffffff;
-      padding: 2px 9px;
-      border-radius: 10px;
-      font-size: 11px;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 14px;
       font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    .score-badge.high-score {
+      background: linear-gradient(135deg, #D4AF37, #B8860B);
+      color: #ffffff;
+      padding: 5px 14px;
+      font-size: 15px;
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(184,134,11,0.35);
     }
 
     .bu-tag {
@@ -226,8 +237,8 @@
     }
 
     .bu-section-header img.bu-logo {
-      max-height: 26px;
-      margin-right: 10px;
+      max-height: 34px;
+      margin-right: 12px;
       vertical-align: middle;
     }
 
@@ -360,7 +371,7 @@
         padding-left: 20px !important;
         padding-right: 20px !important;
       }
-      .header h1 { font-size: 26px !important; }
+      .header h1 { font-size: 28px !important; }
       .exec-summary h2 { font-size: 18px !important; }
       .bu-section-header h2 { font-size: 17px !important; }
     }
@@ -408,7 +419,7 @@
               </div>
               <div class="headline">{{ signal_of_week.headline }}</div>
               <div class="card-meta">
-                <span class="score-badge">{{ signal_of_week.composite_score }}</span>
+                <span class="score-badge{% if signal_of_week.high_score %} high-score{% endif %}">{{ signal_of_week.composite_score }}</span>
                 {% for bu in signal_of_week.bu_matches[:3] %}
                 <span class="bu-tag">{{ bu.bu_id | replace('vpg-', '') | replace('-', ' ') }}</span>
                 {% endfor %}
@@ -453,7 +464,7 @@
             {% for signal in top_signals %}
             <li style="border-left-color: {{ signal.type_color }};">
               <a href="#signal-{{ signal.anchor_id }}">
-                <span class="score-badge">{{ signal.composite_score }}</span>
+                <span class="score-badge{% if signal.high_score %} high-score{% endif %}">{{ signal.composite_score }}</span>
                 &nbsp;{{ signal.headline }}
                 <br>
                 <span style="font-size: 11px; color: {{ signal.type_color }}; font-weight: 600;">
@@ -492,7 +503,7 @@
               </div>
               <div class="headline">{{ signal.headline }}</div>
               <div class="card-meta">
-                <span class="score-badge">{{ signal.composite_score }}</span>
+                <span class="score-badge{% if signal.high_score %} high-score{% endif %}">{{ signal.composite_score }}</span>
                 {% if signal.validation_level is defined %}
                 <span class="badge-{{ signal.validation_level }}">{{ signal.validation_level | upper }}</span>
                 {% endif %}

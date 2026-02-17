@@ -3,6 +3,8 @@
 Generates responsive HTML email digests from scored signals.
 """
 
+import base64
+import io
 import logging
 import re
 from datetime import datetime
@@ -10,10 +12,15 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
 from markupsafe import Markup, escape
+from PIL import Image
 
-from src.config import TEMPLATES_DIR
+from src.config import CONFIG_DIR, TEMPLATES_DIR
 
 logger = logging.getLogger(__name__)
+
+# Logo sizing — widths in pixels
+HEADER_LOGO_WIDTH = 220
+BU_LOGO_HEIGHT = 34
 
 # Signal type color scheme — professional, blue-centric, no orange/yellow
 SIGNAL_TYPE_COLORS = {
@@ -27,6 +34,39 @@ SIGNAL_TYPE_COLORS = {
 }
 
 _DEFAULT_TYPE = {"color": "#2E75B6", "bg": "#E3F2FD", "icon": "\U0001f4cb"}
+
+# Score threshold for highlighting
+HIGH_SCORE_THRESHOLD = 9.0
+
+
+def _logo_to_data_uri(logo_filename: str, max_height: int | None = None,
+                      max_width: int | None = None) -> str:
+    """Load a logo file from config dir, resize, and return a base64 data URI."""
+    if not logo_filename:
+        return ""
+    logo_path = CONFIG_DIR / logo_filename
+    if not logo_path.exists():
+        logger.warning("Logo file not found: %s", logo_path)
+        return ""
+    try:
+        img = Image.open(logo_path)
+        img = img.convert("RGB")
+        # Resize proportionally
+        w, h = img.size
+        if max_width and w > max_width:
+            ratio = max_width / w
+            img = img.resize((max_width, int(h * ratio)), Image.LANCZOS)
+            w, h = img.size
+        if max_height and h > max_height:
+            ratio = max_height / h
+            img = img.resize((int(w * ratio), max_height), Image.LANCZOS)
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG", quality=85, optimize=True)
+        b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+        return f"data:image/jpeg;base64,{b64}"
+    except Exception as e:
+        logger.warning("Failed to process logo %s: %s", logo_filename, e)
+        return ""
 
 
 def _to_bullets(text):
@@ -81,7 +121,7 @@ def build_digest_context(signals: list[dict], bu_config: dict) -> dict:
         signals, key=lambda s: s.get("composite_score", 0), reverse=True
     )
 
-    # Assign anchor IDs and pre-compute signal type colors
+    # Assign anchor IDs, pre-compute signal type colors, and flag high scores
     for i, signal in enumerate(all_sorted):
         signal["anchor_id"] = str(i)
         type_info = SIGNAL_TYPE_COLORS.get(
@@ -90,6 +130,7 @@ def build_digest_context(signals: list[dict], bu_config: dict) -> dict:
         signal["type_color"] = type_info["color"]
         signal["type_bg"] = type_info["bg"]
         signal["type_icon"] = type_info["icon"]
+        signal["high_score"] = signal.get("composite_score", 0) >= HIGH_SCORE_THRESHOLD
 
     # Signal of the week = top signal (shown once, not repeated)
     signal_of_week = all_sorted[0] if all_sorted else None
@@ -110,6 +151,15 @@ def build_digest_context(signals: list[dict], bu_config: dict) -> dict:
         )
 
     bu_lookup = {bu["id"]: bu for bu in bu_config.get("business_units", [])}
+
+    # Pre-process BU logos into base64 data URIs
+    bu_logo_cache: dict[str, str] = {}
+    for bu in bu_config.get("business_units", []):
+        logo_file = bu.get("logo_file", "")
+        if logo_file:
+            bu_logo_cache[bu["id"]] = _logo_to_data_uri(
+                logo_file, max_height=BU_LOGO_HEIGHT
+            )
 
     # Build BU sections with cross-BU deduplication
     seen_ids: set[int] = set()
@@ -140,7 +190,7 @@ def build_digest_context(signals: list[dict], bu_config: dict) -> dict:
                 "bu_id": bu_id,
                 "bu_name": bu_info.get("name", bu_id),
                 "bu_color": bu_info.get("color", "#2E75B6"),
-                "bu_logo_url": bu_info.get("logo_url", ""),
+                "bu_logo_url": bu_logo_cache.get(bu_id, bu_info.get("logo_url", "")),
                 "signals": deduped,
             })
 
@@ -153,11 +203,16 @@ def build_digest_context(signals: list[dict], bu_config: dict) -> dict:
         reverse=True,
     )
 
-    # Branding config
+    # Branding config — process header logo
     branding = bu_config.get("branding", {
         "logo_url": "",
         "company_name": "VPG",
     })
+    header_logo_file = branding.get("logo_file", "")
+    if header_logo_file:
+        branding["logo_url"] = _logo_to_data_uri(
+            header_logo_file, max_width=HEADER_LOGO_WIDTH
+        )
 
     # Subject line
     top_headline = (
