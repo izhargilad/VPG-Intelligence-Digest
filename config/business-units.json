@@ -1,4 +1,8 @@
 {
+  "branding": {
+    "logo_url": "",
+    "company_name": "Vishay Precision Group"
+  },
   "business_units": [
     {
       "id": "vpg-force-sensors",
@@ -37,6 +41,7 @@
         "Rice Lake"
       ],
       "color": "#2E75B6",
+      "logo_url": "",
       "icon": "force-sensors",
       "active": true
     },
@@ -71,6 +76,7 @@
         "Novanta"
       ],
       "color": "#1B2A4A",
+      "logo_url": "",
       "icon": "foil-resistors",
       "active": true
     },
@@ -105,7 +111,8 @@
         "Kyowa",
         "TT Electronics"
       ],
-      "color": "#E8792F",
+      "color": "#3949AB",
+      "logo_url": "",
       "icon": "micro-measurements",
       "active": true
     },
@@ -140,7 +147,8 @@
         "Rice Lake",
         "Sunrise Instruments"
       ],
-      "color": "#4CAF50",
+      "color": "#2E7D32",
+      "logo_url": "",
       "icon": "onboard-weighing",
       "active": true
     },
@@ -174,7 +182,8 @@
         "Rice Lake",
         "Flintec"
       ],
-      "color": "#795548",
+      "color": "#546E7A",
+      "logo_url": "",
       "icon": "blh-nobel",
       "active": true
     },
@@ -209,6 +218,7 @@
         "NMB"
       ],
       "color": "#607D8B",
+      "logo_url": "",
       "icon": "kelk",
       "active": true
     },
@@ -239,7 +249,8 @@
         "weld simulation"
       ],
       "key_competitors": [],
-      "color": "#9C27B0",
+      "color": "#7B1FA2",
+      "logo_url": "",
       "icon": "gleeble",
       "active": true
     },
@@ -271,7 +282,8 @@
         "NMB",
         "Omega"
       ],
-      "color": "#00BCD4",
+      "color": "#0097A7",
+      "logo_url": "",
       "icon": "pacific-instruments",
       "active": true
     },
@@ -304,7 +316,8 @@
         "Kyowa",
         "NMB"
       ],
-      "color": "#FF5722",
+      "color": "#455A64",
+      "logo_url": "",
       "icon": "dts",
       "active": true
     }
