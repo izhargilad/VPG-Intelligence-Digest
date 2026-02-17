@@ -132,9 +132,9 @@ Return a single JSON object with exactly these fields:
     "competitive_pressure": <1-10>
   }},
   "headline": "<concise action-oriented headline, max 100 chars>",
-  "what_summary": "<2-3 sentence factual summary of the signal>",
-  "why_it_matters": "<2-3 sentences on specific relevance to the matched VPG BU(s)>",
-  "quick_win": "<one specific action to take THIS WEEK, with enough detail to execute>",
+  "what_summary": "<2-3 concise bullet-point facts about the signal, separated by sentence boundaries>",
+  "why_it_matters": "<2-3 concise bullet-point statements on specific VPG/BU relevance and business impact>",
+  "quick_win": "<one specific, actionable step for this week>",
   "suggested_owner": "<specific role, e.g. 'VP Sales - Force Sensors'>",
   "estimated_impact": "<revenue range, e.g. '$200K-$500K' or 'Defensive - protect $1M+ account'>",
   "outreach_template": "<optional: 2-3 sentence email/LinkedIn outreach draft if signal_type is revenue-opportunity or partnership-signal, otherwise null>"
@@ -145,6 +145,7 @@ Rules:
 - relevant_bus MUST contain at least one entry
 - All score values must be integers from 1 to 10
 - headline must be concise and action-oriented
+- what_summary and why_it_matters must use executive-style bullet points, not narrative paragraphs
 - quick_win must be specific enough to execute this week
 - suggested_owner must name a role tied to a specific BU
 - Return ONLY the JSON object, no additional text"""
@@ -198,9 +199,9 @@ Return a JSON array with one object per signal, in the same order. Each object m
 - relevant_bus: array of {{"bu_id": "<id>", "relevance_score": <0-1>}}
 - scores: {{"revenue_impact": <1-10>, "time_sensitivity": <1-10>, "strategic_alignment": <1-10>, "competitive_pressure": <1-10>}}
 - headline: concise action-oriented headline
-- what_summary: 2-3 sentence factual summary
-- why_it_matters: BU-specific relevance
-- quick_win: specific action for this week
+- what_summary: 2-3 concise bullet-point facts (executive style, not storytelling)
+- why_it_matters: 2-3 concise bullet-point statements on BU-specific relevance
+- quick_win: one specific, actionable step for this week
 - suggested_owner: role tied to a BU
 - estimated_impact: revenue range string
 - outreach_template: outreach draft or null

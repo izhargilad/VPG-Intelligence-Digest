@@ -12,151 +12,283 @@
     img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
     body { margin: 0; padding: 0; width: 100% !important; height: 100% !important; }
 
-    /* Base */
+    /* Base — executive style fonts */
     body {
-      font-family: Arial, Helvetica, sans-serif;
-      background-color: #f4f4f7;
-      color: #333333;
+      font-family: 'Segoe UI', Calibri, Helvetica, Arial, sans-serif;
+      background-color: #E8ECF1;
+      color: #2D3748;
+      line-height: 1.5;
     }
 
     .email-wrapper {
       width: 100%;
-      background-color: #f4f4f7;
-      padding: 20px 0;
+      background-color: #E8ECF1;
+      padding: 30px 0;
     }
 
     .email-content {
-      max-width: 600px;
+      max-width: 640px;
       margin: 0 auto;
       background-color: #ffffff;
     }
 
-    /* Header */
+    /* ── Header ─────────────────────────────────── */
     .header {
-      background-color: {{ colors.navy }};
-      padding: 30px 40px;
+      background-color: #1B2A4A;
+      padding: 48px 40px 38px;
       text-align: center;
+    }
+
+    .header img.logo {
+      max-height: 48px;
+      margin-bottom: 20px;
+    }
+
+    .header .logo-text {
+      font-family: 'Segoe UI', Calibri, Arial, sans-serif;
+      font-size: 13px;
+      color: #6B82A6;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin: 0 0 18px;
     }
 
     .header h1 {
       color: #ffffff;
-      font-size: 24px;
-      margin: 0 0 5px 0;
-      font-weight: bold;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 32px;
+      font-weight: 700;
+      margin: 0 0 8px;
+      letter-spacing: 0.3px;
     }
 
     .header .subtitle {
-      color: {{ colors.accent }};
-      font-size: 14px;
+      color: #8BA3C7;
+      font-size: 16px;
+      font-weight: 400;
       margin: 0;
     }
 
     .header .date {
-      color: #aab4c6;
-      font-size: 12px;
-      margin-top: 8px;
+      color: #6B82A6;
+      font-size: 13px;
+      margin-top: 12px;
     }
 
-    /* Executive Summary */
+    /* ── Stats Bar ──────────────────────────────── */
+    .stats-bar {
+      background-color: #2E75B6;
+      padding: 14px 40px;
+      text-align: center;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .stats-bar span {
+      margin: 0 12px;
+    }
+
+    /* ── Signal of the Week ────────────────────── */
+    .signal-of-week {
+      padding: 30px 40px;
+      background-color: #F0F4F8;
+      border-bottom: 1px solid #D2DCE6;
+    }
+
+    .sotw-badge {
+      display: inline-block;
+      background-color: #1B2A4A;
+      color: #ffffff;
+      padding: 5px 16px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+    }
+
+    /* ── Executive Summary ──────────────────────── */
     .exec-summary {
-      background-color: #f8f9fb;
-      padding: 25px 40px;
-      border-bottom: 3px solid {{ colors.blue }};
+      background-color: #F7F9FC;
+      padding: 30px 40px;
+      border-bottom: 3px solid #2E75B6;
     }
 
     .exec-summary h2 {
-      color: {{ colors.navy }};
-      font-size: 18px;
-      margin: 0 0 15px 0;
+      font-family: Georgia, 'Times New Roman', serif;
+      color: #1B2A4A;
+      font-size: 22px;
+      margin: 0 0 18px;
+      font-weight: 700;
     }
 
     .exec-summary ul {
       margin: 0;
-      padding-left: 20px;
+      padding-left: 0;
+      list-style: none;
     }
 
     .exec-summary li {
-      color: #333333;
       font-size: 14px;
-      line-height: 1.6;
-      margin-bottom: 8px;
+      line-height: 1.5;
+      margin-bottom: 10px;
+      padding: 10px 14px;
+      background-color: #ffffff;
+      border-left: 4px solid;
     }
 
+    .exec-summary li a {
+      text-decoration: none;
+      color: #2D3748;
+    }
+
+    .exec-summary li a:hover {
+      color: #2E75B6;
+    }
+
+    /* ── Badges & Tags ─────────────────────────── */
     .score-badge {
       display: inline-block;
-      background-color: {{ colors.accent }};
+      background-color: #2E75B6;
       color: #ffffff;
-      padding: 2px 8px;
+      padding: 2px 9px;
       border-radius: 10px;
       font-size: 11px;
-      font-weight: bold;
+      font-weight: 700;
     }
 
     .bu-tag {
       display: inline-block;
-      background-color: {{ colors.blue }};
-      color: #ffffff;
+      background-color: #E8ECF1;
+      color: #1B2A4A;
       padding: 2px 8px;
       border-radius: 3px;
       font-size: 10px;
       text-transform: uppercase;
+      font-weight: 600;
     }
 
-    /* BU Section */
+    .also-relevant {
+      display: inline-block;
+      background-color: #EDF2F7;
+      color: #4A5568;
+      padding: 3px 10px;
+      border-radius: 3px;
+      font-size: 11px;
+    }
+
+    .badge-verified {
+      background-color: #2E7D32;
+      color: #fff;
+      padding: 2px 7px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .badge-likely {
+      background-color: #1565C0;
+      color: #fff;
+      padding: 2px 7px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .badge-unverified {
+      background-color: #C62828;
+      color: #fff;
+      padding: 2px 7px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    /* ── BU Section ─────────────────────────────── */
     .bu-section {
-      padding: 25px 40px;
-      border-bottom: 1px solid #e8e8e8;
+      padding: 28px 40px;
+      border-bottom: 1px solid #E2E8F0;
     }
 
     .bu-section-header {
-      padding: 10px 15px;
-      margin-bottom: 15px;
+      padding: 12px 16px;
+      margin-bottom: 18px;
       border-left: 4px solid;
     }
 
     .bu-section-header h2 {
       margin: 0;
-      font-size: 16px;
-      color: {{ colors.navy }};
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 20px;
+      color: #1B2A4A;
+      font-weight: 700;
     }
 
-    /* Action Card */
+    .bu-section-header img.bu-logo {
+      max-height: 26px;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+
+    .bu-initial {
+      display: inline-block;
+      width: 28px;
+      height: 28px;
+      line-height: 28px;
+      text-align: center;
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 700;
+      border-radius: 4px;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+
+    /* ── Action Card ────────────────────────────── */
     .action-card {
-      border: 1px solid #e0e0e0;
+      border: 1px solid #E2E8F0;
       border-radius: 6px;
-      margin-bottom: 15px;
+      margin-bottom: 16px;
       overflow: hidden;
+      border-left: 4px solid;
     }
 
     .card-header {
-      padding: 12px 15px;
-      background-color: #f8f9fb;
-      border-bottom: 1px solid #e0e0e0;
+      padding: 14px 16px;
+      border-bottom: 1px solid #E2E8F0;
     }
 
     .card-header .signal-type {
-      font-size: 12px;
-      font-weight: bold;
+      font-size: 11px;
+      font-weight: 700;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .card-header .headline {
-      font-size: 15px;
-      font-weight: bold;
-      color: {{ colors.navy }};
-      margin: 5px 0 0 0;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: #1B2A4A;
+      margin: 6px 0 0;
+    }
+
+    .card-meta {
+      margin-top: 8px;
     }
 
     .card-body {
-      padding: 15px;
+      padding: 16px;
     }
 
     .card-body .field-label {
       font-size: 11px;
-      font-weight: bold;
-      color: {{ colors.blue }};
+      font-weight: 700;
+      color: #2E75B6;
       text-transform: uppercase;
-      margin: 10px 0 3px 0;
+      letter-spacing: 0.5px;
+      margin: 14px 0 4px;
     }
 
     .card-body .field-label:first-child {
@@ -165,21 +297,30 @@
 
     .card-body .field-value {
       font-size: 13px;
-      color: #333333;
-      line-height: 1.5;
+      color: #2D3748;
+      line-height: 1.6;
       margin: 0;
     }
 
+    .card-body .field-value ul {
+      margin: 4px 0;
+      padding-left: 18px;
+    }
+
+    .card-body .field-value li {
+      margin-bottom: 3px;
+    }
+
     .card-footer {
-      padding: 10px 15px;
-      background-color: #fafafa;
-      border-top: 1px solid #e0e0e0;
+      padding: 10px 16px;
+      background-color: #F7F9FC;
+      border-top: 1px solid #E2E8F0;
       font-size: 11px;
-      color: #666666;
+      color: #718096;
     }
 
     .card-footer a {
-      color: {{ colors.blue }};
+      color: #2E75B6;
       text-decoration: none;
     }
 
@@ -187,114 +328,141 @@
       text-decoration: underline;
     }
 
-    /* Validation badges */
-    .badge-verified {
-      background-color: #43A047;
-      color: #fff;
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-size: 10px;
-      font-weight: bold;
-    }
-
-    .badge-likely {
-      background-color: #FB8C00;
-      color: #fff;
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-size: 10px;
-      font-weight: bold;
-    }
-
-    .badge-unverified {
-      background-color: #E53935;
-      color: #fff;
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-size: 10px;
-      font-weight: bold;
-    }
-
-    /* Footer */
+    /* ── Footer ─────────────────────────────────── */
     .footer {
-      background-color: {{ colors.navy }};
-      padding: 25px 40px;
+      background-color: #1B2A4A;
+      padding: 30px 40px;
       text-align: center;
     }
 
     .footer p {
-      color: #aab4c6;
-      font-size: 11px;
+      color: #8BA3C7;
+      font-size: 12px;
       line-height: 1.6;
-      margin: 0 0 5px 0;
+      margin: 0 0 6px;
     }
 
     .footer a {
-      color: {{ colors.accent }};
+      color: #7CB4E8;
       text-decoration: none;
     }
 
-    /* Stats bar */
-    .stats-bar {
-      background-color: {{ colors.blue }};
-      padding: 12px 40px;
-      text-align: center;
-      color: #ffffff;
-      font-size: 13px;
+    .footer a:hover {
+      text-decoration: underline;
     }
 
-    .stats-bar span {
-      margin: 0 15px;
-    }
-
-    /* Responsive */
+    /* ── Responsive ─────────────────────────────── */
     @media screen and (max-width: 480px) {
       .email-content {
         width: 100% !important;
       }
-      .header, .exec-summary, .bu-section, .footer {
+      .header, .exec-summary, .bu-section, .footer, .signal-of-week {
         padding-left: 20px !important;
         padding-right: 20px !important;
       }
-      .header h1 { font-size: 20px !important; }
+      .header h1 { font-size: 26px !important; }
+      .exec-summary h2 { font-size: 18px !important; }
+      .bu-section-header h2 { font-size: 17px !important; }
     }
   </style>
 </head>
 <body>
   <div class="email-wrapper">
-    <table class="email-content" align="center" cellpadding="0" cellspacing="0" width="600">
+    <table class="email-content" align="center" cellpadding="0" cellspacing="0" width="640">
 
-      <!-- Header -->
+      <!-- ═══ HEADER ═══ -->
       <tr>
         <td class="header">
-          <h1>VPG Intelligence Digest</h1>
+          {% if branding.logo_url %}
+          <img src="{{ branding.logo_url }}" alt="VPG" class="logo"><br>
+          {% else %}
+          <p class="logo-text">Vishay Precision Group</p>
+          {% endif %}
+          <h1>Intelligence Digest</h1>
           <p class="subtitle">Weekly Strategic Intelligence Report</p>
-          <p class="date">Week {{ week_number }}, {{ year }} | {{ date_range }}</p>
+          <p class="date">Week {{ week_number }}, {{ year }} &bull; {{ date_range }}</p>
         </td>
       </tr>
 
-      <!-- Stats Bar -->
+      <!-- ═══ STATS BAR ═══ -->
       <tr>
         <td class="stats-bar">
           <span>{{ total_signals }} Signals</span>
-          <span>|</span>
-          <span>{{ bu_sections|length }} Business Units</span>
+          <span>&middot;</span>
+          <span>{{ bu_count }} Business Units</span>
         </td>
       </tr>
 
-      <!-- Executive Summary -->
+      <!-- ═══ SIGNAL OF THE WEEK ═══ -->
+      {% if signal_of_week %}
+      <tr>
+        <td class="signal-of-week">
+          <div style="text-align: center; margin-bottom: 16px;">
+            <span class="sotw-badge">&#9733; Signal of the Week</span>
+          </div>
+          <div class="action-card" id="signal-{{ signal_of_week.anchor_id }}"
+               style="border-left-color: {{ signal_of_week.type_color }}; border-left-width: 5px;">
+            <div class="card-header" style="background-color: {{ signal_of_week.type_bg }};">
+              <div class="signal-type" style="color: {{ signal_of_week.type_color }};">
+                {{ signal_of_week.type_icon }} {{ signal_of_week.signal_type | replace('-', ' ') | upper }}
+              </div>
+              <div class="headline">{{ signal_of_week.headline }}</div>
+              <div class="card-meta">
+                <span class="score-badge">{{ signal_of_week.composite_score }}</span>
+                {% for bu in signal_of_week.bu_matches[:3] %}
+                <span class="bu-tag">{{ bu.bu_id | replace('vpg-', '') | replace('-', ' ') }}</span>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="field-label">What</div>
+              <div class="field-value">{{ signal_of_week.what_summary | to_bullets }}</div>
+
+              <div class="field-label">Why It Matters</div>
+              <div class="field-value">{{ signal_of_week.why_it_matters | to_bullets }}</div>
+
+              <div class="field-label">Quick Win</div>
+              <p class="field-value">{{ signal_of_week.quick_win }}</p>
+
+              {% if signal_of_week.suggested_owner %}
+              <div class="field-label">Owner</div>
+              <p class="field-value">{{ signal_of_week.suggested_owner }}</p>
+              {% endif %}
+
+              {% if signal_of_week.estimated_impact %}
+              <div class="field-label">Est. Impact</div>
+              <p class="field-value">{{ signal_of_week.estimated_impact }}</p>
+              {% endif %}
+            </div>
+            {% if signal_of_week.url %}
+            <div class="card-footer">
+              Sources: <a href="{{ signal_of_week.url }}" target="_blank">[Primary]</a>
+            </div>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endif %}
+
+      <!-- ═══ TOP SIGNALS — clickable links to detail cards below ═══ -->
       {% if top_signals %}
       <tr>
         <td class="exec-summary">
           <h2>Top Signals This Week</h2>
           <ul>
             {% for signal in top_signals %}
-            <li>
-              <span class="score-badge">{{ signal.composite_score }}</span>
-              {{ signal.headline }}
-              {% for bu in signal.bu_matches[:2] %}
-              <span class="bu-tag">{{ bu.bu_id }}</span>
-              {% endfor %}
+            <li style="border-left-color: {{ signal.type_color }};">
+              <a href="#signal-{{ signal.anchor_id }}">
+                <span class="score-badge">{{ signal.composite_score }}</span>
+                &nbsp;{{ signal.headline }}
+                <br>
+                <span style="font-size: 11px; color: {{ signal.type_color }}; font-weight: 600;">
+                  {{ signal.type_icon }} {{ signal.signal_type | replace('-', ' ') | upper }}
+                </span>
+                {% for bu in signal.bu_matches[:2] %}
+                <span class="bu-tag">{{ bu.bu_id | replace('vpg-', '') | replace('-', ' ') }}</span>
+                {% endfor %}
+              </a>
             </li>
             {% endfor %}
           </ul>
@@ -302,58 +470,40 @@
       </tr>
       {% endif %}
 
-      <!-- Signal of the Week -->
-      {% if signal_of_week %}
-      <tr>
-        <td class="bu-section" style="background-color: #fffbf5;">
-          <div style="text-align: center; margin-bottom: 10px;">
-            <span style="background-color: {{ colors.accent }}; color: #fff; padding: 4px 12px; border-radius: 3px; font-size: 12px; font-weight: bold;">SIGNAL OF THE WEEK</span>
-          </div>
-          <div class="action-card" style="border-color: {{ colors.accent }}; border-width: 2px;">
-            <div class="card-header" style="background-color: #fff5eb;">
-              <div class="signal-type" style="color: {{ colors.accent }};">{{ signal_of_week.signal_type | replace('-', ' ') | upper }}</div>
-              <div class="headline">{{ signal_of_week.headline }}</div>
-              <span class="score-badge">Score: {{ signal_of_week.composite_score }}</span>
-            </div>
-            <div class="card-body">
-              <div class="field-label">What</div>
-              <p class="field-value">{{ signal_of_week.what_summary }}</p>
-              <div class="field-label">Why It Matters</div>
-              <p class="field-value">{{ signal_of_week.why_it_matters }}</p>
-              <div class="field-label">Quick Win</div>
-              <p class="field-value">{{ signal_of_week.quick_win }}</p>
-              <div class="field-label">Owner</div>
-              <p class="field-value">{{ signal_of_week.suggested_owner }}</p>
-            </div>
-          </div>
-        </td>
-      </tr>
-      {% endif %}
-
-      <!-- BU Sections -->
+      <!-- ═══ BU SECTIONS — deduplicated, cross-BU tagged ═══ -->
       {% for section in bu_sections %}
       <tr>
         <td class="bu-section">
           <div class="bu-section-header" style="border-color: {{ section.bu_color }};">
-            <h2>{{ section.bu_name }}</h2>
+            {% if section.bu_logo_url %}
+            <img src="{{ section.bu_logo_url }}" alt="{{ section.bu_name }}" class="bu-logo">
+            {% else %}
+            <span class="bu-initial" style="background-color: {{ section.bu_color }};">{{ section.bu_name[0] }}</span>
+            {% endif %}
+            <h2 style="display: inline; vertical-align: middle;">{{ section.bu_name }}</h2>
           </div>
 
           {% for signal in section.signals %}
-          <div class="action-card">
-            <div class="card-header">
-              <div class="signal-type">{{ signal.signal_type | replace('-', ' ') | upper }}</div>
+          <div class="action-card" id="signal-{{ signal.anchor_id }}"
+               style="border-left-color: {{ signal.type_color }};">
+            <div class="card-header" style="background-color: {{ signal.type_bg }};">
+              <div class="signal-type" style="color: {{ signal.type_color }};">
+                {{ signal.type_icon }} {{ signal.signal_type | replace('-', ' ') | upper }}
+              </div>
               <div class="headline">{{ signal.headline }}</div>
-              <span class="score-badge">{{ signal.composite_score }}</span>
-              {% if signal.validation_level is defined %}
-              <span class="badge-{{ signal.validation_level }}">{{ signal.validation_level | upper }}</span>
-              {% endif %}
+              <div class="card-meta">
+                <span class="score-badge">{{ signal.composite_score }}</span>
+                {% if signal.validation_level is defined %}
+                <span class="badge-{{ signal.validation_level }}">{{ signal.validation_level | upper }}</span>
+                {% endif %}
+              </div>
             </div>
             <div class="card-body">
               <div class="field-label">What</div>
-              <p class="field-value">{{ signal.what_summary }}</p>
+              <div class="field-value">{{ signal.what_summary | to_bullets }}</div>
 
               <div class="field-label">Why It Matters</div>
-              <p class="field-value">{{ signal.why_it_matters }}</p>
+              <div class="field-value">{{ signal.why_it_matters | to_bullets }}</div>
 
               <div class="field-label">Quick Win</div>
               <p class="field-value">{{ signal.quick_win }}</p>
@@ -369,9 +519,12 @@
               {% endif %}
             </div>
             <div class="card-footer">
-              Sources:
+              {% if signal.also_relevant_to is defined and signal.also_relevant_to %}
+              <span class="also-relevant">Also relevant to: {{ signal.also_relevant_to | join(', ') }}</span>
+              <br>
+              {% endif %}
               {% if signal.url %}
-              <a href="{{ signal.url }}" target="_blank">[Primary]</a>
+              Sources: <a href="{{ signal.url }}" target="_blank">[Primary]</a>
               {% endif %}
             </div>
           </div>
@@ -381,12 +534,16 @@
       </tr>
       {% endfor %}
 
-      <!-- Footer -->
+      <!-- ═══ FOOTER ═══ -->
       <tr>
         <td class="footer">
-          <p>Powered by VPG Strategic Intelligence</p>
-          <p>This digest is auto-generated from {{ total_signals }} validated industry signals.</p>
-          <p><a href="#">Unsubscribe</a> | <a href="#">View in Browser</a> | <a href="#">Archive</a></p>
+          <p style="font-size: 14px; color: #ffffff; margin-bottom: 10px;">Powered by VPG Strategic Intelligence</p>
+          <p>Auto-generated from {{ total_signals }} validated industry signals</p>
+          <p style="margin-top: 12px;">
+            <a href="#">Unsubscribe</a> &nbsp;&bull;&nbsp;
+            <a href="#">View in Browser</a> &nbsp;&bull;&nbsp;
+            <a href="#">Archive</a>
+          </p>
         </td>
       </tr>
 
