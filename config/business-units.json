@@ -1,4 +1,9 @@
 {
+  "branding": {
+    "logo_file": "VPG_Logo_Rgb.jpg",
+    "logo_url": "",
+    "company_name": "Vishay Precision Group"
+  },
   "business_units": [
     {
       "id": "vpg-force-sensors",
@@ -37,6 +42,8 @@
         "Rice Lake"
       ],
       "color": "#2E75B6",
+      "logo_url": "",
+      "logo_file": "VPG force sensors Vertical Blue.jpg",
       "icon": "force-sensors",
       "active": true
     },
@@ -71,6 +78,8 @@
         "Novanta"
       ],
       "color": "#1B2A4A",
+      "logo_url": "",
+      "logo_file": "VPG FR Family_RGB.jpg",
       "icon": "foil-resistors",
       "active": true
     },
@@ -105,7 +114,9 @@
         "Kyowa",
         "TT Electronics"
       ],
-      "color": "#E8792F",
+      "color": "#3949AB",
+      "logo_url": "",
+      "logo_file": "Micro-measurement-logo-RGB.jpg",
       "icon": "micro-measurements",
       "active": true
     },
@@ -140,7 +151,9 @@
         "Rice Lake",
         "Sunrise Instruments"
       ],
-      "color": "#4CAF50",
+      "color": "#2E7D32",
+      "logo_url": "",
+      "logo_file": "",
       "icon": "onboard-weighing",
       "active": true
     },
@@ -174,7 +187,9 @@
         "Rice Lake",
         "Flintec"
       ],
-      "color": "#795548",
+      "color": "#546E7A",
+      "logo_url": "",
+      "logo_file": "BLHNobel_Logo_RGB.jpg",
       "icon": "blh-nobel",
       "active": true
     },
@@ -209,6 +224,8 @@
         "NMB"
       ],
       "color": "#607D8B",
+      "logo_url": "",
+      "logo_file": "Kelk_Logo_Rgb.jpg",
       "icon": "kelk",
       "active": true
     },
@@ -239,7 +256,9 @@
         "weld simulation"
       ],
       "key_competitors": [],
-      "color": "#9C27B0",
+      "color": "#7B1FA2",
+      "logo_url": "",
+      "logo_file": "Gleeble_Logo_RGB.jpg",
       "icon": "gleeble",
       "active": true
     },
@@ -271,7 +290,9 @@
         "NMB",
         "Omega"
       ],
-      "color": "#00BCD4",
+      "color": "#0097A7",
+      "logo_url": "",
+      "logo_file": "Pacific-Instruments_Logo_Rgb.jpg",
       "icon": "pacific-instruments",
       "active": true
     },
@@ -304,7 +325,9 @@
         "Kyowa",
         "NMB"
       ],
-      "color": "#FF5722",
+      "color": "#455A64",
+      "logo_url": "",
+      "logo_file": "DTS_A VPG Brand_RGB.jpg",
       "icon": "dts",
       "active": true
     }
