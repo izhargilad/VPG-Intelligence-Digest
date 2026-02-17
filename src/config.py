@@ -79,10 +79,11 @@ ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5-20250929")
 ANTHROPIC_TEMPERATURE = float(os.getenv("ANTHROPIC_TEMPERATURE", "0.3"))
 ANTHROPIC_MAX_TOKENS = int(os.getenv("ANTHROPIC_MAX_TOKENS", "4096"))
 
-# Gmail — sender address (credentials are file-based via config/credentials.json + config/token.json)
+# Gmail settings
 GMAIL_SENDER_EMAIL = os.getenv("GMAIL_SENDER_EMAIL", "")
+GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD", "")
 
-# Delivery mode: 'mock' (local HTML files) or 'gmail' (live send)
+# Delivery mode: 'mock' (local HTML files), 'smtp' (App Password), or 'gmail' (OAuth2 API)
 DELIVERY_MODE = os.getenv("DELIVERY_MODE", "mock")
 MOCK_OUTPUT_DIR = Path(os.getenv("MOCK_OUTPUT_DIR", str(DATA_DIR / "mock-digests")))
 

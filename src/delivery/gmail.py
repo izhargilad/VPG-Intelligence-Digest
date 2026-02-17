@@ -1,53 +1,37 @@
-"""Gmail API delivery and mock file output for VPG Intelligence Digest.
+"""Email delivery for VPG Intelligence Digest.
 
-Supports two modes:
+Supports three modes:
 - 'mock': Writes emails as local HTML files for preview
-- 'gmail': Sends via Gmail API using OAuth2 credentials from config/token.json
+- 'smtp': Sends via Gmail SMTP with App Password (recommended — simplest setup)
+- 'gmail': Sends via Gmail API using OAuth2 credentials
 
-First-time Gmail setup:
-    1. Place credentials.json in config/
-    2. Run: python -m src.delivery.auth
-    3. Set DELIVERY_MODE=gmail in .env
+SMTP setup (recommended):
+    1. Enable 2-Step Verification on your Google Account
+    2. Go to https://myaccount.google.com/apppasswords
+    3. Generate an App Password for "Mail"
+    4. Set GMAIL_SENDER_EMAIL and GMAIL_APP_PASSWORD in .env
+    5. Set DELIVERY_MODE=smtp
 """
 
 import base64
 import logging
+import smtplib
 import time
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from pathlib import Path
 
-from src.config import DELIVERY_MODE, GMAIL_SENDER_EMAIL, MOCK_OUTPUT_DIR
+from src.config import (
+    DELIVERY_MODE,
+    GMAIL_APP_PASSWORD,
+    GMAIL_SENDER_EMAIL,
+    MOCK_OUTPUT_DIR,
+)
 
 logger = logging.getLogger(__name__)
 
-# Lazy-loaded Gmail API service
+# Lazy-loaded Gmail API service (only for 'gmail' OAuth2 mode)
 _gmail_service = None
-
-
-def _get_gmail_service():
-    """Get or create the authenticated Gmail API service client.
-
-    Lazily initialized on first call. Reuses the same service for
-    all sends within a pipeline run.
-    """
-    global _gmail_service
-    if _gmail_service is not None:
-        return _gmail_service
-
-    from googleapiclient.discovery import build
-
-    from src.delivery.auth import get_credentials
-
-    creds = get_credentials()
-    if creds is None:
-        raise RuntimeError(
-            "Gmail not authorized. Run 'python -m src.delivery.auth' first."
-        )
-
-    _gmail_service = build("gmail", "v1", credentials=creds)
-    logger.info("Gmail API service initialized")
-    return _gmail_service
 
 
 def create_email_message(
@@ -88,21 +72,61 @@ def send_mock(
     }
 
 
-def send_gmail(to: str, subject: str, html_content: str) -> dict:
-    """Send email via the Gmail API.
+def send_smtp(to: str, subject: str, html_content: str) -> dict:
+    """Send email via Gmail SMTP with App Password.
 
-    Args:
-        to: Recipient email address.
-        subject: Email subject line.
-        html_content: Rendered HTML body.
-
-    Returns:
-        Dict with 'status', 'mode', 'gmail_message_id', 'recipient'.
+    Requires GMAIL_SENDER_EMAIL and GMAIL_APP_PASSWORD in .env.
+    No OAuth2, no credentials.json, no browser auth needed.
     """
+    if not GMAIL_SENDER_EMAIL:
+        raise RuntimeError("GMAIL_SENDER_EMAIL not set in .env")
+    if not GMAIL_APP_PASSWORD:
+        raise RuntimeError(
+            "GMAIL_APP_PASSWORD not set in .env. "
+            "Generate one at https://myaccount.google.com/apppasswords"
+        )
+
+    msg = create_email_message(to, subject, html_content)
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login(GMAIL_SENDER_EMAIL, GMAIL_APP_PASSWORD)
+        server.send_message(msg)
+
+    logger.info("SMTP email sent to %s from %s", to, GMAIL_SENDER_EMAIL)
+
+    return {
+        "status": "sent",
+        "mode": "smtp",
+        "recipient": to,
+    }
+
+
+def _get_gmail_service():
+    """Get or create the authenticated Gmail API service client (OAuth2 mode)."""
+    global _gmail_service
+    if _gmail_service is not None:
+        return _gmail_service
+
+    from googleapiclient.discovery import build
+
+    from src.delivery.auth import get_credentials
+
+    creds = get_credentials()
+    if creds is None:
+        raise RuntimeError(
+            "Gmail not authorized. Run 'python -m src.delivery.auth' first."
+        )
+
+    _gmail_service = build("gmail", "v1", credentials=creds)
+    logger.info("Gmail API service initialized")
+    return _gmail_service
+
+
+def send_gmail(to: str, subject: str, html_content: str) -> dict:
+    """Send email via the Gmail API (OAuth2 mode)."""
     service = _get_gmail_service()
     msg = create_email_message(to, subject, html_content)
 
-    # Gmail API requires base64url-encoded RFC 2822 message
     raw_bytes = msg.as_bytes()
     encoded = base64.urlsafe_b64encode(raw_bytes).decode("ascii")
 
@@ -130,7 +154,7 @@ def send_email(
     """Send an email using the configured delivery mode with retry logic.
 
     Retries with exponential backoff on transient failures.
-    Falls back to mock mode if Gmail auth is missing.
+    Falls back to mock mode if auth is missing.
     """
     mode = DELIVERY_MODE
 
@@ -138,6 +162,9 @@ def send_email(
         try:
             if mode == "mock":
                 return send_mock(to, subject, html_content)
+
+            if mode == "smtp":
+                return send_smtp(to, subject, html_content)
 
             if mode == "gmail":
                 return send_gmail(to, subject, html_content)
@@ -147,7 +174,7 @@ def send_email(
 
         except RuntimeError as e:
             # Auth not configured — fall back to mock, don't retry
-            logger.warning("Gmail auth unavailable, falling back to mock: %s", e)
+            logger.warning("Auth unavailable, falling back to mock: %s", e)
             return send_mock(to, subject, html_content)
 
         except Exception as e:

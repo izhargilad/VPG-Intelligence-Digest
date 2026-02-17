@@ -13,6 +13,7 @@ from src.delivery.gmail import (
     send_email,
     send_gmail,
     send_mock,
+    send_smtp,
 )
 
 
@@ -62,6 +63,61 @@ class TestEmailMessage:
         assert len(payloads) == 2
         assert payloads[0].get_content_type() == "text/plain"
         assert payloads[1].get_content_type() == "text/html"
+
+
+# -- SMTP delivery tests --
+
+
+class TestSmtpDelivery:
+    def test_send_smtp_success(self):
+        """SMTP send with mocked smtplib."""
+        with patch("src.delivery.gmail.GMAIL_SENDER_EMAIL", "sender@gmail.com"), \
+             patch("src.delivery.gmail.GMAIL_APP_PASSWORD", "abcd efgh ijkl mnop"), \
+             patch("src.delivery.gmail.smtplib.SMTP_SSL") as mock_ssl:
+            mock_server = MagicMock()
+            mock_ssl.return_value.__enter__ = MagicMock(return_value=mock_server)
+            mock_ssl.return_value.__exit__ = MagicMock(return_value=False)
+
+            result = send_smtp("to@test.com", "Test Subject", "<p>Hello</p>")
+
+        assert result["status"] == "sent"
+        assert result["mode"] == "smtp"
+        assert result["recipient"] == "to@test.com"
+        mock_server.login.assert_called_once_with("sender@gmail.com", "abcd efgh ijkl mnop")
+        mock_server.send_message.assert_called_once()
+
+    def test_send_smtp_missing_password_raises(self):
+        """Should raise RuntimeError if GMAIL_APP_PASSWORD is not set."""
+        with patch("src.delivery.gmail.GMAIL_SENDER_EMAIL", "sender@gmail.com"), \
+             patch("src.delivery.gmail.GMAIL_APP_PASSWORD", ""):
+            with pytest.raises(RuntimeError, match="GMAIL_APP_PASSWORD"):
+                send_smtp("to@test.com", "Subject", "<p>Hi</p>")
+
+    def test_send_email_smtp_mode(self):
+        """send_email routes to SMTP when mode is 'smtp'."""
+        with patch("src.delivery.gmail.DELIVERY_MODE", "smtp"), \
+             patch("src.delivery.gmail.GMAIL_SENDER_EMAIL", "s@g.com"), \
+             patch("src.delivery.gmail.GMAIL_APP_PASSWORD", "pass"), \
+             patch("src.delivery.gmail.smtplib.SMTP_SSL") as mock_ssl:
+            mock_server = MagicMock()
+            mock_ssl.return_value.__enter__ = MagicMock(return_value=mock_server)
+            mock_ssl.return_value.__exit__ = MagicMock(return_value=False)
+
+            result = send_email("to@test.com", "Subject", "<p>Hi</p>")
+
+        assert result["status"] == "sent"
+        assert result["mode"] == "smtp"
+
+    def test_send_email_smtp_auth_missing_falls_back(self, tmp_path):
+        """When SMTP password is missing, send_email falls back to mock."""
+        with patch("src.delivery.gmail.DELIVERY_MODE", "smtp"), \
+             patch("src.delivery.gmail.GMAIL_SENDER_EMAIL", "s@g.com"), \
+             patch("src.delivery.gmail.GMAIL_APP_PASSWORD", ""), \
+             patch("src.delivery.gmail.MOCK_OUTPUT_DIR", tmp_path):
+            result = send_email("x@y.com", "Subject", "<p>Hi</p>")
+
+        assert result["status"] == "sent"
+        assert result["mode"] == "mock"
 
 
 # -- Gmail API tests (mocked) --
