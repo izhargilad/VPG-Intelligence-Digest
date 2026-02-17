@@ -24,15 +24,15 @@
   "recipients": [
     {
       "id": "pilot-001",
-      "name": "Pilot Recipient",
-      "email": "pilot@example.com",
+      "name": "Izhar Gilad",
+      "email": "izhargilad@gmail.com",
       "role": "Strategic Initiatives",
       "groups": ["executive-team"],
       "bu_filter": ["all"],
       "signal_type_filter": ["all"],
       "status": "active",
       "created_at": "2026-02-16T00:00:00Z",
-      "notes": "Pilot recipient for testing - replace with real address"
+      "notes": "Pilot recipient — forwarding to team"
     }
   ],
   "delivery_settings": {
