@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>VPG Intel [Week 8]: Kistler Launches Next-Gen Piezoelectric Force Sensor for Robotic Assembly Lines + 7 more signals</title>
+  <style type="text/css">
+    /* Reset */
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+    body { margin: 0; padding: 0; width: 100% !important; height: 100% !important; }
+
+    /* Base — executive style fonts */
+    body {
+      font-family: 'Segoe UI', Calibri, Helvetica, Arial, sans-serif;
+      background-color: #E8ECF1;
+      color: #2D3748;
+      line-height: 1.5;
+    }
+
+    .email-wrapper {
+      width: 100%;
+      background-color: #E8ECF1;
+      padding: 30px 0;
+    }
+
+    .email-content {
+      max-width: 640px;
+      margin: 0 auto;
+      background-color: #ffffff;
+    }
+
+    /* ── Header ─────────────────────────────────── */
+    .header {
+      background-color: #1B2A4A;
+      padding: 56px 40px 48px;
+      text-align: center;
+    }
+
+    .header img.logo {
+      max-height: 64px;
+      max-width: 220px;
+      margin-bottom: 24px;
+    }
+
+    .header .logo-text {
+      font-family: 'Segoe UI', Calibri, Arial, sans-serif;
+      font-size: 14px;
+      color: #6B82A6;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      margin: 0 0 22px;
+    }
+
+    .header h1 {
+      color: #ffffff;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 38px;
+      font-weight: 700;
+      margin: 0 0 10px;
+      letter-spacing: 0.3px;
+    }
+
+    .header .subtitle {
+      color: #8BA3C7;
+      font-size: 18px;
+      font-weight: 400;
+      margin: 0;
+    }
+
+    .header .date {
+      color: #6B82A6;
+      font-size: 14px;
+      margin-top: 14px;
+    }
+
+    /* ── Stats Bar ──────────────────────────────── */
+    .stats-bar {
+      background-color: #2E75B6;
+      padding: 14px 40px;
+      text-align: center;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .stats-bar span {
+      margin: 0 12px;
+    }
+
+    /* ── Signal of the Week ────────────────────── */
+    .signal-of-week {
+      padding: 30px 40px;
+      background-color: #F0F4F8;
+      border-bottom: 1px solid #D2DCE6;
+    }
+
+    .sotw-badge {
+      display: inline-block;
+      background-color: #1B2A4A;
+      color: #ffffff;
+      padding: 5px 16px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+    }
+
+    /* ── Executive Summary ──────────────────────── */
+    .exec-summary {
+      background-color: #F7F9FC;
+      padding: 30px 40px;
+      border-bottom: 3px solid #2E75B6;
+    }
+
+    .exec-summary h2 {
+      font-family: Georgia, 'Times New Roman', serif;
+      color: #1B2A4A;
+      font-size: 22px;
+      margin: 0 0 18px;
+      font-weight: 700;
+    }
+
+    .exec-summary ul {
+      margin: 0;
+      padding-left: 0;
+      list-style: none;
+    }
+
+    .exec-summary li {
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 10px;
+      padding: 10px 14px;
+      background-color: #ffffff;
+      border-left: 4px solid;
+    }
+
+    .exec-summary li a {
+      text-decoration: none;
+      color: #2D3748;
+    }
+
+    .exec-summary li a:hover {
+      color: #2E75B6;
+    }
+
+    /* ── Badges & Tags ─────────────────────────── */
+    .score-badge {
+      display: inline-block;
+      background-color: #2E75B6;
+      color: #ffffff;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    .score-badge.high-score {
+      background: linear-gradient(135deg, #D4AF37, #B8860B);
+      color: #ffffff;
+      padding: 5px 14px;
+      font-size: 15px;
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(184,134,11,0.35);
+    }
+
+    .bu-tag {
+      display: inline-block;
+      background-color: #E8ECF1;
+      color: #1B2A4A;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .also-relevant {
+      display: inline-block;
+      background-color: #EDF2F7;
+      color: #4A5568;
+      padding: 3px 10px;
+      border-radius: 3px;
+      font-size: 11px;
+    }
+
+    .badge-verified {
+      background-color: #2E7D32;
+      color: #fff;
+      padding: 2px 7px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .badge-likely {
+      background-color: #1565C0;
+      color: #fff;
+      padding: 2px 7px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .badge-unverified {
+      background-color: #C62828;
+      color: #fff;
+      padding: 2px 7px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    /* ── BU Section ─────────────────────────────── */
+    .bu-section {
+      padding: 28px 40px;
+      border-bottom: 1px solid #E2E8F0;
+    }
+
+    .bu-section-header {
+      padding: 12px 16px;
+      margin-bottom: 18px;
+      border-left: 4px solid;
+    }
+
+    .bu-section-header h2 {
+      margin: 0;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 20px;
+      color: #1B2A4A;
+      font-weight: 700;
+    }
+
+    .bu-section-header img.bu-logo {
+      max-height: 34px;
+      margin-right: 12px;
+      vertical-align: middle;
+    }
+
+    .bu-initial {
+      display: inline-block;
+      width: 28px;
+      height: 28px;
+      line-height: 28px;
+      text-align: center;
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 700;
+      border-radius: 4px;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+
+    /* ── Action Card ────────────────────────────── */
+    .action-card {
+      border: 1px solid #E2E8F0;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      overflow: hidden;
+      border-left: 4px solid;
+    }
+
+    .card-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid #E2E8F0;
+    }
+
+    .card-header .signal-type {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .card-header .headline {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: #1B2A4A;
+      margin: 6px 0 0;
+    }
+
+    .card-meta {
+      margin-top: 8px;
+    }
+
+    .card-body {
+      padding: 16px;
+    }
+
+    .card-body .field-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #2E75B6;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 14px 0 4px;
+    }
+
+    .card-body .field-label:first-child {
+      margin-top: 0;
+    }
+
+    .card-body .field-value {
+      font-size: 13px;
+      color: #2D3748;
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .card-body .field-value ul {
+      margin: 4px 0;
+      padding-left: 18px;
+    }
+
+    .card-body .field-value li {
+      margin-bottom: 3px;
+    }
+
+    .card-footer {
+      padding: 10px 16px;
+      background-color: #F7F9FC;
+      border-top: 1px solid #E2E8F0;
+      font-size: 11px;
+      color: #718096;
+    }
+
+    .card-footer a {
+      color: #2E75B6;
+      text-decoration: none;
+    }
+
+    .card-footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* ── Footer ─────────────────────────────────── */
+    .footer {
+      background-color: #1B2A4A;
+      padding: 30px 40px;
+      text-align: center;
+    }
+
+    .footer p {
+      color: #8BA3C7;
+      font-size: 12px;
+      line-height: 1.6;
+      margin: 0 0 6px;
+    }
+
+    .footer a {
+      color: #7CB4E8;
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* ── Responsive ─────────────────────────────── */
+    @media screen and (max-width: 480px) {
+      .email-content {
+        width: 100% !important;
+      }
+      .header, .exec-summary, .bu-section, .footer, .signal-of-week {
+        padding-left: 20px !important;
+        padding-right: 20px !important;
+      }
+      .header h1 { font-size: 28px !important; }
+      .exec-summary h2 { font-size: 18px !important; }
+      .bu-section-header h2 { font-size: 17px !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="email-wrapper">
+    <table class="email-content" align="center" cellpadding="0" cellspacing="0" width="640">
+
+      <!-- ═══ HEADER ═══ -->
+      <tr>
+        <td class="header">
+          
+          <img src="data:image/jpeg;base64,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" alt="VPG" class="logo"><br>
+          
+          <h1>Intelligence Digest</h1>
+          <p class="subtitle">Weekly Strategic Intelligence Report</p>
+          <p class="date">Week 8, 2026 &bull; February 17, 2026</p>
+        </td>
+      </tr>
+
+      <!-- ═══ STATS BAR ═══ -->
+      <tr>
+        <td class="stats-bar">
+          <span>8 Signals</span>
+          <span>&middot;</span>
+          <span>7 Business Units</span>
+        </td>
+      </tr>
+
+      <!-- ═══ SIGNAL OF THE WEEK ═══ -->
+      
+      <tr>
+        <td class="signal-of-week">
+          <div style="text-align: center; margin-bottom: 16px;">
+            <span class="sotw-badge">&#9733; Signal of the Week</span>
+          </div>
+          <div class="action-card" id="signal-0"
+               style="border-left-color: #0D47A1; border-left-width: 5px;">
+            <div class="card-header" style="background-color: #E3F2FD;">
+              <div class="signal-type" style="color: #0D47A1;">
+                🎯 MARKET SHIFT
+              </div>
+              <div class="headline">Kistler Launches Next-Gen Piezoelectric Force Sensor for Robotic Assembly Lines</div>
+              <div class="card-meta">
+                <span class="score-badge">6.25</span>
+                
+                <span class="bu-tag">force sensors</span>
+                
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="field-label">What</div>
+              <div class="field-value"><ul style="margin:4px 0;padding-left:18px;"><li>Kistler has announced its new 9175B piezoelectric force sensor designed specifically for collaborative robot (cobot) end-effectors.</li><li>The sensor offers ±0.1% linearity and an integrated digital interface, targeting the growing cobot market expected to reach $12B by 2028.</li><li>The launch directly competes with VPG Force Sensors&#39; load cell product line for robotic integration.</li></ul></div>
+
+              <div class="field-label">Why It Matters</div>
+              <div class="field-value">Automated analysis unavailable — manual review recommended.</div>
+
+              <div class="field-label">Quick Win</div>
+              <p class="field-value">Review signal and assess BU impact.</p>
+
+              
+              <div class="field-label">Owner</div>
+              <p class="field-value">BU Manager</p>
+              
+
+              
+              <div class="field-label">Est. Impact</div>
+              <p class="field-value">TBD</p>
+              
+            </div>
+            
+            <div class="card-footer">
+              Sources: <a href="https://www.kistler.com/en/newsroom/piezo-9175b-launch" target="_blank">[Primary]</a>
+            </div>
+            
+          </div>
+        </td>
+      </tr>
+      
+
+      <!-- ═══ TOP SIGNALS — clickable links to detail cards below ═══ -->
+      
+      <tr>
+        <td class="exec-summary">
+          <h2>Top Signals This Week</h2>
+          <ul>
+            
+            <li style="border-left-color: #0D47A1;">
+              <a href="#signal-1">
+                <span class="score-badge">6.25</span>
+                &nbsp;Caterpillar Expanding Autonomous Mining Fleet, Seeking New Onboard Weighing Partners
+                <br>
+                <span style="font-size: 11px; color: #0D47A1; font-weight: 600;">
+                  🎯 MARKET SHIFT
+                </span>
+                
+                <span class="bu-tag">onboard weighing</span>
+                
+              </a>
+            </li>
+            
+            <li style="border-left-color: #0D47A1;">
+              <a href="#signal-2">
+                <span class="score-badge">6.25</span>
+                &nbsp;HBK Acquires Strain Gage Startup, Expands into Structural Health Monitoring
+                <br>
+                <span style="font-size: 11px; color: #0D47A1; font-weight: 600;">
+                  🎯 MARKET SHIFT
+                </span>
+                
+                <span class="bu-tag">micro measurements</span>
+                
+              </a>
+            </li>
+            
+            <li style="border-left-color: #0D47A1;">
+              <a href="#signal-3">
+                <span class="score-badge">6.25</span>
+                &nbsp;Semiconductor Test Equipment Market Surges 18% — Precision Resistor Demand Spikes
+                <br>
+                <span style="font-size: 11px; color: #0D47A1; font-weight: 600;">
+                  🎯 MARKET SHIFT
+                </span>
+                
+                <span class="bu-tag">foil resistors</span>
+                
+              </a>
+            </li>
+            
+            <li style="border-left-color: #0D47A1;">
+              <a href="#signal-4">
+                <span class="score-badge">5.75</span>
+                &nbsp;Humanetics Selects New DAQ Partner for Next-Gen Crash Test Dummies
+                <br>
+                <span style="font-size: 11px; color: #0D47A1; font-weight: 600;">
+                  🎯 MARKET SHIFT
+                </span>
+                
+                <span class="bu-tag">dts</span>
+                
+                <span class="bu-tag">pacific instruments</span>
+                
+              </a>
+            </li>
+            
+            <li style="border-left-color: #0D47A1;">
+              <a href="#signal-5">
+                <span class="score-badge">5.5</span>
+                &nbsp;ArcelorMittal Invests $2B in Smart Steel Mill Upgrades with Laser Measurement Systems
+                <br>
+                <span style="font-size: 11px; color: #0D47A1; font-weight: 600;">
+                  🎯 MARKET SHIFT
+                </span>
+                
+                <span class="bu-tag">kelk</span>
+                
+              </a>
+            </li>
+            
+          </ul>
+        </td>
+      </tr>
+      
+
+      <!-- ═══ BU SECTIONS — deduplicated, cross-BU tagged ═══ -->
+      
+      <tr>
+        <td class="bu-section">
+          <div class="bu-section-header" style="border-color: #2E7D32;">
+            
+            <span class="bu-initial" style="background-color: #2E7D32;">V</span>
+            
+            <h2 style="display: inline; vertical-align: middle;">VPG Onboard Weighing</h2>
+          </div>
+
+          
+          <div class="action-card" id="signal-1"
+               style="border-left-color: #0D47A1;">
+            <div class="card-header" style="background-color: #E3F2FD;">
+              <div class="signal-type" style="color: #0D47A1;">
+                🎯 MARKET SHIFT
+              </div>
+              <div class="headline">Caterpillar Expanding Autonomous Mining Fleet, Seeking New Onboard Weighing Partners</div>
+              <div class="card-meta">
+                <span class="score-badge">6.25</span>
+                
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="field-label">What</div>
+              <div class="field-value"><ul style="margin:4px 0;padding-left:18px;"><li>Caterpillar&#39;s Mining &amp; Technology division has issued an RFI for integrated onboard weighing systems across its 794 AC autonomous haul truck fleet.</li><li>The program covers 200+ vehicles at three Australian mine sites, with partner selection expected by Q3 2026.</li><li>This represents a major revenue opportunity for VPG Onboard Weighing&#39;s TruckWeigh and BulkWeigh product lines.</li></ul></div>
+
+              <div class="field-label">Why It Matters</div>
+              <div class="field-value">Automated analysis unavailable — manual review recommended.</div>
+
+              <div class="field-label">Quick Win</div>
+              <p class="field-value">Review signal and assess BU impact.</p>
+
+              
+              <div class="field-label">Owner</div>
+              <p class="field-value">BU Manager</p>
+              
+
+              
+              <div class="field-label">Est. Impact</div>
+              <p class="field-value">TBD</p>
+              
+            </div>
+            <div class="card-footer">
+              
+              
+              Sources: <a href="https://www.caterpillar.com/en/news/2026/autonomous-mining-expansion.html" target="_blank">[Primary]</a>
+              
+            </div>
+          </div>
+          
+
+        </td>
+      </tr>
+      
+      <tr>
+        <td class="bu-section">
+          <div class="bu-section-header" style="border-color: #3949AB;">
+            
+            <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAAiADQDASIAAhEBAxEB/8QAGQABAAMBAQAAAAAAAAAAAAAAAAQFBgII/8QAJRAAAQMDBAICAwAAAAAAAAAAAQACAwQFERITIUEGFDFRIjJx/8QAGAEBAAMBAAAAAAAAAAAAAAAAAAECBAP/xAAeEQACAwACAwEAAAAAAAAAAAAAAgEDERQxBEFSsf/aAAwDAQACEQMRAD8A9loiqvKLu6y2wVkdDNXPdNHE2GIgOcXuDeM/347VkSXaFjuSrutayzdQWqLGQ+f01RPIKa3TOpy5nrVD5AyOZji0CTkfizJPJ6Ge13N5uIZntda5Jo4sCSSnl3WajrwGuDdJ/Tsg84wtHDu+TLz/AB/r9NgiobN5ELhUbBpmNduhhfFOJGcxh/DgBk84I6V8uD1tXOMaK7VsjVkIiKh0Cg3y1wXeh9OolqI49xjyYJTG46XAgahyBx0pyIDPUfilNTmZ5ud0nknA3Xzz6y8jvGMDPAIAAwBwotXZa5soFNFM+MANLve0OABwMANxnA++ytWisrZ60qy71OFBbbQ+mqInbMrQyTIJqA4AYI+NPfBI+yr9EUTOkrGewiIoJCIiAIiIAiIgCIiA/9k=" alt="Micro-Measurements" class="bu-logo">
+            
+            <h2 style="display: inline; vertical-align: middle;">Micro-Measurements</h2>
+          </div>
+
+          
+          <div class="action-card" id="signal-2"
+               style="border-left-color: #0D47A1;">
+            <div class="card-header" style="background-color: #E3F2FD;">
+              <div class="signal-type" style="color: #0D47A1;">
+                🎯 MARKET SHIFT
+              </div>
+              <div class="headline">HBK Acquires Strain Gage Startup, Expands into Structural Health Monitoring</div>
+              <div class="card-meta">
+                <span class="score-badge">6.25</span>
+                
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="field-label">What</div>
+              <div class="field-value"><ul style="margin:4px 0;padding-left:18px;"><li>Hottinger Brüel &amp; Kjær (HBK) has acquired StrainSense Labs, a UK-based startup specializing in wireless strain gage networks for bridge and building monitoring.</li><li>The acquisition strengthens HBK&#39;s position against Micro-Measurements in the structural testing market and signals a push into IoT-connected SHM.</li><li>The deal was reportedly valued at €45M.</li></ul></div>
+
+              <div class="field-label">Why It Matters</div>
+              <div class="field-value">Automated analysis unavailable — manual review recommended.</div>
+
+              <div class="field-label">Quick Win</div>
+              <p class="field-value">Review signal and assess BU impact.</p>
+
+              
+              <div class="field-label">Owner</div>
+              <p class="field-value">BU Manager</p>
+              
+
+              
+              <div class="field-label">Est. Impact</div>
+              <p class="field-value">TBD</p>
+              
+            </div>
+            <div class="card-footer">
+              
+              
+              Sources: <a href="https://www.hbkworld.com/en/news/hbk-strainsense-acquisition" target="_blank">[Primary]</a>
+              
+            </div>
+          </div>
+          
+
+        </td>
+      </tr>
+      
+      <tr>
+        <td class="bu-section">
+          <div class="bu-section-header" style="border-color: #1B2A4A;">
+            
+            <img src="data:image/jpeg;base64,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" alt="VPG Foil Resistors" class="bu-logo">
+            
+            <h2 style="display: inline; vertical-align: middle;">VPG Foil Resistors</h2>
+          </div>
+
+          
+          <div class="action-card" id="signal-3"
+               style="border-left-color: #0D47A1;">
+            <div class="card-header" style="background-color: #E3F2FD;">
+              <div class="signal-type" style="color: #0D47A1;">
+                🎯 MARKET SHIFT
+              </div>
+              <div class="headline">Semiconductor Test Equipment Market Surges 18% — Precision Resistor Demand Spikes</div>
+              <div class="card-meta">
+                <span class="score-badge">6.25</span>
+                
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="field-label">What</div>
+              <div class="field-value"><ul style="margin:4px 0;padding-left:18px;"><li>The global semiconductor automated test equipment (ATE) market grew 18% year-over-year in Q4 2025, driven by AI chip testing demand.</li><li>ATE manufacturers are reporting supply constraints on ultra-precision foil resistors used in test measurement circuits.</li><li>This creates a strong demand signal for VPG Foil Resistors&#39; Z1-Foil product line, which targets this exact application.</li></ul></div>
+
+              <div class="field-label">Why It Matters</div>
+              <div class="field-value">Automated analysis unavailable — manual review recommended.</div>
+
+              <div class="field-label">Quick Win</div>
+              <p class="field-value">Review signal and assess BU impact.</p>
+
+              
+              <div class="field-label">Owner</div>
+              <p class="field-value">BU Manager</p>
+              
+
+              
+              <div class="field-label">Est. Impact</div>
+              <p class="field-value">TBD</p>
+              
+            </div>
+            <div class="card-footer">
+              
+              
+              Sources: <a href="https://www.eetimes.com/semiconductor-test-market-2026-outlook" target="_blank">[Primary]</a>
+              
+            </div>
+          </div>
+          
+
+        </td>
+      </tr>
+      
+      <tr>
+        <td class="bu-section">
+          <div class="bu-section-header" style="border-color: #455A64;">
+            
+            <img src="data:image/jpeg;base64,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" alt="DTS" class="bu-logo">
+            
+            <h2 style="display: inline; vertical-align: middle;">DTS</h2>
+          </div>
+
+          
+          <div class="action-card" id="signal-4"
+               style="border-left-color: #0D47A1;">
+            <div class="card-header" style="background-color: #E3F2FD;">
+              <div class="signal-type" style="color: #0D47A1;">
+                🎯 MARKET SHIFT
+              </div>
+              <div class="headline">Humanetics Selects New DAQ Partner for Next-Gen Crash Test Dummies</div>
+              <div class="card-meta">
+                <span class="score-badge">5.75</span>
+                
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="field-label">What</div>
+              <div class="field-value"><ul style="margin:4px 0;padding-left:18px;"><li>Humanetics, the world&#39;s largest crash test dummy manufacturer and a key VPG target account, is evaluating data acquisition systems for its upcoming THOR-50M Gen 3 dummy.</li><li>The requirements call for 256+ channels of miniaturized, shock-rated DAQ capable of surviving 150g impacts.</li><li>This is a direct fit for DTS miniature data acquisition and Pacific Instruments high-performance DAQ capabilities.</li></ul></div>
+
+              <div class="field-label">Why It Matters</div>
+              <div class="field-value">Automated analysis unavailable — manual review recommended.</div>
+
+              <div class="field-label">Quick Win</div>
+              <p class="field-value">Review signal and assess BU impact.</p>
+
+              
+              <div class="field-label">Owner</div>
+              <p class="field-value">BU Manager</p>
+              
+
+              
+              <div class="field-label">Est. Impact</div>
+              <p class="field-value">TBD</p>
+              
+            </div>
+            <div class="card-footer">
+              
+              <span class="also-relevant">Also relevant to: Pacific Instruments</span>
+              <br>
+              
+              
+              Sources: <a href="https://www.humanetics.com/news/daq-partner-search-2026" target="_blank">[Primary]</a>
+              
+            </div>
+          </div>
+          
+
+        </td>
+      </tr>
+      
+      <tr>
+        <td class="bu-section">
+          <div class="bu-section-header" style="border-color: #607D8B;">
+            
+            <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAAiADQDASIAAhEBAxEB/8QAGgABAAMAAwAAAAAAAAAAAAAAAAQFBgIDCP/EACQQAAEEAQQCAwEBAAAAAAAAAAEAAgMEEQUSITEGFBMiQVFx/8QAFwEBAQEBAAAAAAAAAAAAAAAAAAIDAf/EACQRAAICAQIFBQAAAAAAAAAAAAECAAMRBBITITFBcTJRYZHB/9oADAMBAAIRAxEAPwD2WiKn1fybRNIv+lqd+OpJ6xs5lyG7A8M76J3EAN7KlmCjJM0rqe1ttYJPxLhFmNU850LS3VmXzdryWmOkhjfUkDi1pAJIIyOx3gqbonk+lavbZUqOsCaSt7TWywOZmLfs3DI6J6Ui1CdoPObNodSqcQodvvjlLpFQ2PL9Bgu2aMlw+3BOK5rtic6WSQsD9rGgZf8AUg5HA/VeQv8AkibJsezcAdrhgj/QqV1boZlZRZWAXUjPTPeckRFUyhQ7OlabZuG5Zo15pzAa5fIwOJjJDizn8yAcKYi4QD1lK7IcqcSis+IeNWWQMn0etI2u1zYdwJ+Nrjkgc8DIHHSqr/g9SR0Xp09IgEYcxpfXe9waXbgMh445OR/eRhbJFxUQHO0fQmravUEY4jDwxH7MvW8XiZTfWfp2jFk2x0zfhcdz2jbuznOQ0NAPB4WioxvhqRxSbNzRj65xj8756Xcirl2AEyL2N6mJ8nMIiJJhERIhERIhERIhERIn/9k=" alt="KELK" class="bu-logo">
+            
+            <h2 style="display: inline; vertical-align: middle;">KELK</h2>
+          </div>
+
+          
+          <div class="action-card" id="signal-5"
+               style="border-left-color: #0D47A1;">
+            <div class="card-header" style="background-color: #E3F2FD;">
+              <div class="signal-type" style="color: #0D47A1;">
+                🎯 MARKET SHIFT
+              </div>
+              <div class="headline">ArcelorMittal Invests $2B in Smart Steel Mill Upgrades with Laser Measurement Systems</div>
+              <div class="card-meta">
+                <span class="score-badge">5.5</span>
+                
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="field-label">What</div>
+              <div class="field-value"><ul style="margin:4px 0;padding-left:18px;"><li>ArcelorMittal has announced a global modernization program investing $2B in AI-driven quality control for its flat steel rolling mills across Europe and North America.</li><li>The program includes real-time laser thickness and profile measurement — the exact application space of KELK&#39;s rolling mill systems and Nokra&#39;s laser measurement technology.</li><li>Multiple vendors are in early-stage trials.</li></ul></div>
+
+              <div class="field-label">Why It Matters</div>
+              <div class="field-value">Automated analysis unavailable — manual review recommended.</div>
+
+              <div class="field-label">Quick Win</div>
+              <p class="field-value">Review signal and assess BU impact.</p>
+
+              
+              <div class="field-label">Owner</div>
+              <p class="field-value">BU Manager</p>
+              
+
+              
+              <div class="field-label">Est. Impact</div>
+              <p class="field-value">TBD</p>
+              
+            </div>
+            <div class="card-footer">
+              
+              
+              Sources: <a href="https://corporate.arcelormittal.com/media/press-releases/smart-mill-2026" target="_blank">[Primary]</a>
+              
+            </div>
+          </div>
+          
+
+        </td>
+      </tr>
+      
+      <tr>
+        <td class="bu-section">
+          <div class="bu-section-header" style="border-color: #2E75B6;">
+            
+            <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAAiAC0DASIAAhEBAxEB/8QAGgABAQADAQEAAAAAAAAAAAAAAAUEBgcCCP/EACkQAAIBBAEEAQQCAwAAAAAAAAECAwAEBRESBhMhMQcUIjJBI1FCcZH/xAAWAQEBAQAAAAAAAAAAAAAAAAAAAwH/xAAcEQACAgMBAQAAAAAAAAAAAAAAAQMRAiNhEyH/2gAMAwEAAhEDEQA/APsup11ncPbAd/JWyEyPEAXG+afkNe9jxv8A2Ko1qRg6Wy+dzKxyyC6hlt7e+lSQohkBVxEG9EkCMOB7HEHyPFIvO9l1wjO5ljqq+l2zzeIvLiK3tcjbTSyryREcEkefOv16P/DVCtctcDhbHJpNZXj2ai4V2tIplWN5uBUFh+WyN+N+SAdbFbBFLFLz7UiPwYo3FgeLD9H+jWyqNPW/nTIHM8X6pJ8PdKUqRcVyXqvo7pK7usvdr1J0/ZzTZGQ3YubeGSON5oEi4spdf5R22dWJ2Cz+Ds11queZz4pxGWvLy6uMhdD6i7a5SERRdiNnV1kPbK8WZhIwLHydDe/OwJKdLdJ2OQM1v1V0691jZ7ibIfXwQ3DKJZkYPJtwVmUoqCRt+/XoVS+PcZ0p0NNlYz1bi55HiimlaW6CyJCCxWSXlIQSe6PvAUHY/sVnX/xnhrixFrHcTRBHuXjPajYKZ5EkPgr/AImNeJGiNA72ARjj4sxbTRG4zGUuoYZ1ukjnMTEzjt85GfhyYsIxsE6+46H48QN1xuUxmSMwx2QtLswMFlEEyvwJGwDo+PFZlQememocHk8tewXlxIuSuO+bchUiiYlmJVVAHJix5N7bQ352TeoBSlKAUpSgFKUoD//Z" alt="VPG Force Sensors" class="bu-logo">
+            
+            <h2 style="display: inline; vertical-align: middle;">VPG Force Sensors</h2>
+          </div>
+
+          
+          <div class="action-card" id="signal-6"
+               style="border-left-color: #0D47A1;">
+            <div class="card-header" style="background-color: #E3F2FD;">
+              <div class="signal-type" style="color: #0D47A1;">
+                🎯 MARKET SHIFT
+              </div>
+              <div class="headline">Figure AI Places $30M Order for Miniature Force/Torque Sensors for Humanoid Robots</div>
+              <div class="card-meta">
+                <span class="score-badge">5.25</span>
+                
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="field-label">What</div>
+              <div class="field-value"><ul style="margin:4px 0;padding-left:18px;"><li>Humanoid robotics company Figure AI has placed a large-scale order for miniature 6-axis force/torque sensors to be integrated into the hands and wrists of its Figure 02 humanoid robot platform.</li><li>The order, reportedly worth $30M over 18 months, is one of the largest single sensor procurements in the robotics industry.</li><li>The supplier was not disclosed, presenting both a competitive threat and partnership opportunity for VPG Force Sensors.</li></ul></div>
+
+              <div class="field-label">Why It Matters</div>
+              <div class="field-value">Automated analysis unavailable — manual review recommended.</div>
+
+              <div class="field-label">Quick Win</div>
+              <p class="field-value">Review signal and assess BU impact.</p>
+
+              
+              <div class="field-label">Owner</div>
+              <p class="field-value">BU Manager</p>
+              
+
+              
+              <div class="field-label">Est. Impact</div>
+              <p class="field-value">TBD</p>
+              
+            </div>
+            <div class="card-footer">
+              
+              
+              Sources: <a href="https://www.figure.ai/blog/sensor-procurement-2026" target="_blank">[Primary]</a>
+              
+            </div>
+          </div>
+          
+
+        </td>
+      </tr>
+      
+      <tr>
+        <td class="bu-section">
+          <div class="bu-section-header" style="border-color: #0097A7;">
+            
+            <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAAiADQDASIAAhEBAxEB/8QAGgABAAMAAwAAAAAAAAAAAAAAAAYHCAIDBP/EACgQAAIBBAEEAgEFAQAAAAAAAAECAAMEBREGBxIhMRMiURQVM0FSkf/EABcBAQEBAQAAAAAAAAAAAAAAAAADBAH/xAAdEQACAgMBAQEAAAAAAAAAAAAAAQIDBBExEhMy/9oADAMBAAIRAxEAPwDZcRB9GAdBvLQVTSNzRFQEKV+QbB/GpyrXFGke13+3+QCW/wCDzML9X7SjluqnULHWfHa99kamVoJQahffGwqlWCuVYaYDeu0Eb37E1X0lylvgem3H8XyvlGIfNUserXLPkKTMQGK7Ld337TpC3kFlPma7sb5wUk97M9d/uTTXCc0b62q3H6cM6VipYJUpshYD2Rseff8AU9MjNlyLj2Xzlq1tncXVAL07REu6Ze4qaBYoAdkKv497360TJplaa6XTT4IiJw6IPqIgFIZvou17zvMcjbHYet+5XL1mNW4rMf4yilkP12Nk+PGyPx5jN10urW9s+HpVcStrcdoegbi8+J/srU22QdMNuPJ1t963NKxNUMuS6Zp4yf5Kc4jwM4zlVhmKDYi2datOnWoWb1kR6SIUQFSNEjtU69d3cd6OhcYiJGyx2PbK1w8LQiIkygiIgCIiAIiIAiIgH//Z" alt="Pacific Instruments" class="bu-logo">
+            
+            <h2 style="display: inline; vertical-align: middle;">Pacific Instruments</h2>
+          </div>
+
+          
+          <div class="action-card" id="signal-7"
+               style="border-left-color: #0D47A1;">
+            <div class="card-header" style="background-color: #E3F2FD;">
+              <div class="signal-type" style="color: #0D47A1;">
+                🎯 MARKET SHIFT
+              </div>
+              <div class="headline">US Raises Tariffs on Chinese Electronic Components to 50%, India Exempted</div>
+              <div class="card-meta">
+                <span class="score-badge">5.0</span>
+                
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="field-label">What</div>
+              <div class="field-value"><ul style="margin:4px 0;padding-left:18px;"><li>The Office of the US Trade Representative announced a new tariff schedule raising duties on Chinese-origin electronic components — including resistors, sensors, and data acquisition modules — from 25% to 50%, effective April 1, 2026.</li><li>India, Vietnam, and Mexico are explicitly exempted.</li><li>This benefits VPG&#39;s India manufacturing hub and creates competitive pressure on China-dependent rivals like Zemic and Sunrise Instruments.</li></ul></div>
+
+              <div class="field-label">Why It Matters</div>
+              <div class="field-value">Automated analysis unavailable — manual review recommended.</div>
+
+              <div class="field-label">Quick Win</div>
+              <p class="field-value">Review signal and assess BU impact.</p>
+
+              
+              <div class="field-label">Owner</div>
+              <p class="field-value">BU Manager</p>
+              
+
+              
+              <div class="field-label">Est. Impact</div>
+              <p class="field-value">TBD</p>
+              
+            </div>
+            <div class="card-footer">
+              
+              
+              Sources: <a href="https://ustr.gov/tariff-update-2026-electronics" target="_blank">[Primary]</a>
+              
+            </div>
+          </div>
+          
+
+        </td>
+      </tr>
+      
+
+      <!-- ═══ FOOTER ═══ -->
+      <tr>
+        <td class="footer">
+          <p style="font-size: 14px; color: #ffffff; margin-bottom: 10px;">Powered by VPG Strategic Intelligence</p>
+          <p>Auto-generated from 8 validated industry signals</p>
+          <p style="margin-top: 12px;">
+            <a href="#">Unsubscribe</a> &nbsp;&bull;&nbsp;
+            <a href="#">View in Browser</a> &nbsp;&bull;&nbsp;
+            <a href="#">Archive</a>
+          </p>
+        </td>
+      </tr>
+
+    </table>
+  </div>
+</body>
+</html>
