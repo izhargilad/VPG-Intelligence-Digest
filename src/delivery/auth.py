@@ -5,12 +5,18 @@ Handles the initial authorization flow and token refresh lifecycle.
 Usage (first-time setup):
     python -m src.delivery.auth
 
+Credentials can be provided two ways (checked in order):
+    1. GMAIL_CREDENTIALS_JSON env var — paste the full JSON string (avoids
+       committing secrets to Git)
+    2. config/credentials.json file — download from Google Cloud Console
+
 This opens a browser for Google account authorization, then saves the
 refresh token to config/token.json for all future API calls.
 """
 
 import json
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -27,6 +33,44 @@ SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
 
 CREDENTIALS_PATH = CONFIG_DIR / "credentials.json"
 TOKEN_PATH = CONFIG_DIR / "token.json"
+
+
+def _resolve_credentials_path() -> Path:
+    """Return the path to OAuth2 credentials, creating from env var if needed.
+
+    Checks GMAIL_CREDENTIALS_JSON env var first. If set, writes the JSON to
+    config/credentials.json (gitignored) so the standard Google auth library
+    can consume it as a file. Falls back to an existing credentials.json file.
+
+    Returns:
+        Path to the credentials JSON file.
+
+    Raises:
+        FileNotFoundError: If neither the env var nor the file is available.
+    """
+    env_json = os.environ.get("GMAIL_CREDENTIALS_JSON", "").strip()
+
+    if env_json:
+        # Validate it's parseable JSON before writing
+        try:
+            json.loads(env_json)
+        except json.JSONDecodeError as e:
+            raise ValueError(
+                f"GMAIL_CREDENTIALS_JSON contains invalid JSON: {e}"
+            )
+        CREDENTIALS_PATH.write_text(env_json)
+        logger.info("Wrote credentials from GMAIL_CREDENTIALS_JSON to %s", CREDENTIALS_PATH)
+        return CREDENTIALS_PATH
+
+    if CREDENTIALS_PATH.exists():
+        return CREDENTIALS_PATH
+
+    raise FileNotFoundError(
+        "Gmail OAuth2 credentials not found. Provide them via either:\n"
+        "  1. GMAIL_CREDENTIALS_JSON env var in .env (recommended — avoids Git)\n"
+        "  2. config/credentials.json file\n\n"
+        "Get credentials from: Google Cloud Console → APIs & Services → Credentials"
+    )
 
 
 def get_credentials() -> Credentials | None:
@@ -82,14 +126,9 @@ def run_auth_flow() -> Credentials:
         Authorized Credentials object.
 
     Raises:
-        FileNotFoundError: If credentials.json is missing.
+        FileNotFoundError: If credentials.json is missing and no env var set.
     """
-    if not CREDENTIALS_PATH.exists():
-        raise FileNotFoundError(
-            f"Gmail credentials not found at {CREDENTIALS_PATH}\n"
-            "Download OAuth2 credentials from Google Cloud Console and save as:\n"
-            f"  {CREDENTIALS_PATH}"
-        )
+    creds_path = _resolve_credentials_path()
 
     print("=" * 60)
     print("VPG Intelligence Digest — Gmail Authorization")
@@ -100,7 +139,7 @@ def run_auth_flow() -> Credentials:
     print()
 
     flow = InstalledAppFlow.from_client_secrets_file(
-        str(CREDENTIALS_PATH), SCOPES
+        str(creds_path), SCOPES
     )
 
     # run_local_server handles the redirect and token exchange
@@ -127,10 +166,12 @@ def check_auth_status() -> dict:
     Returns:
         Dict with 'authorized', 'email' (if available), and 'message'.
     """
-    if not CREDENTIALS_PATH.exists():
+    try:
+        _resolve_credentials_path()
+    except (FileNotFoundError, ValueError) as e:
         return {
             "authorized": False,
-            "message": "credentials.json not found in config/",
+            "message": str(e),
         }
 
     creds = get_credentials()
