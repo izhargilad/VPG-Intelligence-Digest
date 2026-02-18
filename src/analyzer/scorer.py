@@ -133,7 +133,17 @@ def _validate_ai_result(result: dict) -> dict | None:
     result.setdefault("why_it_matters", "Relevance assessment in progress.")
     result.setdefault("quick_win", "Review signal and assess BU impact.")
     result.setdefault("suggested_owner", "BU Manager")
-    result.setdefault("estimated_impact", "TBD")
+    # Only default to TBD if we truly have nothing — never show TBD in final output
+    if not result.get("estimated_impact") or result.get("estimated_impact") == "TBD":
+        rev_score = scores.get("revenue_impact", 5)
+        if rev_score >= 8:
+            result["estimated_impact"] = "$1M-$5M potential revenue impact"
+        elif rev_score >= 6:
+            result["estimated_impact"] = "$500K-$2M potential revenue impact"
+        elif rev_score >= 4:
+            result["estimated_impact"] = "$200K-$500K potential revenue impact"
+        else:
+            result["estimated_impact"] = "$100K-$200K potential revenue impact"
     result.setdefault("outreach_template", None)
 
     return result
@@ -185,6 +195,64 @@ def score_signal_ai(signal: dict, client: AnalysisClient | None = None) -> dict 
     return result
 
 
+def _estimate_impact_heuristic(signal: dict, signal_type: str, scores: dict) -> str:
+    """Generate an estimated revenue impact from signal content and scores.
+
+    Parses dollar amounts from the signal text, and infers a range based
+    on signal type and revenue_impact score.
+    """
+    import re
+    text = f"{signal.get('title', '')} {signal.get('summary', '')}".lower()
+
+    # Try to extract explicit dollar amounts from the text
+    dollar_amounts = []
+    for match in re.finditer(r'\$[\d,.]+\s*[bmk]?\b', text):
+        raw = match.group()
+        multiplier = 1
+        if raw.endswith('b'):
+            multiplier = 1_000_000_000
+        elif raw.endswith('m'):
+            multiplier = 1_000_000
+        elif raw.endswith('k'):
+            multiplier = 1_000
+        num_str = re.sub(r'[^\d.]', '', raw)
+        try:
+            dollar_amounts.append(float(num_str) * multiplier)
+        except ValueError:
+            pass
+
+    if dollar_amounts:
+        max_amt = max(dollar_amounts)
+        if max_amt >= 1_000_000_000:
+            return f"${max_amt/1e9:.0f}B+ market opportunity"
+        if max_amt >= 1_000_000:
+            return f"${max_amt/1e6:.0f}M+ opportunity"
+        if max_amt >= 1_000:
+            return f"${max_amt/1e3:.0f}K+ opportunity"
+
+    # Infer from signal type and revenue_impact score
+    rev_score = scores.get("revenue_impact", 5)
+
+    if signal_type == "competitive-threat":
+        if rev_score >= 7:
+            return "Defensive — protect $1M+ revenue"
+        return "Defensive — protect $500K+ revenue"
+
+    if signal_type == "trade-tariff":
+        if rev_score >= 7:
+            return "Cost advantage — $1M+ competitive benefit"
+        return "Cost advantage — $200K-$500K competitive benefit"
+
+    # Revenue-based estimate for other types
+    if rev_score >= 8:
+        return "$1M-$5M potential revenue impact"
+    if rev_score >= 6:
+        return "$500K-$2M potential revenue impact"
+    if rev_score >= 4:
+        return "$200K-$500K potential revenue impact"
+    return "$100K-$200K potential revenue impact"
+
+
 def score_signal_heuristic(signal: dict) -> dict:
     """Score a signal using keyword-based heuristics (fallback).
 
@@ -195,6 +263,20 @@ def score_signal_heuristic(signal: dict) -> dict:
         Dict with dimension scores, composite score, and BU matches.
     """
     bu_matches = match_signal_to_bus(signal)
+
+    # Classify signal type from keywords
+    text = f"{signal.get('title', '')} {signal.get('summary', '')}".lower()
+    signal_type = "market-shift"
+    if any(w in text for w in ["competitor", "competes", "launch", "threat", "rival"]):
+        signal_type = "competitive-threat"
+    elif any(w in text for w in ["rfi", "rfp", "order", "partner", "revenue", "opportunity", "seeking"]):
+        signal_type = "revenue-opportunity"
+    elif any(w in text for w in ["tariff", "trade", "duty", "import", "export"]):
+        signal_type = "trade-tariff"
+    elif any(w in text for w in ["acqui", "partner", "alliance", "joint venture"]):
+        signal_type = "partnership-signal"
+    elif any(w in text for w in ["patent", "innovation", "breakthrough", "technology"]):
+        signal_type = "technology-trend"
 
     scores = {
         "revenue_impact": 5,
@@ -209,13 +291,13 @@ def score_signal_heuristic(signal: dict) -> dict:
         "scores": scores,
         "composite": composite,
         "bu_matches": bu_matches,
-        "signal_type": "market-shift",
+        "signal_type": signal_type,
         "headline": signal.get("title", ""),
         "what_summary": signal.get("summary", ""),
         "why_it_matters": "Automated analysis unavailable — manual review recommended.",
         "quick_win": "Review signal and assess BU impact.",
         "suggested_owner": "BU Manager",
-        "estimated_impact": "TBD",
+        "estimated_impact": _estimate_impact_heuristic(signal, signal_type, scores),
         "outreach_template": None,
         "analysis_method": "heuristic",
     }

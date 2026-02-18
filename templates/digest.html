@@ -1,9 +1,17 @@
 <!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <!--[if gte mso 9]>
+  <xml>
+    <o:OfficeDocumentSettings>
+      <o:AllowPNG/>
+      <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
+  </xml>
+  <![endif]-->
   <title>{{ subject }}</title>
   <style type="text/css">
     /* Reset */
@@ -385,9 +393,9 @@
       <tr>
         <td class="header">
           {% if branding.logo_url %}
-          <img src="{{ branding.logo_url }}" alt="VPG" class="logo"><br>
+          <img src="{{ branding.logo_url }}" alt="Vishay Precision Group" class="logo" style="max-height:64px;max-width:220px;margin-bottom:24px;display:inline-block;"><br>
           {% else %}
-          <p class="logo-text">Vishay Precision Group</p>
+          <p class="logo-text" style="font-family:'Segoe UI',Calibri,Arial,sans-serif;font-size:14px;color:#6B82A6;letter-spacing:5px;text-transform:uppercase;margin:0 0 22px;">Vishay Precision Group</p>
           {% endif %}
           <h1>Intelligence Digest</h1>
           <p class="subtitle">Weekly Strategic Intelligence Report</p>
@@ -487,9 +495,9 @@
         <td class="bu-section">
           <div class="bu-section-header" style="border-color: {{ section.bu_color }};">
             {% if section.bu_logo_url %}
-            <img src="{{ section.bu_logo_url }}" alt="{{ section.bu_name }}" class="bu-logo">
+            <img src="{{ section.bu_logo_url }}" alt="{{ section.bu_name }}" class="bu-logo" style="max-height:34px;margin-right:12px;vertical-align:middle;display:inline;">
             {% else %}
-            <span class="bu-initial" style="background-color: {{ section.bu_color }};">{{ section.bu_name[0] }}</span>
+            <span class="bu-initial" style="display:inline-block;width:28px;height:28px;line-height:28px;text-align:center;color:#ffffff;font-size:13px;font-weight:700;border-radius:4px;margin-right:10px;vertical-align:middle;background-color:{{ section.bu_color }};">{{ section.bu_name[0] }}</span>
             {% endif %}
             <h2 style="display: inline; vertical-align: middle;">{{ section.bu_name }}</h2>
           </div>

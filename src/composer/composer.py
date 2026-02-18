@@ -1,6 +1,11 @@
 """Digest composer for VPG Intelligence Digest.
 
 Generates responsive HTML email digests from scored signals.
+Supports two image modes:
+- CID mode (default): Images embedded as MIME attachments with Content-ID
+  references. Works in Outlook, corporate Exchange, Gmail, Apple Mail.
+- Data URI mode (fallback): Base64 inline images. Works in webmail/browsers
+  but blocked by many corporate mail clients.
 """
 
 import base64
@@ -39,15 +44,19 @@ _DEFAULT_TYPE = {"color": "#2E75B6", "bg": "#E3F2FD", "icon": "\U0001f4cb"}
 HIGH_SCORE_THRESHOLD = 9.0
 
 
-def _logo_to_data_uri(logo_filename: str, max_height: int | None = None,
-                      max_width: int | None = None) -> str:
-    """Load a logo file from config dir, resize, and return a base64 data URI."""
+def _process_logo(logo_filename: str, max_height: int | None = None,
+                  max_width: int | None = None) -> dict | None:
+    """Load a logo file from config dir, resize, and return image data.
+
+    Returns a dict with 'bytes', 'cid', 'data_uri', and 'filename' keys,
+    or None if the logo cannot be loaded.
+    """
     if not logo_filename:
-        return ""
+        return None
     logo_path = CONFIG_DIR / logo_filename
     if not logo_path.exists():
         logger.warning("Logo file not found: %s", logo_path)
-        return ""
+        return None
     try:
         img = Image.open(logo_path)
         img = img.convert("RGB")
@@ -62,11 +71,27 @@ def _logo_to_data_uri(logo_filename: str, max_height: int | None = None,
             img = img.resize((int(w * ratio), max_height), Image.LANCZOS)
         buf = io.BytesIO()
         img.save(buf, format="JPEG", quality=85, optimize=True)
-        b64 = base64.b64encode(buf.getvalue()).decode("ascii")
-        return f"data:image/jpeg;base64,{b64}"
+        img_bytes = buf.getvalue()
+        b64 = base64.b64encode(img_bytes).decode("ascii")
+        # CID = sanitized filename without extension
+        cid = re.sub(r"[^a-zA-Z0-9_-]", "_", Path(logo_filename).stem).lower()
+        return {
+            "bytes": img_bytes,
+            "cid": cid,
+            "data_uri": f"data:image/jpeg;base64,{b64}",
+            "cid_uri": f"cid:{cid}",
+            "filename": logo_filename,
+        }
     except Exception as e:
         logger.warning("Failed to process logo %s: %s", logo_filename, e)
-        return ""
+        return None
+
+
+def _logo_to_data_uri(logo_filename: str, max_height: int | None = None,
+                      max_width: int | None = None) -> str:
+    """Load a logo and return a base64 data URI (legacy compatibility)."""
+    result = _process_logo(logo_filename, max_height, max_width)
+    return result["data_uri"] if result else ""
 
 
 def _to_bullets(text):
@@ -113,8 +138,12 @@ def build_digest_context(signals: list[dict], bu_config: dict) -> dict:
     - Cross-BU deduplication (signal shown once with "Also relevant to" tag)
     - Anchor IDs for in-email navigation from executive summary to detail cards
     - Signal type color assignment
+    - CID image collection for MIME embedding
     """
     week_num, year = get_week_number()
+
+    # Collect CID images for MIME attachment (used by delivery layer)
+    cid_images: dict[str, dict] = {}
 
     # Sort all signals by composite score descending
     all_sorted = sorted(
@@ -152,14 +181,15 @@ def build_digest_context(signals: list[dict], bu_config: dict) -> dict:
 
     bu_lookup = {bu["id"]: bu for bu in bu_config.get("business_units", [])}
 
-    # Pre-process BU logos into base64 data URIs
+    # Pre-process BU logos — collect both CID and data URI versions
     bu_logo_cache: dict[str, str] = {}
     for bu in bu_config.get("business_units", []):
         logo_file = bu.get("logo_file", "")
         if logo_file:
-            bu_logo_cache[bu["id"]] = _logo_to_data_uri(
-                logo_file, max_height=BU_LOGO_HEIGHT
-            )
+            logo_data = _process_logo(logo_file, max_height=BU_LOGO_HEIGHT)
+            if logo_data:
+                cid_images[logo_data["cid"]] = logo_data
+                bu_logo_cache[bu["id"]] = logo_data["cid_uri"]
 
     # Build BU sections with cross-BU deduplication
     seen_ids: set[int] = set()
@@ -190,7 +220,7 @@ def build_digest_context(signals: list[dict], bu_config: dict) -> dict:
                 "bu_id": bu_id,
                 "bu_name": bu_info.get("name", bu_id),
                 "bu_color": bu_info.get("color", "#2E75B6"),
-                "bu_logo_url": bu_logo_cache.get(bu_id, bu_info.get("logo_url", "")),
+                "bu_logo_url": bu_logo_cache.get(bu_id, ""),
                 "signals": deduped,
             })
 
@@ -210,9 +240,10 @@ def build_digest_context(signals: list[dict], bu_config: dict) -> dict:
     })
     header_logo_file = branding.get("logo_file", "")
     if header_logo_file:
-        branding["logo_url"] = _logo_to_data_uri(
-            header_logo_file, max_width=HEADER_LOGO_WIDTH
-        )
+        logo_data = _process_logo(header_logo_file, max_width=HEADER_LOGO_WIDTH)
+        if logo_data:
+            cid_images[logo_data["cid"]] = logo_data
+            branding["logo_url"] = logo_data["cid_uri"]
 
     # Subject line
     top_headline = (
@@ -236,6 +267,7 @@ def build_digest_context(signals: list[dict], bu_config: dict) -> dict:
         "signal_of_week": signal_of_week,
         "bu_sections": bu_sections,
         "branding": branding,
+        "cid_images": cid_images,
         "colors": {
             "navy": "#1B2A4A",
             "blue": "#2E75B6",

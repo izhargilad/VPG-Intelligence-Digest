@@ -34,6 +34,7 @@ from src.db import (
     update_signal_status,
 )
 from src.delivery.gmail import send_email
+from src.trends.tracker import update_trends
 from src.validator.validator import validate_signal
 
 logger = logging.getLogger(__name__)
@@ -157,8 +158,13 @@ def stage_score(conn) -> list[dict]:
     return scored_signals
 
 
-def stage_compose(scored_signals: list[dict]) -> tuple[str, str]:
-    """Stage 5: Compose the HTML digest."""
+def stage_compose(scored_signals: list[dict]) -> tuple[str, str, dict]:
+    """Stage 5: Compose the HTML digest.
+
+    Returns:
+        Tuple of (html, subject, cid_images) where cid_images is a dict
+        of CID -> image data for MIME embedding.
+    """
     logger.info("=== Stage 5: Composition ===")
 
     bu_config = get_business_units()
@@ -166,15 +172,16 @@ def stage_compose(scored_signals: list[dict]) -> tuple[str, str]:
 
     html = render_digest(context)
     subject = context["subject"]
+    cid_images = context.get("cid_images", {})
 
     # Always save a local copy
     save_digest_html(html, MOCK_OUTPUT_DIR)
     logger.info("Digest composed: %s (%d chars)", subject, len(html))
 
-    return html, subject
+    return html, subject, cid_images
 
 
-def stage_deliver(html: str, subject: str) -> list[dict]:
+def stage_deliver(html: str, subject: str, cid_images: dict | None = None) -> list[dict]:
     """Stage 6: Deliver the digest to recipients."""
     logger.info("=== Stage 6: Delivery (mode: %s) ===", DELIVERY_MODE)
 
@@ -189,6 +196,7 @@ def stage_deliver(html: str, subject: str) -> list[dict]:
             to=recipient["email"],
             subject=subject,
             html_content=html,
+            cid_images=cid_images,
         )
         results.append(result)
         logger.info("Delivery to %s: %s", recipient["email"], result["status"])
@@ -228,11 +236,16 @@ def run_full_pipeline() -> dict:
             )
             return {"status": "completed", "signals": 0, "message": "No signals above threshold"}
 
+        # Trend analysis (runs after scoring, before composition)
+        logger.info("=== Trend Analysis ===")
+        trend_result = update_trends(conn)
+        logger.info("Trends: %d updated, %d notable", trend_result["trends_updated"], len(trend_result["notable"]))
+
         # Stage 5: Compose
-        html, subject = stage_compose(scored_signals)
+        html, subject, cid_images = stage_compose(scored_signals)
 
         # Stage 6: Deliver
-        delivery_results = stage_deliver(html, subject)
+        delivery_results = stage_deliver(html, subject, cid_images)
 
         complete_pipeline_run(
             conn, run_id, "completed",

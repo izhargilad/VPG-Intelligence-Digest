@@ -5,6 +5,9 @@ Supports three modes:
 - 'smtp': Sends via Gmail SMTP with App Password (recommended — simplest setup)
 - 'gmail': Sends via Gmail API using OAuth2 credentials
 
+Images are embedded as CID (Content-ID) MIME attachments for maximum
+compatibility with corporate mail clients (Outlook, Exchange, Apple Mail).
+
 SMTP setup (recommended):
     1. Enable 2-Step Verification on your Google Account
     2. Go to https://myaccount.google.com/apppasswords
@@ -17,6 +20,7 @@ import base64
 import logging
 import smtplib
 import time
+from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from pathlib import Path
@@ -35,33 +39,77 @@ _gmail_service = None
 
 
 def create_email_message(
-    to: str, subject: str, html_content: str, sender: str | None = None
+    to: str, subject: str, html_content: str, sender: str | None = None,
+    cid_images: dict | None = None,
 ) -> MIMEMultipart:
-    """Create a MIME email message with HTML body and plain-text fallback."""
-    msg = MIMEMultipart("alternative")
+    """Create a MIME email message with HTML body, plain-text fallback,
+    and CID-embedded images for corporate mail compatibility.
+
+    Args:
+        to: Recipient email address.
+        subject: Email subject line.
+        html_content: HTML body of the email.
+        sender: Sender address (defaults to GMAIL_SENDER_EMAIL).
+        cid_images: Dict of CID -> image data dicts with 'bytes', 'cid',
+                    'filename' keys. Images are attached as related MIME parts.
+    """
+    # Use 'related' as the outer type so CID images resolve
+    msg = MIMEMultipart("related")
     msg["To"] = to
     msg["From"] = sender or GMAIL_SENDER_EMAIL
     msg["Subject"] = subject
 
+    # The alternative part holds text + HTML versions
+    msg_alt = MIMEMultipart("alternative")
+    msg.attach(msg_alt)
+
     plain_text = "This email requires an HTML-capable email client."
-    msg.attach(MIMEText(plain_text, "plain"))
-    msg.attach(MIMEText(html_content, "html"))
+    msg_alt.attach(MIMEText(plain_text, "plain"))
+    msg_alt.attach(MIMEText(html_content, "html"))
+
+    # Attach CID images as related MIME parts
+    if cid_images:
+        for cid, img_data in cid_images.items():
+            img_bytes = img_data.get("bytes")
+            if not img_bytes:
+                continue
+            mime_img = MIMEImage(img_bytes, _subtype="jpeg")
+            mime_img.add_header("Content-ID", f"<{cid}>")
+            mime_img.add_header(
+                "Content-Disposition", "inline",
+                filename=img_data.get("filename", f"{cid}.jpg"),
+            )
+            msg.attach(mime_img)
+            logger.debug("Attached CID image: %s", cid)
 
     return msg
 
 
 def send_mock(
-    to: str, subject: str, html_content: str, output_dir: Path | None = None
+    to: str, subject: str, html_content: str, output_dir: Path | None = None,
+    cid_images: dict | None = None,
 ) -> dict:
-    """Save email as local HTML file (mock mode)."""
+    """Save email as local HTML file (mock mode).
+
+    For mock mode, CID references are converted back to data URIs
+    so the HTML file renders correctly in a browser.
+    """
     out = output_dir or MOCK_OUTPUT_DIR
     out.mkdir(parents=True, exist_ok=True)
+
+    # Convert cid: references to data URIs for browser preview
+    preview_html = html_content
+    if cid_images:
+        for cid, img_data in cid_images.items():
+            data_uri = img_data.get("data_uri", "")
+            if data_uri:
+                preview_html = preview_html.replace(f"cid:{cid}", data_uri)
 
     safe_to = to.replace("@", "_at_").replace(".", "_")
     filename = f"digest_{safe_to}.html"
     path = out / filename
 
-    path.write_text(html_content, encoding="utf-8")
+    path.write_text(preview_html, encoding="utf-8")
     logger.info("Mock email saved: %s -> %s", to, path)
 
     return {
@@ -72,8 +120,11 @@ def send_mock(
     }
 
 
-def send_smtp(to: str, subject: str, html_content: str) -> dict:
-    """Send email via Gmail SMTP with App Password.
+def send_smtp(
+    to: str, subject: str, html_content: str,
+    cid_images: dict | None = None,
+) -> dict:
+    """Send email via Gmail SMTP with App Password and CID images.
 
     Requires GMAIL_SENDER_EMAIL and GMAIL_APP_PASSWORD in .env.
     No OAuth2, no credentials.json, no browser auth needed.
@@ -86,7 +137,7 @@ def send_smtp(to: str, subject: str, html_content: str) -> dict:
             "Generate one at https://myaccount.google.com/apppasswords"
         )
 
-    msg = create_email_message(to, subject, html_content)
+    msg = create_email_message(to, subject, html_content, cid_images=cid_images)
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
         server.login(GMAIL_SENDER_EMAIL, GMAIL_APP_PASSWORD)
@@ -122,10 +173,13 @@ def _get_gmail_service():
     return _gmail_service
 
 
-def send_gmail(to: str, subject: str, html_content: str) -> dict:
+def send_gmail(
+    to: str, subject: str, html_content: str,
+    cid_images: dict | None = None,
+) -> dict:
     """Send email via the Gmail API (OAuth2 mode)."""
     service = _get_gmail_service()
-    msg = create_email_message(to, subject, html_content)
+    msg = create_email_message(to, subject, html_content, cid_images=cid_images)
 
     raw_bytes = msg.as_bytes()
     encoded = base64.urlsafe_b64encode(raw_bytes).decode("ascii")
@@ -149,7 +203,8 @@ def send_gmail(to: str, subject: str, html_content: str) -> dict:
 
 
 def send_email(
-    to: str, subject: str, html_content: str, max_retries: int = 3
+    to: str, subject: str, html_content: str, max_retries: int = 3,
+    cid_images: dict | None = None,
 ) -> dict:
     """Send an email using the configured delivery mode with retry logic.
 
@@ -161,13 +216,13 @@ def send_email(
     for attempt in range(max_retries):
         try:
             if mode == "mock":
-                return send_mock(to, subject, html_content)
+                return send_mock(to, subject, html_content, cid_images=cid_images)
 
             if mode == "smtp":
-                return send_smtp(to, subject, html_content)
+                return send_smtp(to, subject, html_content, cid_images=cid_images)
 
             if mode == "gmail":
-                return send_gmail(to, subject, html_content)
+                return send_gmail(to, subject, html_content, cid_images=cid_images)
 
             logger.error("Unknown delivery mode: %s", mode)
             return {"status": "failed", "error": f"Unknown mode: {mode}"}
@@ -175,7 +230,7 @@ def send_email(
         except RuntimeError as e:
             # Auth not configured — fall back to mock, don't retry
             logger.warning("Auth unavailable, falling back to mock: %s", e)
-            return send_mock(to, subject, html_content)
+            return send_mock(to, subject, html_content, cid_images=cid_images)
 
         except Exception as e:
             logger.error("Delivery attempt %d/%d failed: %s", attempt + 1, max_retries, e)

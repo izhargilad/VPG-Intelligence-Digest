@@ -181,3 +181,43 @@ CREATE TABLE IF NOT EXISTS pipeline_runs (
 );
 
 CREATE INDEX IF NOT EXISTS idx_pipeline_runs_status ON pipeline_runs(status);
+
+-- ============================================================
+-- Trend tracking - aggregated signal patterns over time
+-- ============================================================
+CREATE TABLE IF NOT EXISTS trends (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    trend_key TEXT NOT NULL,                -- Unique key: "{bu_id}:{signal_type}" or "{keyword}"
+    trend_type TEXT NOT NULL,               -- bu_signal_type, keyword, competitor, industry
+    label TEXT NOT NULL,                     -- Human-readable label
+    first_seen DATE NOT NULL,
+    last_seen DATE NOT NULL,
+    occurrence_count INTEGER NOT NULL DEFAULT 1,
+    week_over_week_change REAL DEFAULT 0,   -- % change vs prior week
+    avg_score REAL DEFAULT 0,
+    max_score REAL DEFAULT 0,
+    momentum TEXT DEFAULT 'stable',         -- rising, stable, declining, new, spike
+    updated_at DATETIME NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_trends_key ON trends(trend_key);
+CREATE INDEX IF NOT EXISTS idx_trends_momentum ON trends(momentum);
+CREATE INDEX IF NOT EXISTS idx_trends_type ON trends(trend_type);
+
+-- ============================================================
+-- Weekly trend snapshots for time-series analysis
+-- ============================================================
+CREATE TABLE IF NOT EXISTS trend_snapshots (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    trend_id INTEGER NOT NULL REFERENCES trends(id) ON DELETE CASCADE,
+    week_number INTEGER NOT NULL,
+    year INTEGER NOT NULL,
+    signal_count INTEGER NOT NULL DEFAULT 0,
+    avg_score REAL DEFAULT 0,
+    top_signal_id INTEGER REFERENCES signals(id),
+    captured_at DATETIME NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(trend_id, week_number, year)
+);
+
+CREATE INDEX IF NOT EXISTS idx_snapshots_trend ON trend_snapshots(trend_id);
+CREATE INDEX IF NOT EXISTS idx_snapshots_week ON trend_snapshots(week_number, year);

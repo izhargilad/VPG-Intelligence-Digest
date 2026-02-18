@@ -33,6 +33,7 @@ from src.db import (
     update_signal_status,
 )
 from src.delivery.gmail import send_email
+from src.trends.tracker import update_trends
 from src.validator.validator import validate_signal
 
 logger = logging.getLogger(__name__)
@@ -265,23 +266,33 @@ def main():
             logger.warning("No signals above threshold for digest")
             return
 
+        # Trend analysis
+        logger.info("=== Trend Analysis ===")
+        trend_result = update_trends(conn)
+        logger.info("Trends: %d updated, %d notable",
+                     trend_result["trends_updated"], len(trend_result["notable"]))
+
         # Stage 5: Composition
         logger.info("=== Stage 5: Composition ===")
         bu_config = get_business_units()
         context = build_digest_context(scored_signals, bu_config)
         html = render_digest(context)
         subject = context["subject"]
+        cid_images = context.get("cid_images", {})
         saved_path = save_digest_html(html, MOCK_OUTPUT_DIR)
         logger.info("Digest composed: %s (%d chars)", subject, len(html))
 
-        # Stage 6: Delivery (mock)
+        # Stage 6: Delivery
         logger.info("=== Stage 6: Delivery (mode: %s) ===", DELIVERY_MODE)
         recipients_config = get_recipients()
         results = []
         for recipient in recipients_config.get("recipients", []):
             if recipient.get("status") != "active":
                 continue
-            result = send_email(to=recipient["email"], subject=subject, html_content=html)
+            result = send_email(
+                to=recipient["email"], subject=subject, html_content=html,
+                cid_images=cid_images,
+            )
             results.append(result)
             logger.info("Delivery to %s: %s", recipient["email"], result["status"])
 

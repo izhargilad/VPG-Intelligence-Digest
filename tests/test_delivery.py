@@ -58,11 +58,15 @@ class TestEmailMessage:
         assert msg["From"] == "from@test.com"
         assert msg["Subject"] == "Weekly Digest"
 
-        # Should have 2 parts: plain text fallback + HTML
+        # Outer is multipart/related, inner is multipart/alternative with 2 parts
         payloads = msg.get_payload()
-        assert len(payloads) == 2
-        assert payloads[0].get_content_type() == "text/plain"
-        assert payloads[1].get_content_type() == "text/html"
+        # First payload is the alternative part
+        alt_part = payloads[0]
+        assert alt_part.get_content_type() == "multipart/alternative"
+        alt_payloads = alt_part.get_payload()
+        assert len(alt_payloads) == 2
+        assert alt_payloads[0].get_content_type() == "text/plain"
+        assert alt_payloads[1].get_content_type() == "text/html"
 
 
 # -- SMTP delivery tests --
