@@ -212,7 +212,7 @@ class TestAuthStatus:
 
     def test_status_not_authorized(self, tmp_path):
         creds_path = tmp_path / "credentials.json"
-        creds_path.write_text("{}")
+        creds_path.write_text("{}", encoding="utf-8")
         with patch("src.delivery.auth.CREDENTIALS_PATH", creds_path), \
              patch("src.delivery.auth.get_credentials", return_value=None):
             status = check_auth_status()
@@ -220,7 +220,7 @@ class TestAuthStatus:
 
     def test_status_authorized(self, tmp_path):
         creds_path = tmp_path / "credentials.json"
-        creds_path.write_text("{}")
+        creds_path.write_text("{}", encoding="utf-8")
         mock_creds = MagicMock()
         with patch("src.delivery.auth.CREDENTIALS_PATH", creds_path), \
              patch("src.delivery.auth.get_credentials", return_value=mock_creds):

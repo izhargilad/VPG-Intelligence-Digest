@@ -58,7 +58,7 @@ def _resolve_credentials_path() -> Path:
             raise ValueError(
                 f"GMAIL_CREDENTIALS_JSON contains invalid JSON: {e}"
             )
-        CREDENTIALS_PATH.write_text(env_json)
+        CREDENTIALS_PATH.write_text(env_json, encoding="utf-8")
         logger.info("Wrote credentials from GMAIL_CREDENTIALS_JSON to %s", CREDENTIALS_PATH)
         return CREDENTIALS_PATH
 
@@ -112,7 +112,7 @@ def _save_token(creds: Credentials) -> None:
         "client_secret": creds.client_secret,
         "scopes": creds.scopes,
     }
-    TOKEN_PATH.write_text(json.dumps(token_data, indent=2))
+    TOKEN_PATH.write_text(json.dumps(token_data, indent=2), encoding="utf-8")
     logger.info("Token saved to %s", TOKEN_PATH)
 
 

@@ -22,14 +22,14 @@ TEMPLATES_DIR = PROJECT_ROOT / "templates"
 def _load_json(filename: str) -> dict:
     """Load a JSON config file from the config directory."""
     path = CONFIG_DIR / filename
-    with open(path, "r") as f:
+    with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
 def _save_json(filename: str, data: dict) -> None:
     """Save data to a JSON config file in the config directory."""
     path = CONFIG_DIR / filename
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
 
 

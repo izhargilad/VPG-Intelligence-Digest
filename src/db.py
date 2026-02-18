@@ -23,7 +23,7 @@ def get_connection(db_path: Path | None = None) -> sqlite3.Connection:
 def init_db(db_path: Path | None = None) -> None:
     """Initialize the database by running the schema SQL."""
     schema_path = DATA_DIR / "schema.sql"
-    with open(schema_path, "r") as f:
+    with open(schema_path, "r", encoding="utf-8") as f:
         schema_sql = f.read()
 
     conn = get_connection(db_path)

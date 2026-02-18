@@ -27,7 +27,7 @@ def _read_auth_token() -> str | None:
     if not token_file:
         return None
     try:
-        with open(token_file) as f:
+        with open(token_file, encoding="utf-8") as f:
             return f.read().strip() or None
     except OSError:
         return None

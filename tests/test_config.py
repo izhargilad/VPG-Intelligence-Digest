@@ -15,14 +15,14 @@ class TestConfigFiles:
 
     def test_business_units_loads(self):
         path = CONFIG_DIR / "business-units.json"
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
         assert "business_units" in data
         assert len(data["business_units"]) == 9
 
     def test_all_bus_have_required_fields(self):
         path = CONFIG_DIR / "business-units.json"
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
         required = {"id", "name", "key_products", "core_industries", "monitoring_keywords", "active"}
         for bu in data["business_units"]:
@@ -31,14 +31,14 @@ class TestConfigFiles:
 
     def test_all_bu_ids_unique(self):
         path = CONFIG_DIR / "business-units.json"
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
         ids = [bu["id"] for bu in data["business_units"]]
         assert len(ids) == len(set(ids)), "Duplicate BU IDs found"
 
     def test_sources_loads(self):
         path = CONFIG_DIR / "sources.json"
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
         assert "sources" in data
         assert "source_tiers" in data
@@ -46,7 +46,7 @@ class TestConfigFiles:
 
     def test_all_sources_have_required_fields(self):
         path = CONFIG_DIR / "sources.json"
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
         required = {"id", "name", "url", "type", "tier", "active"}
         for source in data["sources"]:
@@ -55,7 +55,7 @@ class TestConfigFiles:
 
     def test_recipients_loads(self):
         path = CONFIG_DIR / "recipients.json"
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
         assert "recipients" in data
         assert "recipient_groups" in data
@@ -63,7 +63,7 @@ class TestConfigFiles:
 
     def test_scoring_weights_loads(self):
         path = CONFIG_DIR / "scoring-weights.json"
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
         assert "scoring_dimensions" in data
         assert "signal_types" in data
@@ -71,14 +71,14 @@ class TestConfigFiles:
 
     def test_scoring_weights_sum_to_one(self):
         path = CONFIG_DIR / "scoring-weights.json"
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
         total = sum(d["weight"] for d in data["scoring_dimensions"].values())
         assert abs(total - 1.0) < 0.001, f"Weights sum to {total}, expected 1.0"
 
     def test_seven_signal_types(self):
         path = CONFIG_DIR / "scoring-weights.json"
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
         assert len(data["signal_types"]) == 7
 
@@ -92,7 +92,7 @@ class TestDatabaseSchema:
 
     def test_schema_contains_required_tables(self):
         path = PROJECT_ROOT / "data" / "schema.sql"
-        schema = path.read_text()
+        schema = path.read_text(encoding="utf-8")
         required_tables = [
             "signals",
             "signal_validations",
