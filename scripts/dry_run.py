@@ -174,13 +174,25 @@ def _make_external_id(signal: dict) -> str:
 
 
 def seed_signals(conn) -> int:
-    """Insert seed signals into the database. Returns count inserted."""
+    """Insert seed signals into the database. Returns count inserted.
+
+    On re-runs, resets existing seed signals back to 'new' status so the
+    pipeline can reprocess them.
+    """
     inserted = 0
     for sig in SEED_SIGNALS:
         sig["external_id"] = _make_external_id(sig)
         row_id = insert_signal(conn, sig)
         if row_id:
             inserted += 1
+        else:
+            # Signal already exists — reset to 'new' so it gets reprocessed
+            conn.execute(
+                "UPDATE signals SET status = 'new' WHERE external_id = ?",
+                (sig["external_id"],),
+            )
+            inserted += 1
+    conn.commit()
     return inserted
 
 
@@ -225,6 +237,12 @@ def main():
         validated_signals = get_signals_by_status(conn, "validated")
         if not validated_signals:
             logger.warning("No validated signals to score")
+            complete_pipeline_run(
+                conn, run_id, "completed",
+                signals_collected=inserted,
+                signals_validated=len(new_signals),
+                signals_scored=0,
+            )
             return
 
         client = AnalysisClient()
@@ -264,6 +282,12 @@ def main():
 
         if not scored_signals:
             logger.warning("No signals above threshold for digest")
+            complete_pipeline_run(
+                conn, run_id, "completed",
+                signals_collected=inserted,
+                signals_validated=len(new_signals),
+                signals_scored=0,
+            )
             return
 
         # Trend analysis

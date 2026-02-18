@@ -58,6 +58,22 @@ app.add_middleware(
 _pipeline_status = {"running": False, "last_result": None, "last_run": None}
 
 
+@app.on_event("startup")
+def _cleanup_stale_runs():
+    """Mark any pipeline runs stuck in 'running' as 'failed' (from prior crash/restart)."""
+    try:
+        conn = get_connection()
+        init_db()
+        conn.execute(
+            "UPDATE pipeline_runs SET status = 'failed', completed_at = datetime('now') "
+            "WHERE status = 'running'"
+        )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        logger.warning("Could not clean up stale pipeline runs: %s", e)
+
+
 # ── Pydantic Models ──────────────────────────────────────────────────
 
 class RecipientCreate(BaseModel):
