@@ -35,7 +35,12 @@ def init_db(db_path: Path | None = None) -> None:
 
 
 def insert_signal(conn: sqlite3.Connection, signal: dict) -> int:
-    """Insert a new signal and return its ID."""
+    """Insert a new signal and return its ID, or 0 if it already exists.
+
+    Uses INSERT OR IGNORE to skip duplicates (same external_id).
+    Also uses cursor.rowcount to accurately detect ignored inserts,
+    since cursor.lastrowid retains the prior value on IGNORE.
+    """
     cursor = conn.execute(
         """INSERT OR IGNORE INTO signals
            (external_id, title, summary, url, source_id, source_name, source_tier,
@@ -55,6 +60,8 @@ def insert_signal(conn: sqlite3.Connection, signal: dict) -> int:
         ),
     )
     conn.commit()
+    if cursor.rowcount == 0:
+        return 0  # Insert was ignored (duplicate external_id)
     return cursor.lastrowid
 
 

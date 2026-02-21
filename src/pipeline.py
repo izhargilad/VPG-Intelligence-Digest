@@ -136,7 +136,12 @@ def setup_logging() -> None:
 
 
 def stage_collect(conn) -> int:
-    """Stage 1: Collect signals from all sources."""
+    """Stage 1: Collect signals from all sources.
+
+    New signals are inserted with status 'new'. If a signal already
+    exists (same external_id from a prior run), its status is reset
+    to 'new' so it gets reprocessed with current scoring weights.
+    """
     logger.info("=== Stage 1: Collection ===")
     pipeline_control.current_stage = "collection"
 
@@ -146,14 +151,30 @@ def stage_collect(conn) -> int:
     scraped_signals = collect_all_scraped()
     all_signals = rss_signals + scraped_signals
 
-    inserted = 0
+    new_count = 0
+    reprocessed = 0
     for signal in all_signals:
         row_id = insert_signal(conn, signal)
         if row_id:
-            inserted += 1
+            new_count += 1
+        else:
+            # Signal already exists — reset to 'new' so it gets re-scored
+            # with current thresholds and weights
+            conn.execute(
+                "UPDATE signals SET status = 'new' WHERE external_id = ?",
+                (signal["external_id"],),
+            )
+            reprocessed += 1
 
-    logger.info("Collected %d signals, %d new", len(all_signals), inserted)
-    return inserted
+    if reprocessed:
+        conn.commit()
+
+    total = new_count + reprocessed
+    logger.info(
+        "Collected %d signals (%d new, %d existing re-queued)",
+        len(all_signals), new_count, reprocessed,
+    )
+    return total
 
 
 def stage_validate(conn) -> int:
