@@ -257,6 +257,54 @@ def _estimate_impact_heuristic(signal: dict, signal_type: str, scores: dict) -> 
     return "$100K-$200K potential revenue impact"
 
 
+def _generate_heuristic_why(signal: dict, signal_type: str, bu_matches: list[dict]) -> str:
+    """Generate a meaningful 'why it matters' from signal content and BU matches."""
+    bu_config = get_business_units()
+    bu_names = {bu["id"]: bu["name"] for bu in bu_config.get("business_units", [])}
+
+    matched_bus = [bu_names.get(m["bu_id"], m["bu_id"]) for m in bu_matches[:3]]
+    bu_str = ", ".join(matched_bus) if matched_bus else "VPG business units"
+
+    type_reasons = {
+        "competitive-threat": f"A competitor move has been detected that could affect {bu_str}. Monitoring competitor positioning and preparing a defensive response is advised.",
+        "revenue-opportunity": f"This signal points to a potential revenue opportunity relevant to {bu_str}. Early engagement could secure first-mover advantage.",
+        "trade-tariff": f"Trade policy changes could create a cost advantage for VPG's India production hub relative to China-dependent competitors, benefiting {bu_str}.",
+        "partnership-signal": f"A potential partnership or alliance opportunity has been identified that aligns with {bu_str} strategic priorities.",
+        "technology-trend": f"An emerging technology trend could impact {bu_str} product roadmaps or create new market opportunities.",
+        "customer-intelligence": f"Customer activity signals suggest {bu_str} should evaluate account strategy and prepare updated talking points.",
+        "market-shift": f"Industry dynamics are shifting in a way that could create both risks and opportunities for {bu_str}.",
+    }
+    return type_reasons.get(signal_type, f"This development is relevant to {bu_str} and warrants review.")
+
+
+def _generate_heuristic_quick_win(signal_type: str) -> str:
+    """Generate a relevant quick-win action based on signal type."""
+    actions = {
+        "competitive-threat": "Brief sales team on competitive positioning. Prepare counter-messaging for affected accounts.",
+        "revenue-opportunity": "Identify decision-maker contacts and prepare an initial outreach draft within the week.",
+        "trade-tariff": "Quantify cost advantage vs. China-sourced competitors and update pricing models.",
+        "partnership-signal": "Research the partner's strategic priorities and identify mutual value propositions.",
+        "technology-trend": "Map current product capabilities against the emerging trend. Identify gaps and content opportunities.",
+        "customer-intelligence": "Schedule internal account review and prepare updated talking points for the next customer interaction.",
+        "market-shift": "Circulate this signal to the BU leadership team for impact assessment and response planning.",
+    }
+    return actions.get(signal_type, "Review the signal details and assess relevance to current BU priorities.")
+
+
+def _generate_heuristic_owner(signal_type: str) -> str:
+    """Assign a relevant owner role based on signal type."""
+    owners = {
+        "competitive-threat": "VP Sales / Product Marketing",
+        "revenue-opportunity": "BU Sales Director",
+        "trade-tariff": "VP Operations / Supply Chain",
+        "partnership-signal": "VP Business Development",
+        "technology-trend": "CTO / Product Engineering Lead",
+        "customer-intelligence": "Key Account Manager",
+        "market-shift": "BU General Manager",
+    }
+    return owners.get(signal_type, "BU Manager")
+
+
 def score_signal_heuristic(signal: dict) -> dict:
     """Score a signal using keyword-based heuristics (fallback).
 
@@ -282,34 +330,33 @@ def score_signal_heuristic(signal: dict) -> dict:
     elif any(w in text for w in ["patent", "innovation", "breakthrough", "technology"]):
         signal_type = "technology-trend"
 
-    # Base scores — generous defaults so live signals don't get filtered out.
-    # The heuristic is a fallback; it's better to include a borderline signal
-    # than to miss a real opportunity. Humans can skip irrelevant ones.
-    base_revenue = 6
-    base_time = 6
-    base_competitive = 5
+    # Base scores — moderate defaults; signals must earn their way in
+    # through keyword matches and type boosting
+    base_revenue = 5
+    base_time = 5
+    base_competitive = 4
 
     # Boost based on signal type
     if signal_type == "competitive-threat":
-        base_competitive = 8
+        base_competitive = 7
         base_time = 7
     elif signal_type == "revenue-opportunity":
-        base_revenue = 8
+        base_revenue = 7
         base_time = 7
     elif signal_type == "trade-tariff":
         base_revenue = 7
-        base_competitive = 7
+        base_competitive = 6
     elif signal_type == "partnership-signal":
-        base_revenue = 7
-    elif signal_type == "technology-trend":
         base_revenue = 6
+    elif signal_type == "technology-trend":
+        base_revenue = 5
 
-    # Strategic alignment from keyword matching — floor at 5 so general
-    # industry signals still qualify
+    # Strategic alignment from keyword matching — only scores well if
+    # the signal actually matches VPG BU keywords/products/industries
     if bu_matches:
-        alignment = max(5, min(int(bu_matches[0]["relevance_score"] * 10), 10))
+        alignment = max(4, min(int(bu_matches[0]["relevance_score"] * 10), 10))
     else:
-        alignment = 4
+        alignment = 3
 
     scores = {
         "revenue_impact": base_revenue,
@@ -327,9 +374,9 @@ def score_signal_heuristic(signal: dict) -> dict:
         "signal_type": signal_type,
         "headline": signal.get("title", ""),
         "what_summary": signal.get("summary", ""),
-        "why_it_matters": "Automated analysis unavailable — manual review recommended.",
-        "quick_win": "Review signal and assess BU impact.",
-        "suggested_owner": "BU Manager",
+        "why_it_matters": _generate_heuristic_why(signal, signal_type, bu_matches),
+        "quick_win": _generate_heuristic_quick_win(signal_type),
+        "suggested_owner": _generate_heuristic_owner(signal_type),
         "estimated_impact": _estimate_impact_heuristic(signal, signal_type, scores),
         "outreach_template": None,
         "analysis_method": "heuristic",

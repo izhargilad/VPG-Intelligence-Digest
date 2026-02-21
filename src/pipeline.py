@@ -232,9 +232,18 @@ def stage_score(conn) -> list[dict]:
 
     scored_signals.sort(key=lambda s: s["composite_score"], reverse=True)
 
+    # Cap the number of signals to keep the digest scannable
+    max_signals = thresholds.get("max_signals_per_digest", 25)
+    if len(scored_signals) > max_signals:
+        logger.info(
+            "Capping digest from %d to %d signals (top scores only)",
+            len(scored_signals), max_signals,
+        )
+        scored_signals = scored_signals[:max_signals]
+
     ai_count = sum(1 for s in scored_signals if s.get("analysis_method", "").startswith("ai"))
     logger.info(
-        "Scored %d signals (%d AI, %d heuristic), %d above threshold",
+        "Scored %d signals (%d AI, %d heuristic), %d in digest",
         len(validated_signals), ai_count, len(validated_signals) - ai_count,
         len(scored_signals),
     )
@@ -269,12 +278,9 @@ def stage_compose(scored_signals: list[dict], pdf_mode: bool = False) -> tuple[s
     # Generate PDF if requested
     pdf_path = None
     if pdf_mode:
-        try:
-            from src.composer.pdf_generator import generate_pdf
-            pdf_path = generate_pdf(html, context, MOCK_OUTPUT_DIR, cid_images=cid_images)
-            logger.info("PDF generated: %s", pdf_path)
-        except Exception as e:
-            logger.warning("PDF generation failed, will send HTML only: %s", e)
+        from src.composer.pdf_generator import generate_pdf
+        pdf_path = generate_pdf(html, context, MOCK_OUTPUT_DIR, cid_images=cid_images)
+        logger.info("PDF generated: %s (%d KB)", pdf_path, pdf_path.stat().st_size // 1024)
 
     return html, subject, cid_images, pdf_path
 

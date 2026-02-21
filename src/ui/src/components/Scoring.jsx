@@ -144,6 +144,27 @@ export default function Scoring() {
             color="bg-yellow-500"
           />
         </div>
+
+        {/* Max signals cap */}
+        <div className="mt-6 pt-5 border-t border-gray-100">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-sm font-medium text-gray-700">Max Signals per Digest</span>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min="5"
+                max="50"
+                step="1"
+                value={thresholds.max_signals_per_digest ?? 25}
+                onChange={e => updateThreshold('max_signals_per_digest', e.target.value)}
+                className="w-16 text-right text-sm font-bold text-vpg-navy border border-gray-300 rounded px-2 py-1"
+              />
+            </div>
+          </div>
+          <p className="text-[11px] text-gray-400">
+            Caps the digest to the top-N signals by score. Keeps the email scannable in under 3 minutes.
+          </p>
+        </div>
       </div>
 
       {/* Dimension Weights */}
