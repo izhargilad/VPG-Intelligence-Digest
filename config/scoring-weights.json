@@ -46,10 +46,10 @@
     }
   },
   "thresholds": {
-    "include_in_digest": 4.0,
-    "highlight_signal": 7.5,
-    "signal_of_week_minimum": 8.0,
-    "unverified_minimum": 8.0
+    "include_in_digest": 3.0,
+    "highlight_signal": 7.0,
+    "signal_of_week_minimum": 7.0,
+    "unverified_minimum": 6.5
   },
   "signal_types": [
     {

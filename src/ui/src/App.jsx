@@ -6,6 +6,7 @@ import BusinessUnits from './components/BusinessUnits'
 import Pipeline from './components/Pipeline'
 import Digests from './components/Digests'
 import Trends from './components/Trends'
+import Scoring from './components/Scoring'
 
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: '📊' },
@@ -13,6 +14,7 @@ const NAV_ITEMS = [
   { id: 'recipients', label: 'Recipients', icon: '📧' },
   { id: 'sources', label: 'Sources', icon: '🔗' },
   { id: 'business-units', label: 'Business Units', icon: '🏢' },
+  { id: 'scoring', label: 'Scoring', icon: '🎚' },
   { id: 'trends', label: 'Trends', icon: '📈' },
   { id: 'digests', label: 'Digest History', icon: '📰' },
 ]
@@ -27,6 +29,7 @@ export default function App() {
       case 'recipients': return <Recipients />
       case 'sources': return <Sources />
       case 'business-units': return <BusinessUnits />
+      case 'scoring': return <Scoring />
       case 'trends': return <Trends />
       case 'digests': return <Digests />
       default: return <Dashboard />

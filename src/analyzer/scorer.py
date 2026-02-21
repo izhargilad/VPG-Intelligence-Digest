@@ -73,15 +73,19 @@ def match_signal_to_bus(signal: dict) -> list[dict]:
 
         score = 0.0
         keywords = bu.get("monitoring_keywords", [])
+        products = bu.get("key_products", [])
+        industries = bu.get("core_industries", [])
+        all_keywords = keywords + products + industries
         matched_keywords = []
 
-        for keyword in keywords:
+        for keyword in all_keywords:
             if keyword.lower() in text:
                 score += 1.0
                 matched_keywords.append(keyword)
 
-        if keywords:
-            score = min(score / max(len(keywords) * 0.3, 1), 1.0)
+        # Normalize: even 1-2 keyword matches should give a meaningful score
+        if all_keywords and matched_keywords:
+            score = min(0.4 + (score / max(len(all_keywords) * 0.25, 1)) * 0.6, 1.0)
 
         if score > 0:
             matches.append({
@@ -278,11 +282,40 @@ def score_signal_heuristic(signal: dict) -> dict:
     elif any(w in text for w in ["patent", "innovation", "breakthrough", "technology"]):
         signal_type = "technology-trend"
 
+    # Base scores — generous defaults so live signals don't get filtered out.
+    # The heuristic is a fallback; it's better to include a borderline signal
+    # than to miss a real opportunity. Humans can skip irrelevant ones.
+    base_revenue = 6
+    base_time = 6
+    base_competitive = 5
+
+    # Boost based on signal type
+    if signal_type == "competitive-threat":
+        base_competitive = 8
+        base_time = 7
+    elif signal_type == "revenue-opportunity":
+        base_revenue = 8
+        base_time = 7
+    elif signal_type == "trade-tariff":
+        base_revenue = 7
+        base_competitive = 7
+    elif signal_type == "partnership-signal":
+        base_revenue = 7
+    elif signal_type == "technology-trend":
+        base_revenue = 6
+
+    # Strategic alignment from keyword matching — floor at 5 so general
+    # industry signals still qualify
+    if bu_matches:
+        alignment = max(5, min(int(bu_matches[0]["relevance_score"] * 10), 10))
+    else:
+        alignment = 4
+
     scores = {
-        "revenue_impact": 5,
-        "time_sensitivity": 5,
-        "strategic_alignment": min(int(bu_matches[0]["relevance_score"] * 10), 10) if bu_matches else 2,
-        "competitive_pressure": 5,
+        "revenue_impact": base_revenue,
+        "time_sensitivity": base_time,
+        "strategic_alignment": alignment,
+        "competitive_pressure": base_competitive,
     }
 
     composite = calculate_composite_score(scores)
