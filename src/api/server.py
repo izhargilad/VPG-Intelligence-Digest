@@ -359,8 +359,8 @@ def _run_pipeline_bg(dry_run: bool = False, pdf_mode: bool = False):
     try:
         if dry_run:
             from scripts.dry_run import main as dry_run_main
-            dry_run_main()
-            _pipeline_status["last_result"] = {"status": "completed", "mode": "dry-run"}
+            dry_run_main(pdf_mode=pdf_mode)
+            _pipeline_status["last_result"] = {"status": "completed", "mode": "dry-run", "pdf_generated": pdf_mode}
         else:
             from src.pipeline import run_full_pipeline
             result = run_full_pipeline(pdf_mode=pdf_mode)

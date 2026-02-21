@@ -2,6 +2,8 @@
 runs stages 2-6 of the VPG Intelligence Digest pipeline.
 
 Used when live source collection is blocked (e.g. sandboxed environment).
+Now delegates to the main pipeline's compose/deliver stages to ensure
+PDF generation and inline-styled HTML are used consistently.
 """
 
 import hashlib
@@ -210,9 +212,15 @@ def setup_logging() -> None:
     )
 
 
-def main():
+def main(pdf_mode: bool = True):
+    """Run the dry-run pipeline.
+
+    Args:
+        pdf_mode: If True (default), generate a PDF and send as attachment.
+                  This bypasses enterprise spam filters that scramble HTML.
+    """
     setup_logging()
-    logger.info("=== VPG Intelligence Digest — Dry Run ===")
+    logger.info("=== VPG Intelligence Digest — Dry Run (pdf_mode=%s) ===", pdf_mode)
 
     conn = get_connection()
     init_db()
@@ -296,7 +304,7 @@ def main():
         logger.info("Trends: %d updated, %d notable",
                      trend_result["trends_updated"], len(trend_result["notable"]))
 
-        # Stage 5: Composition
+        # Stage 5: Composition (use main pipeline's compose which supports PDF)
         logger.info("=== Stage 5: Composition ===")
         bu_config = get_business_units()
         context = build_digest_context(scored_signals, bu_config)
@@ -306,16 +314,32 @@ def main():
         saved_path = save_digest_html(html, MOCK_OUTPUT_DIR)
         logger.info("Digest composed: %s (%d chars)", subject, len(html))
 
+        # Generate PDF if requested
+        pdf_path = None
+        if pdf_mode:
+            try:
+                from src.composer.pdf_generator import generate_pdf
+                pdf_path = generate_pdf(
+                    html, context, MOCK_OUTPUT_DIR, cid_images=cid_images
+                )
+                logger.info("PDF generated: %s", pdf_path)
+            except Exception as e:
+                logger.warning("PDF generation failed, will send HTML only: %s", e)
+
         # Stage 6: Delivery
-        logger.info("=== Stage 6: Delivery (mode: %s) ===", DELIVERY_MODE)
+        logger.info("=== Stage 6: Delivery (mode: %s, pdf: %s) ===",
+                     DELIVERY_MODE, pdf_path is not None)
         recipients_config = get_recipients()
         results = []
         for recipient in recipients_config.get("recipients", []):
             if recipient.get("status") != "active":
                 continue
             result = send_email(
-                to=recipient["email"], subject=subject, html_content=html,
+                to=recipient["email"],
+                subject=subject,
+                html_content=html,
                 cid_images=cid_images,
+                pdf_path=pdf_path,
             )
             results.append(result)
             logger.info("Delivery to %s: %s", recipient["email"], result["status"])
@@ -332,7 +356,10 @@ def main():
 
         logger.info("=== Dry Run Complete ===")
         logger.info("Output file: %s", saved_path)
-        print(f"\nDigest saved to: {saved_path}")
+        if pdf_path:
+            logger.info("PDF file: %s", pdf_path)
+            print(f"\nPDF digest saved to: {pdf_path}")
+        print(f"HTML digest saved to: {saved_path}")
 
     except Exception as e:
         logger.error("Dry run failed: %s", str(e), exc_info=True)
