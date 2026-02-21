@@ -13,560 +13,251 @@
   </xml>
   <![endif]-->
   <title>{{ subject }}</title>
-  <style type="text/css">
-    /* Reset */
-    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-    img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
-    body { margin: 0; padding: 0; width: 100% !important; height: 100% !important; }
-
-    /* Base — executive style fonts */
-    body {
-      font-family: 'Segoe UI', Calibri, Helvetica, Arial, sans-serif;
-      background-color: #E8ECF1;
-      color: #2D3748;
-      line-height: 1.5;
-    }
-
-    .email-wrapper {
-      width: 100%;
-      background-color: #E8ECF1;
-      padding: 30px 0;
-    }
-
-    .email-content {
-      max-width: 640px;
-      margin: 0 auto;
-      background-color: #ffffff;
-    }
-
-    /* ── Header ─────────────────────────────────── */
-    .header {
-      background-color: #1B2A4A;
-      padding: 56px 40px 48px;
-      text-align: center;
-    }
-
-    .header img.logo {
-      max-height: 64px;
-      max-width: 220px;
-      margin-bottom: 24px;
-    }
-
-    .header .logo-text {
-      font-family: 'Segoe UI', Calibri, Arial, sans-serif;
-      font-size: 14px;
-      color: #6B82A6;
-      letter-spacing: 5px;
-      text-transform: uppercase;
-      margin: 0 0 22px;
-    }
-
-    .header h1 {
-      color: #ffffff;
-      font-family: Georgia, 'Times New Roman', serif;
-      font-size: 38px;
-      font-weight: 700;
-      margin: 0 0 10px;
-      letter-spacing: 0.3px;
-    }
-
-    .header .subtitle {
-      color: #8BA3C7;
-      font-size: 18px;
-      font-weight: 400;
-      margin: 0;
-    }
-
-    .header .date {
-      color: #6B82A6;
-      font-size: 14px;
-      margin-top: 14px;
-    }
-
-    /* ── Stats Bar ──────────────────────────────── */
-    .stats-bar {
-      background-color: #2E75B6;
-      padding: 14px 40px;
-      text-align: center;
-      color: #ffffff;
-      font-size: 14px;
-      font-weight: 600;
-      letter-spacing: 0.3px;
-    }
-
-    .stats-bar span {
-      margin: 0 12px;
-    }
-
-    /* ── Signal of the Week ────────────────────── */
-    .signal-of-week {
-      padding: 30px 40px;
-      background-color: #F0F4F8;
-      border-bottom: 1px solid #D2DCE6;
-    }
-
-    .sotw-badge {
-      display: inline-block;
-      background-color: #1B2A4A;
-      color: #ffffff;
-      padding: 5px 16px;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.8px;
-      text-transform: uppercase;
-    }
-
-    /* ── Executive Summary ──────────────────────── */
-    .exec-summary {
-      background-color: #F7F9FC;
-      padding: 30px 40px;
-      border-bottom: 3px solid #2E75B6;
-    }
-
-    .exec-summary h2 {
-      font-family: Georgia, 'Times New Roman', serif;
-      color: #1B2A4A;
-      font-size: 22px;
-      margin: 0 0 18px;
-      font-weight: 700;
-    }
-
-    .exec-summary ul {
-      margin: 0;
-      padding-left: 0;
-      list-style: none;
-    }
-
-    .exec-summary li {
-      font-size: 14px;
-      line-height: 1.5;
-      margin-bottom: 10px;
-      padding: 10px 14px;
-      background-color: #ffffff;
-      border-left: 4px solid;
-    }
-
-    .exec-summary li a {
-      text-decoration: none;
-      color: #2D3748;
-    }
-
-    .exec-summary li a:hover {
-      color: #2E75B6;
-    }
-
-    /* ── Badges & Tags ─────────────────────────── */
-    .score-badge {
-      display: inline-block;
-      background-color: #2E75B6;
-      color: #ffffff;
-      padding: 4px 12px;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 0.3px;
-    }
-
-    .score-badge.high-score {
-      background: linear-gradient(135deg, #D4AF37, #B8860B);
-      color: #ffffff;
-      padding: 5px 14px;
-      font-size: 15px;
-      border-radius: 12px;
-      box-shadow: 0 1px 4px rgba(184,134,11,0.35);
-    }
-
-    .bu-tag {
-      display: inline-block;
-      background-color: #E8ECF1;
-      color: #1B2A4A;
-      padding: 2px 8px;
-      border-radius: 3px;
-      font-size: 10px;
-      text-transform: uppercase;
-      font-weight: 600;
-    }
-
-    .also-relevant {
-      display: inline-block;
-      background-color: #EDF2F7;
-      color: #4A5568;
-      padding: 3px 10px;
-      border-radius: 3px;
-      font-size: 11px;
-    }
-
-    .badge-verified {
-      background-color: #2E7D32;
-      color: #fff;
-      padding: 2px 7px;
-      border-radius: 3px;
-      font-size: 10px;
-      font-weight: 700;
-    }
-
-    .badge-likely {
-      background-color: #1565C0;
-      color: #fff;
-      padding: 2px 7px;
-      border-radius: 3px;
-      font-size: 10px;
-      font-weight: 700;
-    }
-
-    .badge-unverified {
-      background-color: #C62828;
-      color: #fff;
-      padding: 2px 7px;
-      border-radius: 3px;
-      font-size: 10px;
-      font-weight: 700;
-    }
-
-    /* ── BU Section ─────────────────────────────── */
-    .bu-section {
-      padding: 28px 40px;
-      border-bottom: 1px solid #E2E8F0;
-    }
-
-    .bu-section-header {
-      padding: 12px 16px;
-      margin-bottom: 18px;
-      border-left: 4px solid;
-    }
-
-    .bu-section-header h2 {
-      margin: 0;
-      font-family: Georgia, 'Times New Roman', serif;
-      font-size: 20px;
-      color: #1B2A4A;
-      font-weight: 700;
-    }
-
-    .bu-section-header img.bu-logo {
-      max-height: 34px;
-      margin-right: 12px;
-      vertical-align: middle;
-    }
-
-    .bu-initial {
-      display: inline-block;
-      width: 28px;
-      height: 28px;
-      line-height: 28px;
-      text-align: center;
-      color: #ffffff;
-      font-size: 13px;
-      font-weight: 700;
-      border-radius: 4px;
-      margin-right: 10px;
-      vertical-align: middle;
-    }
-
-    /* ── Action Card ────────────────────────────── */
-    .action-card {
-      border: 1px solid #E2E8F0;
-      border-radius: 6px;
-      margin-bottom: 16px;
-      overflow: hidden;
-      border-left: 4px solid;
-    }
-
-    .card-header {
-      padding: 14px 16px;
-      border-bottom: 1px solid #E2E8F0;
-    }
-
-    .card-header .signal-type {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .card-header .headline {
-      font-family: Georgia, 'Times New Roman', serif;
-      font-size: 16px;
-      font-weight: 700;
-      color: #1B2A4A;
-      margin: 6px 0 0;
-    }
-
-    .card-meta {
-      margin-top: 8px;
-    }
-
-    .card-body {
-      padding: 16px;
-    }
-
-    .card-body .field-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: #2E75B6;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin: 14px 0 4px;
-    }
-
-    .card-body .field-label:first-child {
-      margin-top: 0;
-    }
-
-    .card-body .field-value {
-      font-size: 13px;
-      color: #2D3748;
-      line-height: 1.6;
-      margin: 0;
-    }
-
-    .card-body .field-value ul {
-      margin: 4px 0;
-      padding-left: 18px;
-    }
-
-    .card-body .field-value li {
-      margin-bottom: 3px;
-    }
-
-    .card-footer {
-      padding: 10px 16px;
-      background-color: #F7F9FC;
-      border-top: 1px solid #E2E8F0;
-      font-size: 11px;
-      color: #718096;
-    }
-
-    .card-footer a {
-      color: #2E75B6;
-      text-decoration: none;
-    }
-
-    .card-footer a:hover {
-      text-decoration: underline;
-    }
-
-    /* ── Footer ─────────────────────────────────── */
-    .footer {
-      background-color: #1B2A4A;
-      padding: 30px 40px;
-      text-align: center;
-    }
-
-    .footer p {
-      color: #8BA3C7;
-      font-size: 12px;
-      line-height: 1.6;
-      margin: 0 0 6px;
-    }
-
-    .footer a {
-      color: #7CB4E8;
-      text-decoration: none;
-    }
-
-    .footer a:hover {
-      text-decoration: underline;
-    }
-
-    /* ── Responsive ─────────────────────────────── */
-    @media screen and (max-width: 480px) {
-      .email-content {
-        width: 100% !important;
-      }
-      .header, .exec-summary, .bu-section, .footer, .signal-of-week {
-        padding-left: 20px !important;
-        padding-right: 20px !important;
-      }
-      .header h1 { font-size: 28px !important; }
-      .exec-summary h2 { font-size: 18px !important; }
-      .bu-section-header h2 { font-size: 17px !important; }
-    }
-  </style>
 </head>
-<body>
-  <div class="email-wrapper">
-    <table class="email-content" align="center" cellpadding="0" cellspacing="0" width="640">
+<body style="margin:0;padding:0;width:100%;height:100%;font-family:'Segoe UI',Calibri,Helvetica,Arial,sans-serif;background-color:#E8ECF1;color:#2D3748;line-height:1.5;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+  <!--[if mso]>
+  <style type="text/css">
+    body, table, td { font-family: Calibri, Helvetica, Arial, sans-serif !important; }
+  </style>
+  <![endif]-->
 
-      <!-- ═══ HEADER ═══ -->
-      <tr>
-        <td class="header">
-          {% if branding.logo_url %}
-          <img src="{{ branding.logo_url }}" alt="Vishay Precision Group" class="logo" style="max-height:64px;max-width:220px;margin-bottom:24px;display:inline-block;"><br>
-          {% else %}
-          <p class="logo-text" style="font-family:'Segoe UI',Calibri,Arial,sans-serif;font-size:14px;color:#6B82A6;letter-spacing:5px;text-transform:uppercase;margin:0 0 22px;">Vishay Precision Group</p>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#E8ECF1;padding:30px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="640" cellpadding="0" cellspacing="0" border="0" style="max-width:640px;width:100%;background-color:#ffffff;">
+
+          <!-- HEADER -->
+          <tr>
+            <td style="background-color:#1B2A4A;padding:56px 40px 48px;text-align:center;">
+              {% if branding.logo_url %}
+              <img src="{{ branding.logo_url }}" alt="Vishay Precision Group" style="max-height:64px;max-width:220px;margin-bottom:24px;display:inline-block;border:0;outline:none;" /><br/>
+              {% else %}
+              <p style="font-family:'Segoe UI',Calibri,Arial,sans-serif;font-size:14px;color:#6B82A6;letter-spacing:5px;text-transform:uppercase;margin:0 0 22px;">Vishay Precision Group</p>
+              {% endif %}
+              <h1 style="color:#ffffff;font-family:Georgia,'Times New Roman',serif;font-size:38px;font-weight:700;margin:0 0 10px;letter-spacing:0.3px;">Intelligence Digest</h1>
+              <p style="color:#8BA3C7;font-size:18px;font-weight:400;margin:0;">Weekly Strategic Intelligence Report</p>
+              <p style="color:#6B82A6;font-size:14px;margin-top:14px;">Week {{ week_number }}, {{ year }} &bull; {{ date_range }}</p>
+            </td>
+          </tr>
+
+          <!-- STATS BAR -->
+          <tr>
+            <td style="background-color:#2E75B6;padding:14px 40px;text-align:center;color:#ffffff;font-size:14px;font-weight:600;letter-spacing:0.3px;">
+              <span style="margin:0 12px;">{{ total_signals }} Signals</span>
+              <span style="margin:0 12px;">&middot;</span>
+              <span style="margin:0 12px;">{{ bu_count }} Business Units</span>
+            </td>
+          </tr>
+
+          <!-- SIGNAL OF THE WEEK -->
+          {% if signal_of_week %}
+          <tr>
+            <td style="padding:30px 40px;background-color:#F0F4F8;border-bottom:1px solid #D2DCE6;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" style="padding-bottom:16px;">
+                    <span style="display:inline-block;background-color:#1B2A4A;color:#ffffff;padding:5px 16px;font-size:12px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;">&#9733; Signal of the Week</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <!-- Signal of Week Card -->
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #E2E8F0;border-radius:6px;border-left:5px solid {{ signal_of_week.type_color }};overflow:hidden;">
+                      <!-- Card Header -->
+                      <tr>
+                        <td style="padding:14px 16px;background-color:{{ signal_of_week.type_bg }};border-bottom:1px solid #E2E8F0;">
+                          <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:{{ signal_of_week.type_color }};margin:0;">
+                            {{ signal_of_week.type_icon }} {{ signal_of_week.signal_type | replace('-', ' ') | upper }}
+                          </p>
+                          <p style="font-family:Georgia,'Times New Roman',serif;font-size:16px;font-weight:700;color:#1B2A4A;margin:6px 0 0;">{{ signal_of_week.headline }}</p>
+                          <p style="margin:8px 0 0;">
+                            {% if signal_of_week.high_score %}
+                            <span style="display:inline-block;background:linear-gradient(135deg,#D4AF37,#B8860B);color:#ffffff;padding:5px 14px;border-radius:12px;font-size:15px;font-weight:700;letter-spacing:0.3px;">{{ signal_of_week.composite_score }}</span>
+                            {% else %}
+                            <span style="display:inline-block;background-color:#2E75B6;color:#ffffff;padding:4px 12px;border-radius:12px;font-size:14px;font-weight:700;letter-spacing:0.3px;">{{ signal_of_week.composite_score }}</span>
+                            {% endif %}
+                            {% for bu in signal_of_week.bu_matches[:3] %}
+                            <span style="display:inline-block;background-color:#E8ECF1;color:#1B2A4A;padding:2px 8px;border-radius:3px;font-size:10px;text-transform:uppercase;font-weight:600;margin-left:4px;">{{ bu.bu_id | replace('vpg-', '') | replace('-', ' ') }}</span>
+                            {% endfor %}
+                          </p>
+                        </td>
+                      </tr>
+                      <!-- Card Body -->
+                      <tr>
+                        <td style="padding:16px;">
+                          <p style="font-size:11px;font-weight:700;color:#2E75B6;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">What</p>
+                          <div style="font-size:13px;color:#2D3748;line-height:1.6;margin:0 0 14px;">{{ signal_of_week.what_summary | to_bullets }}</div>
+
+                          <p style="font-size:11px;font-weight:700;color:#2E75B6;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Why It Matters</p>
+                          <div style="font-size:13px;color:#2D3748;line-height:1.6;margin:0 0 14px;">{{ signal_of_week.why_it_matters | to_bullets }}</div>
+
+                          <p style="font-size:11px;font-weight:700;color:#2E75B6;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Quick Win</p>
+                          <p style="font-size:13px;color:#2D3748;line-height:1.6;margin:0 0 14px;">{{ signal_of_week.quick_win }}</p>
+
+                          {% if signal_of_week.suggested_owner %}
+                          <p style="font-size:11px;font-weight:700;color:#2E75B6;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Owner</p>
+                          <p style="font-size:13px;color:#2D3748;line-height:1.6;margin:0 0 14px;">{{ signal_of_week.suggested_owner }}</p>
+                          {% endif %}
+
+                          {% if signal_of_week.estimated_impact %}
+                          <p style="font-size:11px;font-weight:700;color:#2E75B6;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Est. Impact</p>
+                          <p style="font-size:13px;color:#2D3748;line-height:1.6;margin:0;">{{ signal_of_week.estimated_impact }}</p>
+                          {% endif %}
+                        </td>
+                      </tr>
+                      {% if signal_of_week.url %}
+                      <!-- Card Footer -->
+                      <tr>
+                        <td style="padding:10px 16px;background-color:#F7F9FC;border-top:1px solid #E2E8F0;font-size:11px;color:#718096;">
+                          Sources: <a href="{{ signal_of_week.url }}" target="_blank" style="color:#2E75B6;text-decoration:none;">[Primary]</a>
+                        </td>
+                      </tr>
+                      {% endif %}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
           {% endif %}
-          <h1>Intelligence Digest</h1>
-          <p class="subtitle">Weekly Strategic Intelligence Report</p>
-          <p class="date">Week {{ week_number }}, {{ year }} &bull; {{ date_range }}</p>
-        </td>
-      </tr>
 
-      <!-- ═══ STATS BAR ═══ -->
-      <tr>
-        <td class="stats-bar">
-          <span>{{ total_signals }} Signals</span>
-          <span>&middot;</span>
-          <span>{{ bu_count }} Business Units</span>
-        </td>
-      </tr>
-
-      <!-- ═══ SIGNAL OF THE WEEK ═══ -->
-      {% if signal_of_week %}
-      <tr>
-        <td class="signal-of-week">
-          <div style="text-align: center; margin-bottom: 16px;">
-            <span class="sotw-badge">&#9733; Signal of the Week</span>
-          </div>
-          <div class="action-card" id="signal-{{ signal_of_week.anchor_id }}"
-               style="border-left-color: {{ signal_of_week.type_color }}; border-left-width: 5px;">
-            <div class="card-header" style="background-color: {{ signal_of_week.type_bg }};">
-              <div class="signal-type" style="color: {{ signal_of_week.type_color }};">
-                {{ signal_of_week.type_icon }} {{ signal_of_week.signal_type | replace('-', ' ') | upper }}
-              </div>
-              <div class="headline">{{ signal_of_week.headline }}</div>
-              <div class="card-meta">
-                <span class="score-badge{% if signal_of_week.high_score %} high-score{% endif %}">{{ signal_of_week.composite_score }}</span>
-                {% for bu in signal_of_week.bu_matches[:3] %}
-                <span class="bu-tag">{{ bu.bu_id | replace('vpg-', '') | replace('-', ' ') }}</span>
+          <!-- EXECUTIVE SUMMARY / TOP SIGNALS -->
+          {% if top_signals %}
+          <tr>
+            <td style="background-color:#F7F9FC;padding:30px 40px;border-bottom:3px solid #2E75B6;">
+              <h2 style="font-family:Georgia,'Times New Roman',serif;color:#1B2A4A;font-size:22px;margin:0 0 18px;font-weight:700;">Top Signals This Week</h2>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                {% for signal in top_signals %}
+                <tr>
+                  <td style="padding:10px 14px;margin-bottom:10px;background-color:#ffffff;border-left:4px solid {{ signal.type_color }};font-size:14px;line-height:1.5;">
+                    <a href="#signal-{{ signal.anchor_id }}" style="text-decoration:none;color:#2D3748;">
+                      {% if signal.high_score %}
+                      <span style="display:inline-block;background:linear-gradient(135deg,#D4AF37,#B8860B);color:#ffffff;padding:4px 12px;border-radius:12px;font-size:14px;font-weight:700;">{{ signal.composite_score }}</span>
+                      {% else %}
+                      <span style="display:inline-block;background-color:#2E75B6;color:#ffffff;padding:4px 12px;border-radius:12px;font-size:14px;font-weight:700;letter-spacing:0.3px;">{{ signal.composite_score }}</span>
+                      {% endif %}
+                      &nbsp;{{ signal.headline }}
+                      <br/>
+                      <span style="font-size:11px;color:{{ signal.type_color }};font-weight:600;">
+                        {{ signal.type_icon }} {{ signal.signal_type | replace('-', ' ') | upper }}
+                      </span>
+                      {% for bu in signal.bu_matches[:2] %}
+                      <span style="display:inline-block;background-color:#E8ECF1;color:#1B2A4A;padding:2px 8px;border-radius:3px;font-size:10px;text-transform:uppercase;font-weight:600;">{{ bu.bu_id | replace('vpg-', '') | replace('-', ' ') }}</span>
+                      {% endfor %}
+                    </a>
+                  </td>
+                </tr>
+                <tr><td style="height:6px;font-size:1px;line-height:1px;">&nbsp;</td></tr>
                 {% endfor %}
-              </div>
-            </div>
-            <div class="card-body">
-              <div class="field-label">What</div>
-              <div class="field-value">{{ signal_of_week.what_summary | to_bullets }}</div>
+              </table>
+            </td>
+          </tr>
+          {% endif %}
 
-              <div class="field-label">Why It Matters</div>
-              <div class="field-value">{{ signal_of_week.why_it_matters | to_bullets }}</div>
+          <!-- BU SECTIONS -->
+          {% for section in bu_sections %}
+          <tr>
+            <td style="padding:28px 40px;border-bottom:1px solid #E2E8F0;">
+              <!-- BU Header -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:18px;">
+                <tr>
+                  <td style="padding:12px 16px;border-left:4px solid {{ section.bu_color }};">
+                    {% if section.bu_logo_url %}
+                    <img src="{{ section.bu_logo_url }}" alt="{{ section.bu_name }}" style="max-height:34px;margin-right:12px;vertical-align:middle;display:inline;border:0;outline:none;" />
+                    {% else %}
+                    <span style="display:inline-block;width:28px;height:28px;line-height:28px;text-align:center;color:#ffffff;font-size:13px;font-weight:700;border-radius:4px;margin-right:10px;vertical-align:middle;background-color:{{ section.bu_color }};">{{ section.bu_name[0] }}</span>
+                    {% endif %}
+                    <span style="display:inline;vertical-align:middle;font-family:Georgia,'Times New Roman',serif;font-size:20px;color:#1B2A4A;font-weight:700;">{{ section.bu_name }}</span>
+                  </td>
+                </tr>
+              </table>
 
-              <div class="field-label">Quick Win</div>
-              <p class="field-value">{{ signal_of_week.quick_win }}</p>
+              <!-- Signal Cards for this BU -->
+              {% for signal in section.signals %}
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" id="signal-{{ signal.anchor_id }}" style="border:1px solid #E2E8F0;border-radius:6px;border-left:4px solid {{ signal.type_color }};overflow:hidden;margin-bottom:16px;">
+                <!-- Card Header -->
+                <tr>
+                  <td style="padding:14px 16px;background-color:{{ signal.type_bg }};border-bottom:1px solid #E2E8F0;">
+                    <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:{{ signal.type_color }};margin:0;">
+                      {{ signal.type_icon }} {{ signal.signal_type | replace('-', ' ') | upper }}
+                    </p>
+                    <p style="font-family:Georgia,'Times New Roman',serif;font-size:16px;font-weight:700;color:#1B2A4A;margin:6px 0 0;">{{ signal.headline }}</p>
+                    <p style="margin:8px 0 0;">
+                      {% if signal.high_score %}
+                      <span style="display:inline-block;background:linear-gradient(135deg,#D4AF37,#B8860B);color:#ffffff;padding:5px 14px;border-radius:12px;font-size:15px;font-weight:700;">{{ signal.composite_score }}</span>
+                      {% else %}
+                      <span style="display:inline-block;background-color:#2E75B6;color:#ffffff;padding:4px 12px;border-radius:12px;font-size:14px;font-weight:700;letter-spacing:0.3px;">{{ signal.composite_score }}</span>
+                      {% endif %}
+                      {% if signal.validation_level is defined %}
+                      {% if signal.validation_level == 'verified' %}
+                      <span style="background-color:#2E7D32;color:#fff;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:700;">{{ signal.validation_level | upper }}</span>
+                      {% elif signal.validation_level == 'likely' %}
+                      <span style="background-color:#1565C0;color:#fff;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:700;">{{ signal.validation_level | upper }}</span>
+                      {% else %}
+                      <span style="background-color:#C62828;color:#fff;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:700;">{{ signal.validation_level | upper }}</span>
+                      {% endif %}
+                      {% endif %}
+                    </p>
+                  </td>
+                </tr>
+                <!-- Card Body -->
+                <tr>
+                  <td style="padding:16px;">
+                    <p style="font-size:11px;font-weight:700;color:#2E75B6;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">What</p>
+                    <div style="font-size:13px;color:#2D3748;line-height:1.6;margin:0 0 14px;">{{ signal.what_summary | to_bullets }}</div>
 
-              {% if signal_of_week.suggested_owner %}
-              <div class="field-label">Owner</div>
-              <p class="field-value">{{ signal_of_week.suggested_owner }}</p>
-              {% endif %}
+                    <p style="font-size:11px;font-weight:700;color:#2E75B6;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Why It Matters</p>
+                    <div style="font-size:13px;color:#2D3748;line-height:1.6;margin:0 0 14px;">{{ signal.why_it_matters | to_bullets }}</div>
 
-              {% if signal_of_week.estimated_impact %}
-              <div class="field-label">Est. Impact</div>
-              <p class="field-value">{{ signal_of_week.estimated_impact }}</p>
-              {% endif %}
-            </div>
-            {% if signal_of_week.url %}
-            <div class="card-footer">
-              Sources: <a href="{{ signal_of_week.url }}" target="_blank">[Primary]</a>
-            </div>
-            {% endif %}
-          </div>
-        </td>
-      </tr>
-      {% endif %}
+                    <p style="font-size:11px;font-weight:700;color:#2E75B6;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Quick Win</p>
+                    <p style="font-size:13px;color:#2D3748;line-height:1.6;margin:0 0 14px;">{{ signal.quick_win }}</p>
 
-      <!-- ═══ TOP SIGNALS — clickable links to detail cards below ═══ -->
-      {% if top_signals %}
-      <tr>
-        <td class="exec-summary">
-          <h2>Top Signals This Week</h2>
-          <ul>
-            {% for signal in top_signals %}
-            <li style="border-left-color: {{ signal.type_color }};">
-              <a href="#signal-{{ signal.anchor_id }}">
-                <span class="score-badge{% if signal.high_score %} high-score{% endif %}">{{ signal.composite_score }}</span>
-                &nbsp;{{ signal.headline }}
-                <br>
-                <span style="font-size: 11px; color: {{ signal.type_color }}; font-weight: 600;">
-                  {{ signal.type_icon }} {{ signal.signal_type | replace('-', ' ') | upper }}
-                </span>
-                {% for bu in signal.bu_matches[:2] %}
-                <span class="bu-tag">{{ bu.bu_id | replace('vpg-', '') | replace('-', ' ') }}</span>
-                {% endfor %}
-              </a>
-            </li>
-            {% endfor %}
-          </ul>
-        </td>
-      </tr>
-      {% endif %}
+                    {% if signal.suggested_owner %}
+                    <p style="font-size:11px;font-weight:700;color:#2E75B6;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Owner</p>
+                    <p style="font-size:13px;color:#2D3748;line-height:1.6;margin:0 0 14px;">{{ signal.suggested_owner }}</p>
+                    {% endif %}
 
-      <!-- ═══ BU SECTIONS — deduplicated, cross-BU tagged ═══ -->
-      {% for section in bu_sections %}
-      <tr>
-        <td class="bu-section">
-          <div class="bu-section-header" style="border-color: {{ section.bu_color }};">
-            {% if section.bu_logo_url %}
-            <img src="{{ section.bu_logo_url }}" alt="{{ section.bu_name }}" class="bu-logo" style="max-height:34px;margin-right:12px;vertical-align:middle;display:inline;">
-            {% else %}
-            <span class="bu-initial" style="display:inline-block;width:28px;height:28px;line-height:28px;text-align:center;color:#ffffff;font-size:13px;font-weight:700;border-radius:4px;margin-right:10px;vertical-align:middle;background-color:{{ section.bu_color }};">{{ section.bu_name[0] }}</span>
-            {% endif %}
-            <h2 style="display: inline; vertical-align: middle;">{{ section.bu_name }}</h2>
-          </div>
+                    {% if signal.estimated_impact %}
+                    <p style="font-size:11px;font-weight:700;color:#2E75B6;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Est. Impact</p>
+                    <p style="font-size:13px;color:#2D3748;line-height:1.6;margin:0;">{{ signal.estimated_impact }}</p>
+                    {% endif %}
+                  </td>
+                </tr>
+                <!-- Card Footer -->
+                <tr>
+                  <td style="padding:10px 16px;background-color:#F7F9FC;border-top:1px solid #E2E8F0;font-size:11px;color:#718096;">
+                    {% if signal.also_relevant_to is defined and signal.also_relevant_to %}
+                    <span style="display:inline-block;background-color:#EDF2F7;color:#4A5568;padding:3px 10px;border-radius:3px;font-size:11px;">Also relevant to: {{ signal.also_relevant_to | join(', ') }}</span>
+                    <br/>
+                    {% endif %}
+                    {% if signal.url %}
+                    Sources: <a href="{{ signal.url }}" target="_blank" style="color:#2E75B6;text-decoration:none;">[Primary]</a>
+                    {% endif %}
+                  </td>
+                </tr>
+              </table>
+              {% endfor %}
 
-          {% for signal in section.signals %}
-          <div class="action-card" id="signal-{{ signal.anchor_id }}"
-               style="border-left-color: {{ signal.type_color }};">
-            <div class="card-header" style="background-color: {{ signal.type_bg }};">
-              <div class="signal-type" style="color: {{ signal.type_color }};">
-                {{ signal.type_icon }} {{ signal.signal_type | replace('-', ' ') | upper }}
-              </div>
-              <div class="headline">{{ signal.headline }}</div>
-              <div class="card-meta">
-                <span class="score-badge{% if signal.high_score %} high-score{% endif %}">{{ signal.composite_score }}</span>
-                {% if signal.validation_level is defined %}
-                <span class="badge-{{ signal.validation_level }}">{{ signal.validation_level | upper }}</span>
-                {% endif %}
-              </div>
-            </div>
-            <div class="card-body">
-              <div class="field-label">What</div>
-              <div class="field-value">{{ signal.what_summary | to_bullets }}</div>
-
-              <div class="field-label">Why It Matters</div>
-              <div class="field-value">{{ signal.why_it_matters | to_bullets }}</div>
-
-              <div class="field-label">Quick Win</div>
-              <p class="field-value">{{ signal.quick_win }}</p>
-
-              {% if signal.suggested_owner %}
-              <div class="field-label">Owner</div>
-              <p class="field-value">{{ signal.suggested_owner }}</p>
-              {% endif %}
-
-              {% if signal.estimated_impact %}
-              <div class="field-label">Est. Impact</div>
-              <p class="field-value">{{ signal.estimated_impact }}</p>
-              {% endif %}
-            </div>
-            <div class="card-footer">
-              {% if signal.also_relevant_to is defined and signal.also_relevant_to %}
-              <span class="also-relevant">Also relevant to: {{ signal.also_relevant_to | join(', ') }}</span>
-              <br>
-              {% endif %}
-              {% if signal.url %}
-              Sources: <a href="{{ signal.url }}" target="_blank">[Primary]</a>
-              {% endif %}
-            </div>
-          </div>
+            </td>
+          </tr>
           {% endfor %}
 
-        </td>
-      </tr>
-      {% endfor %}
+          <!-- FOOTER -->
+          <tr>
+            <td style="background-color:#1B2A4A;padding:30px 40px;text-align:center;">
+              <p style="font-size:14px;color:#ffffff;margin:0 0 10px;line-height:1.6;">Powered by VPG Strategic Intelligence</p>
+              <p style="color:#8BA3C7;font-size:12px;line-height:1.6;margin:0 0 6px;">Auto-generated from {{ total_signals }} validated industry signals</p>
+              <p style="color:#8BA3C7;font-size:12px;line-height:1.6;margin:12px 0 0;">
+                <a href="#" style="color:#7CB4E8;text-decoration:none;">Unsubscribe</a> &nbsp;&bull;&nbsp;
+                <a href="#" style="color:#7CB4E8;text-decoration:none;">View in Browser</a> &nbsp;&bull;&nbsp;
+                <a href="#" style="color:#7CB4E8;text-decoration:none;">Archive</a>
+              </p>
+            </td>
+          </tr>
 
-      <!-- ═══ FOOTER ═══ -->
-      <tr>
-        <td class="footer">
-          <p style="font-size: 14px; color: #ffffff; margin-bottom: 10px;">Powered by VPG Strategic Intelligence</p>
-          <p>Auto-generated from {{ total_signals }} validated industry signals</p>
-          <p style="margin-top: 12px;">
-            <a href="#">Unsubscribe</a> &nbsp;&bull;&nbsp;
-            <a href="#">View in Browser</a> &nbsp;&bull;&nbsp;
-            <a href="#">Archive</a>
-          </p>
-        </td>
-      </tr>
-
-    </table>
-  </div>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>

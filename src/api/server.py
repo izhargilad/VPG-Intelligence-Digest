@@ -3,10 +3,11 @@
 Provides REST API endpoints for:
 - Recipient management (add, edit, remove)
 - Business unit & industry configuration
-- Source management
-- Pipeline execution (run digest, dry-run)
+- Source management (add, edit, toggle, remove)
+- Pipeline execution (run digest, dry-run, pause/resume/cancel)
 - Digest history and status
-- Scheduling control
+- Delivery schedule editing
+- Trend data and history
 
 Run with: python -m src.api.server
 """
@@ -55,7 +56,13 @@ app.add_middleware(
 )
 
 # Track background pipeline runs
-_pipeline_status = {"running": False, "last_result": None, "last_run": None}
+_pipeline_status = {
+    "running": False,
+    "paused": False,
+    "last_result": None,
+    "last_run": None,
+    "current_stage": "",
+}
 
 
 @app.on_event("startup")
@@ -97,17 +104,33 @@ class RecipientUpdate(BaseModel):
     notes: str | None = None
 
 
+class SourceCreate(BaseModel):
+    name: str
+    url: str
+    type: str = "rss"
+    tier: int = 2
+    relevant_bus: list[str] = []
+    keywords: list[str] = []
+    is_competitor: bool = False
+
+
 class SourceUpdate(BaseModel):
     name: str | None = None
     url: str | None = None
     active: bool | None = None
     tier: int | None = None
+    type: str | None = None
+    relevant_bus: list[str] | None = None
+    keywords: list[str] | None = None
+    is_competitor: bool | None = None
 
 
 class DeliverySettingsUpdate(BaseModel):
     send_day: str | None = None
     send_time_et: str | None = None
     timezone: str | None = None
+    max_recipients_per_batch: int | None = None
+    batch_delay_seconds: int | None = None
 
 
 # ── Recipients ───────────────────────────────────────────────────────
@@ -181,6 +204,13 @@ def delete_recipient(recipient_id: str):
     return {"deleted": recipient_id}
 
 
+@app.get("/api/delivery-settings")
+def get_delivery_settings():
+    """Get the delivery schedule settings."""
+    config = get_recipients()
+    return config.get("delivery_settings", {})
+
+
 @app.put("/api/delivery-settings")
 def update_delivery_settings(settings: DeliverySettingsUpdate):
     """Update the delivery schedule settings."""
@@ -221,6 +251,43 @@ def list_sources():
     return get_sources()
 
 
+@app.post("/api/sources")
+def add_source(source: SourceCreate):
+    """Add a new data source."""
+    config = get_sources()
+    sources = config.get("sources", [])
+
+    # Generate a URL-safe ID from the name
+    slug = source.name.lower().replace(" ", "-").replace(".", "")[:30]
+    source_id = slug
+    existing_ids = {s["id"] for s in sources}
+    counter = 1
+    while source_id in existing_ids:
+        source_id = f"{slug}-{counter}"
+        counter += 1
+
+    new_source = {
+        "id": source_id,
+        "name": source.name,
+        "url": source.url,
+        "type": source.type,
+        "tier": source.tier,
+        "relevant_bus": source.relevant_bus,
+        "keywords": source.keywords,
+        "active": True,
+        "last_check": None,
+        "error_count": 0,
+    }
+    if source.is_competitor:
+        new_source["is_competitor"] = True
+
+    sources.append(new_source)
+    config["sources"] = sources
+    save_sources(config)
+
+    return new_source
+
+
 @app.put("/api/sources/{source_id}")
 def update_source(source_id: str, updates: SourceUpdate):
     """Update a data source."""
@@ -234,6 +301,22 @@ def update_source(source_id: str, updates: SourceUpdate):
     raise HTTPException(404, f"Source {source_id} not found")
 
 
+@app.delete("/api/sources/{source_id}")
+def delete_source(source_id: str):
+    """Remove a data source."""
+    config = get_sources()
+    sources = config.get("sources", [])
+    original_len = len(sources)
+
+    config["sources"] = [s for s in sources if s["id"] != source_id]
+
+    if len(config["sources"]) == original_len:
+        raise HTTPException(404, f"Source {source_id} not found")
+
+    save_sources(config)
+    return {"deleted": source_id}
+
+
 # ── Trends ───────────────────────────────────────────────────────────
 
 @app.get("/api/trends")
@@ -243,7 +326,7 @@ def list_trends(limit: int = 30):
     return get_trend_summary(limit=limit)
 
 
-@app.get("/api/trends/{trend_key}/history")
+@app.get("/api/trends/{trend_key:path}/history")
 def trend_history(trend_key: str, weeks: int = 12):
     """Get week-by-week history for a specific trend."""
     from src.trends.tracker import get_trend_history
@@ -267,9 +350,11 @@ def update_scoring(weights: dict):
 
 # ── Pipeline Control ─────────────────────────────────────────────────
 
-def _run_pipeline_bg(dry_run: bool = False):
+def _run_pipeline_bg(dry_run: bool = False, pdf_mode: bool = False):
     """Run the pipeline in a background thread."""
     _pipeline_status["running"] = True
+    _pipeline_status["paused"] = False
+    _pipeline_status["current_stage"] = ""
     _pipeline_status["last_run"] = datetime.now().isoformat()
     try:
         if dry_run:
@@ -278,35 +363,90 @@ def _run_pipeline_bg(dry_run: bool = False):
             _pipeline_status["last_result"] = {"status": "completed", "mode": "dry-run"}
         else:
             from src.pipeline import run_full_pipeline
-            result = run_full_pipeline()
+            result = run_full_pipeline(pdf_mode=pdf_mode)
             _pipeline_status["last_result"] = result
     except Exception as e:
         _pipeline_status["last_result"] = {"status": "failed", "error": str(e)}
     finally:
         _pipeline_status["running"] = False
+        _pipeline_status["paused"] = False
+        _pipeline_status["current_stage"] = ""
 
 
 @app.post("/api/pipeline/run")
-def run_pipeline(dry_run: bool = False):
+def run_pipeline(dry_run: bool = False, pdf_mode: bool = False):
     """Trigger a pipeline run (live or dry-run).
+
+    Args:
+        dry_run: If true, use seed data instead of live sources.
+        pdf_mode: If true, generate PDF and send as attachment.
 
     Runs asynchronously in the background. Check /api/pipeline/status for results.
     """
     if _pipeline_status["running"]:
         raise HTTPException(409, "Pipeline is already running")
 
-    thread = threading.Thread(target=_run_pipeline_bg, args=(dry_run,), daemon=True)
+    thread = threading.Thread(
+        target=_run_pipeline_bg,
+        args=(dry_run, pdf_mode),
+        daemon=True,
+    )
     thread.start()
 
     return {
-        "message": f"Pipeline started ({'dry-run' if dry_run else 'live'} mode)",
+        "message": f"Pipeline started ({'dry-run' if dry_run else 'live'} mode, "
+                   f"{'PDF' if pdf_mode else 'HTML'} delivery)",
         "status_url": "/api/pipeline/status",
     }
+
+
+@app.post("/api/pipeline/pause")
+def pause_pipeline():
+    """Pause a running pipeline."""
+    if not _pipeline_status["running"]:
+        raise HTTPException(400, "Pipeline is not running")
+
+    from src.pipeline import pipeline_control
+    pipeline_control.pause()
+    _pipeline_status["paused"] = True
+    return {"message": "Pipeline paused", "paused": True}
+
+
+@app.post("/api/pipeline/resume")
+def resume_pipeline():
+    """Resume a paused pipeline."""
+    if not _pipeline_status["running"]:
+        raise HTTPException(400, "Pipeline is not running")
+
+    from src.pipeline import pipeline_control
+    pipeline_control.resume()
+    _pipeline_status["paused"] = False
+    return {"message": "Pipeline resumed", "paused": False}
+
+
+@app.post("/api/pipeline/cancel")
+def cancel_pipeline():
+    """Cancel a running pipeline."""
+    if not _pipeline_status["running"]:
+        raise HTTPException(400, "Pipeline is not running")
+
+    from src.pipeline import pipeline_control
+    pipeline_control.cancel()
+    return {"message": "Pipeline cancellation requested"}
 
 
 @app.get("/api/pipeline/status")
 def pipeline_status():
     """Get the current pipeline status."""
+    # Sync stage info from the pipeline control
+    if _pipeline_status["running"]:
+        try:
+            from src.pipeline import pipeline_control
+            _pipeline_status["current_stage"] = pipeline_control.current_stage
+            _pipeline_status["paused"] = pipeline_control.is_paused
+        except Exception:
+            pass
+
     return _pipeline_status
 
 
@@ -314,13 +454,14 @@ def pipeline_status():
 
 @app.get("/api/digests")
 def list_digests():
-    """List generated digests."""
+    """List generated digests (HTML and PDF)."""
     MOCK_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     digests = []
-    for f in sorted(MOCK_OUTPUT_DIR.glob("digest-*.html"), reverse=True):
+    for f in sorted(MOCK_OUTPUT_DIR.glob("digest-*.*"), reverse=True):
         stat = f.stat()
         digests.append({
             "filename": f.name,
+            "format": f.suffix.lstrip("."),
             "size_kb": round(stat.st_size / 1024, 1),
             "created_at": datetime.fromtimestamp(stat.st_mtime).isoformat(),
             "preview_url": f"/api/digests/{f.name}/preview",
@@ -330,10 +471,18 @@ def list_digests():
 
 @app.get("/api/digests/{filename}/preview")
 def preview_digest(filename: str):
-    """Preview a generated digest HTML."""
+    """Preview a generated digest (HTML rendered, PDF downloaded)."""
     path = MOCK_OUTPUT_DIR / filename
     if not path.exists():
         raise HTTPException(404, "Digest not found")
+
+    if path.suffix == ".pdf":
+        return FileResponse(
+            str(path),
+            media_type="application/pdf",
+            filename=path.name,
+        )
+
     return HTMLResponse(path.read_text(encoding="utf-8"))
 
 
@@ -361,7 +510,7 @@ def dashboard():
             if r.get("status") == "active"
         )
 
-        digests = list(MOCK_OUTPUT_DIR.glob("digest-*.html")) if MOCK_OUTPUT_DIR.exists() else []
+        digests = list(MOCK_OUTPUT_DIR.glob("digest-*.*")) if MOCK_OUTPUT_DIR.exists() else []
 
         return {
             "signals_total": signals_total,

@@ -1,16 +1,25 @@
 import React, { useEffect, useState } from 'react'
 
+const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+const TIMEZONES = ['America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles', 'UTC', 'Europe/London', 'Asia/Jerusalem']
+
 export default function Recipients() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', role: '', notes: '' })
   const [saving, setSaving] = useState(false)
+  const [editingSchedule, setEditingSchedule] = useState(false)
+  const [scheduleForm, setScheduleForm] = useState({})
+  const [savingSchedule, setSavingSchedule] = useState(false)
 
   const load = () => {
     fetch('/api/recipients')
       .then(r => r.json())
-      .then(setData)
+      .then(d => {
+        setData(d)
+        setScheduleForm(d.delivery_settings || {})
+      })
       .finally(() => setLoading(false))
   }
 
@@ -47,6 +56,22 @@ export default function Recipients() {
     if (!confirm(`Remove ${name} from recipients?`)) return
     await fetch(`/api/recipients/${id}`, { method: 'DELETE' })
     load()
+  }
+
+  const handleSaveSchedule = async (e) => {
+    e.preventDefault()
+    setSavingSchedule(true)
+    try {
+      await fetch('/api/delivery-settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(scheduleForm),
+      })
+      setEditingSchedule(false)
+      load()
+    } finally {
+      setSavingSchedule(false)
+    }
   }
 
   if (loading) return <div className="text-center py-12 text-gray-500">Loading...</div>
@@ -160,21 +185,76 @@ export default function Recipients() {
 
       {/* Delivery Settings */}
       <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
-        <h3 className="text-lg font-semibold text-vpg-navy mb-3">Delivery Schedule</h3>
-        <div className="grid grid-cols-3 gap-4 text-sm">
-          <div>
-            <span className="text-gray-500">Send Day:</span>
-            <span className="ml-2 font-medium">{settings.send_day}</span>
-          </div>
-          <div>
-            <span className="text-gray-500">Send Time:</span>
-            <span className="ml-2 font-medium">{settings.send_time_et} ET</span>
-          </div>
-          <div>
-            <span className="text-gray-500">Timezone:</span>
-            <span className="ml-2 font-medium">{settings.timezone}</span>
-          </div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-semibold text-vpg-navy">Delivery Schedule</h3>
+          <button
+            onClick={() => setEditingSchedule(!editingSchedule)}
+            className="text-sm text-vpg-blue hover:underline font-medium"
+          >
+            {editingSchedule ? 'Cancel' : 'Edit Schedule'}
+          </button>
         </div>
+
+        {!editingSchedule ? (
+          <div className="grid grid-cols-3 gap-4 text-sm">
+            <div>
+              <span className="text-gray-500">Send Day:</span>
+              <span className="ml-2 font-medium capitalize">{settings.send_day}</span>
+            </div>
+            <div>
+              <span className="text-gray-500">Send Time:</span>
+              <span className="ml-2 font-medium">{settings.send_time_et} ET</span>
+            </div>
+            <div>
+              <span className="text-gray-500">Timezone:</span>
+              <span className="ml-2 font-medium">{settings.timezone}</span>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSaveSchedule}>
+            <div className="grid grid-cols-3 gap-4 text-sm">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Send Day</label>
+                <select
+                  value={scheduleForm.send_day || ''}
+                  onChange={e => setScheduleForm({ ...scheduleForm, send_day: e.target.value })}
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-vpg-blue focus:outline-none"
+                >
+                  {DAYS.map(d => (
+                    <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Send Time (ET)</label>
+                <input
+                  type="time"
+                  value={scheduleForm.send_time_et || '07:00'}
+                  onChange={e => setScheduleForm({ ...scheduleForm, send_time_et: e.target.value })}
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-vpg-blue focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
+                <select
+                  value={scheduleForm.timezone || ''}
+                  onChange={e => setScheduleForm({ ...scheduleForm, timezone: e.target.value })}
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-vpg-blue focus:outline-none"
+                >
+                  {TIMEZONES.map(tz => (
+                    <option key={tz} value={tz}>{tz}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <button
+              type="submit" disabled={savingSchedule}
+              className="mt-4 bg-vpg-navy text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50"
+            >
+              {savingSchedule ? 'Saving...' : 'Save Schedule'}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   )

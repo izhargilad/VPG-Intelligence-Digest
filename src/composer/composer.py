@@ -99,6 +99,7 @@ def _to_bullets(text):
 
     Splits on sentence boundaries and renders as <ul> when there are
     multiple sentences. Returns escaped Markup for XSS safety.
+    All styles are inlined for email client compatibility.
     """
     if not text:
         return ""
@@ -106,10 +107,13 @@ def _to_bullets(text):
     # Split on sentence-ending punctuation followed by whitespace
     parts = [s.strip() for s in re.split(r"(?<=[.!?])\s+", safe) if s.strip()]
     if len(parts) <= 1:
-        return Markup(safe)
-    items = "".join(f"<li>{s}</li>" for s in parts)
+        return Markup(f'<span style="font-size:13px;color:#2D3748;line-height:1.6;">{safe}</span>')
+    items = "".join(
+        f'<li style="margin-bottom:3px;font-size:13px;color:#2D3748;line-height:1.6;">{s}</li>'
+        for s in parts
+    )
     return Markup(
-        f'<ul style="margin:4px 0;padding-left:18px;">{items}</ul>'
+        f'<ul style="margin:4px 0;padding-left:18px;list-style-type:disc;">{items}</ul>'
     )
 
 
