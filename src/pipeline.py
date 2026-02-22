@@ -299,9 +299,21 @@ def stage_compose(scored_signals: list[dict], pdf_mode: bool = False) -> tuple[s
     # Generate PDF if requested
     pdf_path = None
     if pdf_mode:
-        from src.composer.pdf_generator import generate_pdf
-        pdf_path = generate_pdf(html, context, MOCK_OUTPUT_DIR, cid_images=cid_images)
-        logger.info("PDF generated: %s (%d KB)", pdf_path, pdf_path.stat().st_size // 1024)
+        try:
+            from src.composer.pdf_generator import generate_pdf
+            pdf_path = generate_pdf(html, context, MOCK_OUTPUT_DIR, cid_images=cid_images)
+            logger.info("PDF generated: %s (%d KB)", pdf_path, pdf_path.stat().st_size // 1024)
+        except ImportError:
+            logger.error(
+                "PDF GENERATION SKIPPED: reportlab is not installed. "
+                "Run 'pip install reportlab' to enable PDF delivery. "
+                "Falling back to HTML-only email."
+            )
+        except Exception as e:
+            logger.error(
+                "PDF GENERATION FAILED: %s — falling back to HTML-only email. "
+                "The digest will still be delivered as HTML.", e
+            )
 
     return html, subject, cid_images, pdf_path
 
