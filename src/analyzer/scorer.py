@@ -305,6 +305,40 @@ def _generate_heuristic_owner(signal_type: str) -> str:
     return owners.get(signal_type, "BU Manager")
 
 
+def _clean_what_summary(text: str) -> str:
+    """Clean and condense a raw signal summary into concise bullet points.
+
+    Strips HTML, removes boilerplate, and extracts the key facts
+    as 3-5 bullet points max.
+    """
+    import re
+
+    if not text:
+        return ""
+
+    # Strip HTML tags
+    clean = re.sub(r"<[^>]+>", " ", str(text))
+    # Collapse whitespace
+    clean = re.sub(r"\s+", " ", clean).strip()
+    # Remove common RSS boilerplate
+    for junk in ["Continue reading", "Read more", "Click here", "Subscribe",
+                  "The post appeared first on", "appeared first on"]:
+        idx = clean.lower().find(junk.lower())
+        if idx > 0:
+            clean = clean[:idx].strip()
+
+    # Split into sentences
+    sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", clean) if s.strip()]
+
+    # Cap at 5 sentences / bullet points
+    sentences = sentences[:5]
+
+    if not sentences:
+        return clean[:300] if clean else ""
+
+    return " ".join(sentences)
+
+
 def score_signal_heuristic(signal: dict) -> dict:
     """Score a signal using keyword-based heuristics (fallback).
 
@@ -373,7 +407,7 @@ def score_signal_heuristic(signal: dict) -> dict:
         "bu_matches": bu_matches,
         "signal_type": signal_type,
         "headline": signal.get("title", ""),
-        "what_summary": signal.get("summary", ""),
+        "what_summary": _clean_what_summary(signal.get("summary", "")),
         "why_it_matters": _generate_heuristic_why(signal, signal_type, bu_matches),
         "quick_win": _generate_heuristic_quick_win(signal_type),
         "suggested_owner": _generate_heuristic_owner(signal_type),
