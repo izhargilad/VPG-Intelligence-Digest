@@ -26,13 +26,15 @@ export default function Dashboard() {
     { label: 'Pipeline Runs', value: stats.pipeline_runs, color: 'bg-purple-600' },
     { label: 'Active Recipients', value: stats.active_recipients, color: 'bg-vpg-accent' },
     { label: 'Digests Generated', value: stats.digests_generated, color: 'bg-vpg-navy' },
+    { label: 'Industries', value: stats.industries_count || 0, color: 'bg-teal-600' },
+    { label: 'Keywords', value: stats.keywords_count || 0, color: 'bg-indigo-600' },
   ]
 
   return (
     <div>
       <h2 className="text-2xl font-bold text-vpg-navy mb-6">Dashboard</h2>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-8">
         {cards.map(card => (
           <div key={card.label} className="bg-white rounded-lg shadow-sm p-5">
             <div className={`inline-block px-2 py-1 rounded text-white text-xs font-semibold ${card.color} mb-2`}>

@@ -1,0 +1,182 @@
+{
+  "industries": [
+    {
+      "id": "robotics-automation",
+      "name": "Robotics & Automation",
+      "category": "Manufacturing & Industrial",
+      "description": "Industrial robots, cobots, humanoid robots, warehouse automation, robotic grippers",
+      "relevant_bus": ["vpg-force-sensors", "dts"],
+      "keywords": ["robot", "cobot", "humanoid robot", "robotic gripper", "collaborative robot", "warehouse automation", "robotic arm", "servo motor", "end effector", "Figure AI", "Boston Dynamics"],
+      "priority": 1,
+      "active": true
+    },
+    {
+      "id": "aerospace-defense",
+      "name": "Aerospace & Defense",
+      "category": "Aerospace & Defense",
+      "description": "Commercial aerospace, military/defense, space, UAVs, satellites",
+      "relevant_bus": ["vpg-foil-resistors", "micro-measurements", "pacific-instruments", "dts"],
+      "keywords": ["aerospace", "defense contract", "DOD", "military", "satellite", "UAV", "drone", "space launch", "avionics", "MIL-STD", "ITAR"],
+      "priority": 1,
+      "active": true
+    },
+    {
+      "id": "automotive-ev",
+      "name": "Automotive & EV",
+      "category": "Automotive",
+      "description": "Automotive OEMs, EV manufacturing, crash testing, autonomous vehicles",
+      "relevant_bus": ["micro-measurements", "dts", "vpg-onboard-weighing"],
+      "keywords": ["automotive", "electric vehicle", "EV battery", "crash test", "ADAS", "autonomous driving", "NHTSA", "vehicle safety", "Euro NCAP", "OEM"],
+      "priority": 1,
+      "active": true
+    },
+    {
+      "id": "steel-metals",
+      "name": "Steel & Metals Processing",
+      "category": "Metals & Mining",
+      "description": "Steel mills, aluminum rolling, metals processing, foundries",
+      "relevant_bus": ["kelk", "blh-nobel", "gleeble"],
+      "keywords": ["steel mill", "hot strip mill", "cold rolling", "aluminum rolling", "metals processing", "foundry", "continuous casting", "slab", "AIST", "steel production"],
+      "priority": 1,
+      "active": true
+    },
+    {
+      "id": "medical-devices",
+      "name": "Medical Devices",
+      "category": "Healthcare",
+      "description": "Surgical robots, medical instruments, patient monitoring, prosthetics",
+      "relevant_bus": ["vpg-force-sensors", "vpg-foil-resistors"],
+      "keywords": ["medical device", "surgical robot", "prosthetics", "patient monitoring", "FDA clearance", "medical sensor", "biomedical", "implantable"],
+      "priority": 2,
+      "active": true
+    },
+    {
+      "id": "semiconductor-test",
+      "name": "Semiconductor Test & Equipment",
+      "category": "Semiconductors",
+      "description": "Chip fabrication, semiconductor test equipment, wafer processing",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "keywords": ["semiconductor", "wafer", "chip fabrication", "ATE", "probe card", "precision measurement", "cleanroom", "lithography", "ASML"],
+      "priority": 2,
+      "active": true
+    },
+    {
+      "id": "heavy-vehicles-mining",
+      "name": "Heavy Vehicles & Mining",
+      "category": "Mining & Resources",
+      "description": "Heavy trucks, mining equipment, construction vehicles, fleet management",
+      "relevant_bus": ["vpg-onboard-weighing", "blh-nobel"],
+      "keywords": ["mining equipment", "heavy truck", "payload monitoring", "fleet compliance", "overload prevention", "Caterpillar", "Komatsu", "haul truck", "construction vehicle"],
+      "priority": 1,
+      "active": true
+    },
+    {
+      "id": "logistics-transportation",
+      "name": "Logistics & Transportation",
+      "category": "Transportation & Logistics",
+      "description": "Fleet logistics, freight, warehouse operations, last-mile delivery",
+      "relevant_bus": ["vpg-onboard-weighing"],
+      "keywords": ["logistics", "freight", "fleet management", "last-mile delivery", "warehouse", "supply chain", "vehicle weighing", "axle load"],
+      "priority": 2,
+      "active": true
+    },
+    {
+      "id": "process-industries",
+      "name": "Process Industries (Chemical, F&B)",
+      "category": "Chemicals & Food",
+      "description": "Chemical plants, food & beverage production, pharmaceutical manufacturing",
+      "relevant_bus": ["blh-nobel"],
+      "keywords": ["process weighing", "batch weighing", "chemical plant", "food processing", "pharmaceutical", "hopper scale", "belt weigher", "food safety"],
+      "priority": 2,
+      "active": true
+    },
+    {
+      "id": "structural-testing",
+      "name": "Structural Testing & SHM",
+      "category": "Civil Engineering",
+      "description": "Bridge monitoring, structural health, fatigue testing, civil infrastructure",
+      "relevant_bus": ["micro-measurements"],
+      "keywords": ["structural health monitoring", "SHM", "fatigue testing", "bridge monitoring", "strain measurement", "civil engineering", "infrastructure", "stress analysis"],
+      "priority": 2,
+      "active": true
+    },
+    {
+      "id": "materials-research",
+      "name": "Materials Research & Metallurgy",
+      "category": "Research & Academia",
+      "description": "University labs, materials science, metallurgical research, thermal-mechanical testing",
+      "relevant_bus": ["gleeble"],
+      "keywords": ["materials research", "metallurgy", "thermal-mechanical simulation", "CCT diagram", "weld simulation", "hot ductility", "physical simulation", "university lab"],
+      "priority": 2,
+      "active": true
+    },
+    {
+      "id": "nuclear-energy",
+      "name": "Nuclear & Energy",
+      "category": "Energy",
+      "description": "Nuclear power, energy generation, extreme environment instrumentation",
+      "relevant_bus": ["pacific-instruments"],
+      "keywords": ["nuclear power", "nuclear instrumentation", "radiation", "extreme environment", "power generation", "energy sector", "nuclear reactor"],
+      "priority": 3,
+      "active": true
+    },
+    {
+      "id": "precision-instrumentation",
+      "name": "Precision Instrumentation",
+      "category": "Test & Measurement",
+      "description": "Test equipment, measurement systems, DAQ, signal conditioning",
+      "relevant_bus": ["pacific-instruments", "vpg-foil-resistors", "dts"],
+      "keywords": ["data acquisition", "DAQ", "signal conditioning", "test equipment", "instrumentation", "measurement system", "high-channel", "precision measurement"],
+      "priority": 2,
+      "active": true
+    },
+    {
+      "id": "trade-tariff",
+      "name": "Trade, Tariffs & Supply Chain",
+      "category": "Global Trade",
+      "description": "US-China trade, tariffs, reshoring, India manufacturing advantage, supply chain disruptions",
+      "relevant_bus": ["all"],
+      "keywords": ["tariff", "trade war", "US-China", "reshoring", "nearshoring", "India manufacturing", "supply chain disruption", "PLI scheme", "trade regulation", "customs duty"],
+      "priority": 1,
+      "active": true
+    },
+    {
+      "id": "waste-management",
+      "name": "Waste Management",
+      "category": "Environmental Services",
+      "description": "Waste collection vehicles, recycling, environmental compliance",
+      "relevant_bus": ["vpg-onboard-weighing"],
+      "keywords": ["waste management", "refuse truck", "recycling", "waste collection", "environmental compliance", "landfill"],
+      "priority": 3,
+      "active": true
+    },
+    {
+      "id": "biomechanics-ballistics",
+      "name": "Biomechanics & Ballistics",
+      "category": "Defense & Safety",
+      "description": "Crash test dummies, ballistic testing, impact testing, biomechanical research",
+      "relevant_bus": ["dts"],
+      "keywords": ["biomechanics", "ballistic testing", "impact testing", "crash test dummy", "Humanetics", "blast testing", "shock measurement"],
+      "priority": 2,
+      "active": true
+    }
+  ],
+  "categories": [
+    "Manufacturing & Industrial",
+    "Aerospace & Defense",
+    "Automotive",
+    "Metals & Mining",
+    "Healthcare",
+    "Semiconductors",
+    "Mining & Resources",
+    "Transportation & Logistics",
+    "Chemicals & Food",
+    "Civil Engineering",
+    "Research & Academia",
+    "Energy",
+    "Test & Measurement",
+    "Global Trade",
+    "Environmental Services",
+    "Defense & Safety"
+  ]
+}

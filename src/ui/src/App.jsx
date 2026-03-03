@@ -3,6 +3,8 @@ import Dashboard from './components/Dashboard'
 import Recipients from './components/Recipients'
 import Sources from './components/Sources'
 import BusinessUnits from './components/BusinessUnits'
+import Industries from './components/Industries'
+import Keywords from './components/Keywords'
 import Pipeline from './components/Pipeline'
 import Digests from './components/Digests'
 import Trends from './components/Trends'
@@ -14,6 +16,8 @@ const NAV_ITEMS = [
   { id: 'recipients', label: 'Recipients', icon: '📧' },
   { id: 'sources', label: 'Sources', icon: '🔗' },
   { id: 'business-units', label: 'Business Units', icon: '🏢' },
+  { id: 'industries', label: 'Industries', icon: '🏭' },
+  { id: 'keywords', label: 'Keywords', icon: '🔑' },
   { id: 'scoring', label: 'Scoring', icon: '🎚' },
   { id: 'trends', label: 'Trends', icon: '📈' },
   { id: 'digests', label: 'Digest History', icon: '📰' },
@@ -29,6 +33,8 @@ export default function App() {
       case 'recipients': return <Recipients />
       case 'sources': return <Sources />
       case 'business-units': return <BusinessUnits />
+      case 'industries': return <Industries />
+      case 'keywords': return <Keywords />
       case 'scoring': return <Scoring />
       case 'trends': return <Trends />
       case 'digests': return <Digests />
@@ -46,7 +52,7 @@ export default function App() {
             <p className="text-sm text-blue-300">Management Console</p>
           </div>
           <div className="text-xs text-blue-400">
-            v1.0
+            v2.1
           </div>
         </div>
       </header>

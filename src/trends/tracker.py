@@ -212,8 +212,15 @@ def update_trends(conn=None) -> dict:
             conn.close()
 
 
-def get_trend_summary(conn=None, limit: int = 20) -> dict:
+def get_trend_summary(conn=None, limit: int = 20,
+                      start_date: str | None = None,
+                      end_date: str | None = None) -> dict:
     """Get a summary of current trends for display.
+
+    Args:
+        limit: Max trends to return.
+        start_date: Optional YYYY-MM-DD start filter on last_seen.
+        end_date: Optional YYYY-MM-DD end filter on last_seen.
 
     Returns:
         Dict with rising, declining, new, and spike trends.
@@ -223,11 +230,23 @@ def get_trend_summary(conn=None, limit: int = 20) -> dict:
         conn = get_connection()
 
     try:
-        rows = conn.execute("""
+        query = """
             SELECT trend_key, trend_type, label, occurrence_count,
                    week_over_week_change, avg_score, max_score, momentum,
                    first_seen, last_seen
             FROM trends
+        """
+        clauses = []
+        params: list = []
+        if start_date:
+            clauses.append("last_seen >= ?")
+            params.append(start_date)
+        if end_date:
+            clauses.append("last_seen <= ?")
+            params.append(end_date)
+        if clauses:
+            query += " WHERE " + " AND ".join(clauses)
+        query += """
             ORDER BY
                 CASE momentum
                     WHEN 'spike' THEN 1
@@ -238,7 +257,9 @@ def get_trend_summary(conn=None, limit: int = 20) -> dict:
                 END,
                 occurrence_count DESC
             LIMIT ?
-        """, (limit,)).fetchall()
+        """
+        params.append(limit)
+        rows = conn.execute(query, params).fetchall()
 
         trends = []
         for row in rows:

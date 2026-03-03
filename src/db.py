@@ -180,3 +180,205 @@ def complete_pipeline_run(
         values,
     )
     conn.commit()
+
+
+# ── Industries (V2.1) ──────────────────────────────────────────────
+
+def get_all_industries(conn: sqlite3.Connection) -> list[dict]:
+    """Get all industries with their BU associations and keyword counts."""
+    rows = conn.execute(
+        "SELECT * FROM industries ORDER BY priority, name"
+    ).fetchall()
+    industries = []
+    for row in rows:
+        ind = dict(row)
+        # Fetch associated BUs
+        bus = conn.execute(
+            "SELECT bu_id FROM industry_bus WHERE industry_id = ?", (ind["id"],)
+        ).fetchall()
+        ind["relevant_bus"] = [b["bu_id"] for b in bus]
+        # Keyword count
+        kw_count = conn.execute(
+            "SELECT COUNT(*) FROM keywords WHERE industry_id = ? AND active = 1",
+            (ind["id"],),
+        ).fetchone()[0]
+        ind["keyword_count"] = kw_count
+        industries.append(ind)
+    return industries
+
+
+def upsert_industry(conn: sqlite3.Connection, industry: dict) -> str:
+    """Insert or update an industry. Returns the industry id."""
+    conn.execute(
+        """INSERT INTO industries (id, name, category, description, priority, active, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+           ON CONFLICT(id) DO UPDATE SET
+             name=excluded.name, category=excluded.category,
+             description=excluded.description, priority=excluded.priority,
+             active=excluded.active, updated_at=datetime('now')""",
+        (
+            industry["id"],
+            industry["name"],
+            industry.get("category", ""),
+            industry.get("description", ""),
+            industry.get("priority", 2),
+            1 if industry.get("active", True) else 0,
+        ),
+    )
+    # Sync BU associations
+    conn.execute("DELETE FROM industry_bus WHERE industry_id = ?", (industry["id"],))
+    for bu_id in industry.get("relevant_bus", []):
+        if bu_id != "all":
+            conn.execute(
+                "INSERT OR IGNORE INTO industry_bus (industry_id, bu_id) VALUES (?, ?)",
+                (industry["id"], bu_id),
+            )
+    conn.commit()
+    return industry["id"]
+
+
+def delete_industry(conn: sqlite3.Connection, industry_id: str) -> bool:
+    """Delete an industry and its BU associations. Returns True if deleted."""
+    cursor = conn.execute("DELETE FROM industries WHERE id = ?", (industry_id,))
+    conn.commit()
+    return cursor.rowcount > 0
+
+
+# ── Keywords (V2.1) ────────────────────────────────────────────────
+
+def get_all_keywords(conn: sqlite3.Connection, industry_id: str | None = None,
+                     bu_id: str | None = None, active_only: bool = True) -> list[dict]:
+    """Get keywords, optionally filtered by industry or BU."""
+    query = "SELECT * FROM keywords WHERE 1=1"
+    params: list = []
+    if industry_id:
+        query += " AND industry_id = ?"
+        params.append(industry_id)
+    if bu_id:
+        query += " AND bu_id = ?"
+        params.append(bu_id)
+    if active_only:
+        query += " AND active = 1"
+    query += " ORDER BY hit_count DESC, keyword"
+    rows = conn.execute(query, params).fetchall()
+    return [dict(r) for r in rows]
+
+
+def upsert_keyword(conn: sqlite3.Connection, keyword: dict) -> int:
+    """Insert or update a keyword. Returns the keyword id."""
+    existing = conn.execute(
+        "SELECT id FROM keywords WHERE keyword = ? AND industry_id IS ?",
+        (keyword["keyword"].lower(), keyword.get("industry_id")),
+    ).fetchone()
+    if existing:
+        conn.execute(
+            """UPDATE keywords SET bu_id = ?, source = ?, active = ?
+               WHERE id = ?""",
+            (
+                keyword.get("bu_id"),
+                keyword.get("source", "manual"),
+                1 if keyword.get("active", True) else 0,
+                existing["id"],
+            ),
+        )
+        conn.commit()
+        return existing["id"]
+    else:
+        cursor = conn.execute(
+            """INSERT INTO keywords (keyword, industry_id, bu_id, source, active)
+               VALUES (?, ?, ?, ?, ?)""",
+            (
+                keyword["keyword"].lower(),
+                keyword.get("industry_id"),
+                keyword.get("bu_id"),
+                keyword.get("source", "manual"),
+                1 if keyword.get("active", True) else 0,
+            ),
+        )
+        conn.commit()
+        return cursor.lastrowid
+
+
+def delete_keyword(conn: sqlite3.Connection, keyword_id: int) -> bool:
+    """Delete a keyword by ID. Returns True if deleted."""
+    cursor = conn.execute("DELETE FROM keywords WHERE id = ?", (keyword_id,))
+    conn.commit()
+    return cursor.rowcount > 0
+
+
+def bulk_import_keywords(conn: sqlite3.Connection, keywords: list[str],
+                         industry_id: str | None = None, source: str = "imported") -> int:
+    """Bulk import keywords for an industry. Returns count inserted."""
+    count = 0
+    for kw in keywords:
+        kw_clean = kw.strip().lower()
+        if not kw_clean:
+            continue
+        try:
+            conn.execute(
+                "INSERT OR IGNORE INTO keywords (keyword, industry_id, source) VALUES (?, ?, ?)",
+                (kw_clean, industry_id, source),
+            )
+            count += 1
+        except Exception:
+            pass
+    conn.commit()
+    return count
+
+
+# ── Signal ↔ Industry (V2.1) ──────────────────────────────────────
+
+def save_signal_industries(conn: sqlite3.Connection, signal_id: int,
+                           industry_matches: list[dict]) -> None:
+    """Save industry associations for a signal."""
+    for match in industry_matches:
+        conn.execute(
+            """INSERT OR IGNORE INTO signal_industries
+               (signal_id, industry_id, relevance_score, matched_keywords)
+               VALUES (?, ?, ?, ?)""",
+            (
+                signal_id,
+                match["industry_id"],
+                match.get("relevance_score", 0),
+                match.get("matched_keywords", ""),
+            ),
+        )
+    conn.commit()
+
+
+# ── Timeframe-filtered queries (V2.1) ─────────────────────────────
+
+def get_signals_by_timeframe(conn: sqlite3.Connection, start_date: str | None = None,
+                             end_date: str | None = None, status: str | None = None) -> list[dict]:
+    """Get signals with optional date range and status filters."""
+    query = "SELECT * FROM signals WHERE 1=1"
+    params: list = []
+    if status:
+        query += " AND status = ?"
+        params.append(status)
+    if start_date:
+        query += " AND collected_at >= ?"
+        params.append(start_date)
+    if end_date:
+        query += " AND collected_at <= ?"
+        params.append(end_date + " 23:59:59")
+    query += " ORDER BY collected_at DESC"
+    rows = conn.execute(query, params).fetchall()
+    return [dict(r) for r in rows]
+
+
+def get_pipeline_runs_by_timeframe(conn: sqlite3.Connection, start_date: str | None = None,
+                                   end_date: str | None = None, limit: int = 50) -> list[dict]:
+    """Get pipeline runs with optional date range filter."""
+    query = "SELECT * FROM pipeline_runs WHERE 1=1"
+    params: list = []
+    if start_date:
+        query += " AND started_at >= ?"
+        params.append(start_date)
+    if end_date:
+        query += " AND started_at <= ?"
+        params.append(end_date + " 23:59:59")
+    query += " ORDER BY started_at DESC LIMIT ?"
+    params.append(limit)
+    rows = conn.execute(query, params).fetchall()
+    return [dict(r) for r in rows]

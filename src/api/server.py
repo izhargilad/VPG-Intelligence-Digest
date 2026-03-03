@@ -28,22 +28,36 @@ from src.config import (
     MOCK_OUTPUT_DIR,
     PROJECT_ROOT,
     get_business_units,
+    get_industries,
     get_recipients,
     get_scoring_weights,
     get_sources,
     save_business_units,
+    save_industries,
     save_recipients,
     save_scoring_weights,
     save_sources,
 )
-from src.db import get_connection, init_db
+from src.db import (
+    get_connection,
+    init_db,
+    get_all_industries,
+    upsert_industry,
+    delete_industry as db_delete_industry,
+    get_all_keywords,
+    upsert_keyword,
+    delete_keyword as db_delete_keyword,
+    bulk_import_keywords,
+    get_pipeline_runs_by_timeframe,
+    get_signals_by_timeframe,
+)
 
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="VPG Intelligence Digest",
     description="Management UI for the VPG Weekly Intelligence Digest",
-    version="1.0.0",
+    version="2.1.0",
 )
 
 # CORS — allow the React dev server and local access
@@ -131,6 +145,39 @@ class DeliverySettingsUpdate(BaseModel):
     timezone: str | None = None
     max_recipients_per_batch: int | None = None
     batch_delay_seconds: int | None = None
+
+
+class IndustryCreate(BaseModel):
+    id: str
+    name: str
+    category: str = ""
+    description: str = ""
+    relevant_bus: list[str] = []
+    keywords: list[str] = []
+    priority: int = 2
+    active: bool = True
+
+
+class IndustryUpdate(BaseModel):
+    name: str | None = None
+    category: str | None = None
+    description: str | None = None
+    relevant_bus: list[str] | None = None
+    priority: int | None = None
+    active: bool | None = None
+
+
+class KeywordCreate(BaseModel):
+    keyword: str
+    industry_id: str | None = None
+    bu_id: str | None = None
+    source: str = "manual"
+
+
+class KeywordBulkImport(BaseModel):
+    keywords: list[str]
+    industry_id: str | None = None
+    source: str = "imported"
 
 
 # ── Recipients ───────────────────────────────────────────────────────
@@ -243,6 +290,138 @@ def update_business_unit(bu_id: str, updates: dict):
     raise HTTPException(404, f"Business unit {bu_id} not found")
 
 
+# ── Industries (V2.1) ────────────────────────────────────────────────
+
+@app.get("/api/industries")
+def list_industries():
+    """Get all industries with BU associations and keyword counts."""
+    conn = get_connection()
+    try:
+        industries = get_all_industries(conn)
+        return {"industries": industries}
+    except Exception:
+        # Table may not exist yet — return from config file
+        config = get_industries()
+        return {"industries": config.get("industries", [])}
+    finally:
+        conn.close()
+
+
+@app.post("/api/industries")
+def add_industry(industry: IndustryCreate):
+    """Add a new industry to both the DB and config."""
+    conn = get_connection()
+    try:
+        upsert_industry(conn, industry.model_dump())
+        # Seed keywords if provided
+        if industry.keywords:
+            bulk_import_keywords(conn, industry.keywords, industry.id)
+        # Sync to config file
+        _sync_industries_to_config(conn)
+        return {"id": industry.id, "status": "created"}
+    finally:
+        conn.close()
+
+
+@app.put("/api/industries/{industry_id}")
+def update_industry(industry_id: str, updates: IndustryUpdate):
+    """Update an existing industry."""
+    conn = get_connection()
+    try:
+        # Fetch existing
+        existing = conn.execute("SELECT * FROM industries WHERE id = ?", (industry_id,)).fetchone()
+        if not existing:
+            raise HTTPException(404, f"Industry {industry_id} not found")
+        merged = dict(existing)
+        merged["id"] = industry_id
+        update_data = updates.model_dump(exclude_none=True)
+        merged.update(update_data)
+        # Handle active as int for DB
+        if "active" in merged and isinstance(merged["active"], bool):
+            pass  # upsert_industry handles the conversion
+        upsert_industry(conn, merged)
+        _sync_industries_to_config(conn)
+        return get_all_industries(conn)
+    finally:
+        conn.close()
+
+
+@app.delete("/api/industries/{industry_id}")
+def remove_industry(industry_id: str):
+    """Delete an industry."""
+    conn = get_connection()
+    try:
+        if not db_delete_industry(conn, industry_id):
+            raise HTTPException(404, f"Industry {industry_id} not found")
+        _sync_industries_to_config(conn)
+        return {"deleted": industry_id}
+    finally:
+        conn.close()
+
+
+def _sync_industries_to_config(conn):
+    """Write current DB industries back to config/industries.json."""
+    industries = get_all_industries(conn)
+    # Also fetch keywords per industry for config sync
+    for ind in industries:
+        kws = get_all_keywords(conn, industry_id=ind["id"])
+        ind["keywords"] = [k["keyword"] for k in kws]
+        # Clean DB-only fields for config
+        for key in ("keyword_count", "created_at", "updated_at"):
+            ind.pop(key, None)
+        ind["active"] = bool(ind.get("active", 1))
+    config = get_industries()
+    config["industries"] = industries
+    save_industries(config)
+
+
+# ── Keywords (V2.1) ─────────────────────────────────────────────────
+
+@app.get("/api/keywords")
+def list_keywords(industry_id: str | None = None, bu_id: str | None = None):
+    """Get keywords, optionally filtered by industry or BU."""
+    conn = get_connection()
+    try:
+        keywords = get_all_keywords(conn, industry_id=industry_id, bu_id=bu_id, active_only=False)
+        return {"keywords": keywords}
+    finally:
+        conn.close()
+
+
+@app.post("/api/keywords")
+def add_keyword(kw: KeywordCreate):
+    """Add a single keyword."""
+    conn = get_connection()
+    try:
+        kw_id = upsert_keyword(conn, kw.model_dump())
+        return {"id": kw_id, "keyword": kw.keyword}
+    finally:
+        conn.close()
+
+
+@app.post("/api/keywords/bulk")
+def import_keywords_bulk(data: KeywordBulkImport):
+    """Bulk import keywords for an industry."""
+    conn = get_connection()
+    try:
+        count = bulk_import_keywords(conn, data.keywords, data.industry_id, data.source)
+        return {"imported": count}
+    finally:
+        conn.close()
+
+
+@app.delete("/api/keywords/{keyword_id}")
+def remove_keyword(keyword_id: int):
+    """Delete a keyword."""
+    conn = get_connection()
+    try:
+        if not db_delete_keyword(conn, keyword_id):
+            raise HTTPException(404, f"Keyword {keyword_id} not found")
+        return {"deleted": keyword_id}
+    finally:
+        conn.close()
+
+
 # ── Sources ──────────────────────────────────────────────────────────
 
 @app.get("/api/sources")
@@ -320,10 +499,10 @@ def delete_source(source_id: str):
 # ── Trends ───────────────────────────────────────────────────────────
 
 @app.get("/api/trends")
-def list_trends(limit: int = 30):
-    """Get current trend summary."""
+def list_trends(limit: int = 30, start_date: str | None = None, end_date: str | None = None):
+    """Get current trend summary, optionally filtered by date range."""
     from src.trends.tracker import get_trend_summary
-    return get_trend_summary(limit=limit)
+    return get_trend_summary(limit=limit, start_date=start_date, end_date=end_date)
 
 
 @app.get("/api/trends/{trend_key:path}/history")
@@ -453,17 +632,23 @@ def pipeline_status():
 # ── Digest History ───────────────────────────────────────────────────
 
 @app.get("/api/digests")
-def list_digests():
-    """List generated digests (HTML and PDF)."""
+def list_digests(start_date: str | None = None, end_date: str | None = None):
+    """List generated digests (HTML and PDF), optionally filtered by date range."""
     MOCK_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     digests = []
     for f in sorted(MOCK_OUTPUT_DIR.glob("digest-*.*"), reverse=True):
         stat = f.stat()
+        created = datetime.fromtimestamp(stat.st_mtime)
+        # Timeframe filter
+        if start_date and created.strftime("%Y-%m-%d") < start_date:
+            continue
+        if end_date and created.strftime("%Y-%m-%d") > end_date:
+            continue
         digests.append({
             "filename": f.name,
             "format": f.suffix.lstrip("."),
             "size_kb": round(stat.st_size / 1024, 1),
-            "created_at": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+            "created_at": created.isoformat(),
             "preview_url": f"/api/digests/{f.name}/preview",
         })
     return {"digests": digests}
@@ -489,18 +674,58 @@ def preview_digest(filename: str):
 # ── Dashboard Stats ──────────────────────────────────────────────────
 
 @app.get("/api/dashboard")
-def dashboard():
-    """Get dashboard summary stats."""
+def dashboard(start_date: str | None = None, end_date: str | None = None):
+    """Get dashboard summary stats, optionally filtered by date range."""
     try:
         conn = get_connection()
         init_db()
 
-        signals_total = conn.execute("SELECT COUNT(*) FROM signals").fetchone()[0]
-        signals_scored = conn.execute("SELECT COUNT(*) FROM signals WHERE status='scored'").fetchone()[0]
-        pipeline_runs = conn.execute("SELECT COUNT(*) FROM pipeline_runs").fetchone()[0]
+        # Build date-filtered signal counts
+        sig_query = "SELECT COUNT(*) FROM signals"
+        sig_scored_query = "SELECT COUNT(*) FROM signals WHERE status='scored'"
+        run_query = "SELECT COUNT(*) FROM pipeline_runs"
+        params: list = []
+        scored_params: list = []
+        run_params: list = []
+
+        if start_date or end_date:
+            sig_clauses = []
+            scored_clauses = ["status='scored'"]
+            run_clauses = []
+            if start_date:
+                sig_clauses.append("collected_at >= ?")
+                params.append(start_date)
+                scored_clauses.append("collected_at >= ?")
+                scored_params.append(start_date)
+                run_clauses.append("started_at >= ?")
+                run_params.append(start_date)
+            if end_date:
+                sig_clauses.append("collected_at <= ?")
+                params.append(end_date + " 23:59:59")
+                scored_clauses.append("collected_at <= ?")
+                scored_params.append(end_date + " 23:59:59")
+                run_clauses.append("started_at <= ?")
+                run_params.append(end_date + " 23:59:59")
+            if sig_clauses:
+                sig_query += " WHERE " + " AND ".join(sig_clauses)
+            sig_scored_query = "SELECT COUNT(*) FROM signals WHERE " + " AND ".join(scored_clauses)
+            if run_clauses:
+                run_query += " WHERE " + " AND ".join(run_clauses)
+
+        signals_total = conn.execute(sig_query, params).fetchone()[0]
+        signals_scored = conn.execute(sig_scored_query, scored_params).fetchone()[0]
+        pipeline_runs_count = conn.execute(run_query, run_params).fetchone()[0]
         last_run = conn.execute(
             "SELECT started_at, status FROM pipeline_runs ORDER BY started_at DESC LIMIT 1"
         ).fetchone()
+
+        # Industry and keyword counts (V2.1)
+        try:
+            industries_count = conn.execute("SELECT COUNT(*) FROM industries WHERE active = 1").fetchone()[0]
+            keywords_count = conn.execute("SELECT COUNT(*) FROM keywords WHERE active = 1").fetchone()[0]
+        except Exception:
+            industries_count = 0
+            keywords_count = 0
 
         conn.close()
 
@@ -515,7 +740,7 @@ def dashboard():
         return {
             "signals_total": signals_total,
             "signals_scored": signals_scored,
-            "pipeline_runs": pipeline_runs,
+            "pipeline_runs": pipeline_runs_count,
             "last_run": {
                 "time": last_run[0] if last_run else None,
                 "status": last_run[1] if last_run else None,
@@ -523,6 +748,8 @@ def dashboard():
             "active_recipients": active_recipients,
             "digests_generated": len(digests),
             "pipeline_running": _pipeline_status["running"],
+            "industries_count": industries_count,
+            "keywords_count": keywords_count,
         }
     except Exception as e:
         logger.error("Dashboard query failed: %s", e)
@@ -534,7 +761,32 @@ def dashboard():
             "active_recipients": 0,
             "digests_generated": 0,
             "pipeline_running": False,
+            "industries_count": 0,
+            "keywords_count": 0,
         }
+
+
+@app.get("/api/pipeline/runs")
+def list_pipeline_runs(start_date: str | None = None, end_date: str | None = None, limit: int = 50):
+    """Get pipeline run history with optional date range filter."""
+    conn = get_connection()
+    try:
+        runs = get_pipeline_runs_by_timeframe(conn, start_date, end_date, limit)
+        return {"runs": runs}
+    finally:
+        conn.close()
+
+
+@app.get("/api/signals")
+def list_signals(start_date: str | None = None, end_date: str | None = None,
+                 status: str | None = None, limit: int = 100):
+    """Get signals with optional date range and status filters."""
+    conn = get_connection()
+    try:
+        signals = get_signals_by_timeframe(conn, start_date, end_date, status)
+        return {"signals": signals[:limit], "total": len(signals)}
+    finally:
+        conn.close()
 
 
 # ── Serve React Frontend ────────────────────────────────────────────

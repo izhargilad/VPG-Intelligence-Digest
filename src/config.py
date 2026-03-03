@@ -73,6 +73,16 @@ def save_scoring_weights(data: dict) -> None:
     _save_json("scoring-weights.json", data)
 
 
+def get_industries() -> dict:
+    """Load industry configuration."""
+    return _load_json("industries.json")
+
+
+def save_industries(data: dict) -> None:
+    """Save industry configuration."""
+    _save_json("industries.json", data)
+
+
 # Environment-based settings
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5-20250929")

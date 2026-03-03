@@ -1,6 +1,7 @@
 -- VPG Intelligence Digest - SQLite Database Schema
--- Version: 1.0
+-- Version: 2.1
 -- Created: 2026-02-16
+-- Updated: 2026-03-03 (Phase A: industries, keywords, signal_industries)
 
 PRAGMA journal_mode=WAL;
 PRAGMA foreign_keys=ON;
@@ -221,3 +222,63 @@ CREATE TABLE IF NOT EXISTS trend_snapshots (
 
 CREATE INDEX IF NOT EXISTS idx_snapshots_trend ON trend_snapshots(trend_id);
 CREATE INDEX IF NOT EXISTS idx_snapshots_week ON trend_snapshots(week_number, year);
+
+-- ============================================================
+-- Industries — master industry definitions (V2.1)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS industries (
+    id TEXT PRIMARY KEY,                     -- Slug ID e.g. "robotics-automation"
+    name TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT '',       -- Broad grouping e.g. "Manufacturing & Industrial"
+    description TEXT DEFAULT '',
+    priority INTEGER NOT NULL DEFAULT 2,     -- 1=high, 2=medium, 3=low
+    active INTEGER NOT NULL DEFAULT 1,       -- 0/1 boolean
+    created_at DATETIME NOT NULL DEFAULT (datetime('now')),
+    updated_at DATETIME NOT NULL DEFAULT (datetime('now'))
+);
+
+-- ============================================================
+-- Industry ↔ Business Unit associations (V2.1)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS industry_bus (
+    industry_id TEXT NOT NULL REFERENCES industries(id) ON DELETE CASCADE,
+    bu_id TEXT NOT NULL,                     -- References business-units.json id
+    PRIMARY KEY (industry_id, bu_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_industry_bus_bu ON industry_bus(bu_id);
+
+-- ============================================================
+-- Keywords — master keyword list with industry + BU links (V2.1)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS keywords (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    keyword TEXT NOT NULL,
+    industry_id TEXT REFERENCES industries(id) ON DELETE SET NULL,
+    bu_id TEXT DEFAULT NULL,                 -- Optional direct BU link
+    source TEXT DEFAULT 'manual',            -- manual, auto-discovered, imported
+    active INTEGER NOT NULL DEFAULT 1,
+    hit_count INTEGER NOT NULL DEFAULT 0,    -- Times this keyword matched a signal
+    last_hit_at DATETIME,
+    created_at DATETIME NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(keyword, industry_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_keywords_industry ON keywords(industry_id);
+CREATE INDEX IF NOT EXISTS idx_keywords_bu ON keywords(bu_id);
+CREATE INDEX IF NOT EXISTS idx_keywords_active ON keywords(active);
+
+-- ============================================================
+-- Signal ↔ Industry associations (V2.1)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS signal_industries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    signal_id INTEGER NOT NULL REFERENCES signals(id) ON DELETE CASCADE,
+    industry_id TEXT NOT NULL REFERENCES industries(id) ON DELETE CASCADE,
+    relevance_score REAL DEFAULT 0,          -- 0-1 relevance
+    matched_keywords TEXT DEFAULT '',         -- Comma-separated keywords that matched
+    UNIQUE(signal_id, industry_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_signal_industries_signal ON signal_industries(signal_id);
+CREATE INDEX IF NOT EXISTS idx_signal_industries_industry ON signal_industries(industry_id);
