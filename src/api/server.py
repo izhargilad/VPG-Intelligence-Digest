@@ -422,6 +422,57 @@ def remove_keyword(keyword_id: int):
         conn.close()
 
 
+# ── Keyword Discovery (V2.1 Phase B) ────────────────────────────────
+
+@app.get("/api/keywords/discover")
+def discover_keywords(min_score: float = 6.0, max_new: int = 20):
+    """Discover new keyword candidates from scored signals (preview only)."""
+    from src.analyzer.keyword_discovery import discover_keywords_from_signals
+    conn = get_connection()
+    try:
+        return discover_keywords_from_signals(conn, min_score=min_score, max_new=max_new)
+    finally:
+        conn.close()
+
+
+@app.post("/api/keywords/discover/import")
+def import_discovered_keywords(min_score: float = 6.0, max_new: int = 20, auto_activate: bool = False):
+    """Discover and import new keywords into the database."""
+    from src.analyzer.keyword_discovery import auto_import_discovered
+    conn = get_connection()
+    try:
+        return auto_import_discovered(conn, min_score=min_score, max_new=max_new, auto_activate=auto_activate)
+    finally:
+        conn.close()
+
+
+@app.post("/api/keywords/update-hits")
+def update_keyword_hits():
+    """Update keyword hit counts based on recent signal matches."""
+    from src.analyzer.keyword_discovery import update_keyword_hit_counts
+    conn = get_connection()
+    try:
+        updated = update_keyword_hit_counts(conn)
+        return {"updated": updated}
+    finally:
+        conn.close()
+
+
+# ── Google Trends (V2.1 Phase B) ────────────────────────────────────
+
+@app.get("/api/google-trends")
+def google_trends_snapshot(keywords: str | None = None, timeframe: str = "now 7-d"):
+    """Get a Google Trends snapshot for specified keywords.
+
+    Args:
+        keywords: Comma-separated keywords (max 5). Uses industry defaults if empty.
+        timeframe: Pytrends timeframe string (e.g., 'now 7-d', 'today 3-m').
+    """
+    from src.collector.trends_collector import get_trend_snapshot
+    kw_list = [k.strip() for k in keywords.split(",") if k.strip()][:5] if keywords else None
+    return get_trend_snapshot(keywords=kw_list, timeframe=timeframe)
+
+
 # ── Sources ──────────────────────────────────────────────────────────
 
 @app.get("/api/sources")

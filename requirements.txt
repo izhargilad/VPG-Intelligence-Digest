@@ -45,5 +45,11 @@ pytest-cov>=4.1.0
 weasyprint>=60.0
 reportlab>=4.0.0
 
+# Reddit monitoring (Tier 3 social source)
+praw>=7.7.0
+
+# Google Trends monitoring
+pytrends>=4.9.0
+
 # Utilities
 python-dateutil>=2.8.0

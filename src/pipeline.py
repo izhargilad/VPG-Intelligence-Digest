@@ -17,6 +17,8 @@ from src.analyzer.client import AnalysisClient
 from src.analyzer.scorer import score_batch_ai, score_signal
 from src.collector.rss_collector import collect_all_rss
 from src.collector.web_scraper import collect_all_scraped
+from src.collector.reddit_collector import collect_all_reddit
+from src.collector.trends_collector import collect_google_trends
 from src.composer.composer import build_digest_context, render_digest, save_digest_html
 from src.config import (
     DELIVERY_MODE,
@@ -149,7 +151,24 @@ def stage_collect(conn) -> int:
     pipeline_control.check_point()
 
     scraped_signals = collect_all_scraped()
-    all_signals = rss_signals + scraped_signals
+    pipeline_control.check_point()
+
+    # Tier 3: Reddit monitoring (graceful fallback if PRAW unavailable)
+    reddit_signals = []
+    try:
+        reddit_signals = collect_all_reddit()
+    except Exception as e:
+        logger.warning("Reddit collection failed (non-blocking): %s", e)
+    pipeline_control.check_point()
+
+    # Tier 3: Google Trends (graceful fallback if pytrends unavailable)
+    trend_signals = []
+    try:
+        trend_signals = collect_google_trends()
+    except Exception as e:
+        logger.warning("Google Trends collection failed (non-blocking): %s", e)
+
+    all_signals = rss_signals + scraped_signals + reddit_signals + trend_signals
 
     new_count = 0
     reprocessed = 0
@@ -394,6 +413,16 @@ def run_full_pipeline(pdf_mode: bool = False) -> dict:
         pipeline_control.current_stage = "trends"
         trend_result = update_trends(conn)
         logger.info("Trends: %d updated, %d notable", trend_result["trends_updated"], len(trend_result["notable"]))
+
+        # Keyword discovery + hit count update (runs after scoring)
+        try:
+            from src.analyzer.keyword_discovery import auto_import_discovered, update_keyword_hit_counts
+            kw_result = auto_import_discovered(conn, auto_activate=False)
+            logger.info("Keyword discovery: %d new candidates", kw_result["stats"].get("selected", 0))
+            updated_hits = update_keyword_hit_counts(conn)
+            logger.info("Updated hit counts for %d keywords", updated_hits)
+        except Exception as e:
+            logger.warning("Keyword discovery failed (non-blocking): %s", e)
         pipeline_control.check_point()
 
         # Stage 5: Compose
