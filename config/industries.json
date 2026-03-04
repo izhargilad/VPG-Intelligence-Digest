@@ -159,6 +159,36 @@
       "keywords": ["biomechanics", "ballistic testing", "impact testing", "crash test dummy", "Humanetics", "blast testing", "shock measurement"],
       "priority": 2,
       "active": true
+    },
+    {
+      "id": "general-industrial",
+      "name": "General Industrial",
+      "category": "Manufacturing & Industrial",
+      "description": "Industrial automation, factory equipment, process control, OEM manufacturing, industrial IoT",
+      "relevant_bus": ["vpg-force-sensors", "micro-measurements", "blh-nobel", "vpg-foil-resistors"],
+      "keywords": ["industrial automation", "factory automation", "process control", "OEM manufacturing", "industrial IoT", "IIoT", "smart factory", "Industry 4.0", "PLC", "industrial sensor", "manufacturing equipment", "assembly line", "quality control", "production monitoring"],
+      "priority": 1,
+      "active": true
+    },
+    {
+      "id": "consumer-electronics",
+      "name": "Consumer Electronics",
+      "category": "Consumer Technology",
+      "description": "Smartphones, wearables, haptic feedback devices, consumer IoT, smart home devices, gaming peripherals",
+      "relevant_bus": ["vpg-force-sensors", "vpg-foil-resistors", "micro-measurements"],
+      "keywords": ["consumer electronics", "smartphone", "wearable", "haptic feedback", "touchscreen", "consumer IoT", "smart home", "gaming controller", "VR headset", "AR glasses", "miniature sensor", "MEMS", "force touch", "pressure sensing"],
+      "priority": 2,
+      "active": true
+    },
+    {
+      "id": "physical-ai",
+      "name": "Physical AI",
+      "category": "Emerging Technologies",
+      "description": "Humanoid robots, embodied AI, physical world AI agents, sensor fusion for AI, digital twins, sim-to-real transfer, tactile intelligence",
+      "relevant_bus": ["vpg-force-sensors", "dts", "pacific-instruments", "micro-measurements", "vpg-foil-resistors"],
+      "keywords": ["physical AI", "embodied AI", "humanoid robot", "Figure AI", "Boston Dynamics", "Agility Robotics", "tactile sensing", "force feedback", "sensor fusion", "digital twin", "sim-to-real", "foundation model robotics", "dexterous manipulation", "torque sensing robot", "AI robotics", "Tesla Optimus", "NVIDIA Isaac", "physical intelligence"],
+      "priority": 1,
+      "active": true
     }
   ],
   "categories": [
@@ -177,6 +207,8 @@
     "Test & Measurement",
     "Global Trade",
     "Environmental Services",
-    "Defense & Safety"
+    "Defense & Safety",
+    "Consumer Technology",
+    "Emerging Technologies"
   ]
 }

@@ -11,11 +11,13 @@ import Pipeline from './components/Pipeline'
 import Digests from './components/Digests'
 import Trends from './components/Trends'
 import Scoring from './components/Scoring'
+import Recommendations from './components/Recommendations'
 
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: '📊' },
   { id: 'executive', label: 'Executive View', icon: '👔' },
   { id: 'feed', label: 'Intel Feed', icon: '📡' },
+  { id: 'recommendations', label: 'Recommendations', icon: '💡' },
   { id: 'pipeline', label: 'Run Digest', icon: '▶' },
   { id: 'recipients', label: 'Recipients', icon: '📧' },
   { id: 'sources', label: 'Sources', icon: '🔗' },
@@ -35,6 +37,7 @@ export default function App() {
       case 'dashboard': return <Dashboard />
       case 'executive': return <Executive />
       case 'feed': return <Feed />
+      case 'recommendations': return <Recommendations />
       case 'pipeline': return <Pipeline />
       case 'recipients': return <Recipients />
       case 'sources': return <Sources />
@@ -58,7 +61,7 @@ export default function App() {
             <p className="text-sm text-blue-300">Management Console</p>
           </div>
           <div className="text-xs text-blue-400">
-            v2.1
+            v2.2
           </div>
         </div>
       </header>

@@ -57,7 +57,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="VPG Intelligence Digest",
     description="Management UI for the VPG Weekly Intelligence Digest",
-    version="2.1.0",
+    version="2.2.0",
 )
 
 # CORS — allow the React dev server and local access
@@ -1035,6 +1035,32 @@ def list_signals(start_date: str | None = None, end_date: str | None = None,
     try:
         signals = get_signals_by_timeframe(conn, start_date, end_date, status)
         return {"signals": signals[:limit], "total": len(signals)}
+    finally:
+        conn.close()
+
+
+# ── Recommendations (V2.1 Phase D) ────────────────────────────────
+
+@app.get("/api/recommendations")
+def get_recommendations(max_recommendations: int = 15):
+    """Generate AI-powered strategic recommendations from signal patterns."""
+    from src.analyzer.recommendations import generate_recommendations
+    conn = get_connection()
+    try:
+        return generate_recommendations(conn, max_recommendations=max_recommendations)
+    finally:
+        conn.close()
+
+
+# ── Pattern Detection (V2.1 Phase D) ─────────────────────────────
+
+@app.get("/api/patterns")
+def get_patterns():
+    """Detect recurring patterns across signals, competitors, and trends."""
+    from src.analyzer.pattern_detector import detect_patterns
+    conn = get_connection()
+    try:
+        return detect_patterns(conn)
     finally:
         conn.close()
 
