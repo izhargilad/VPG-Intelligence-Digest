@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import Dashboard from './components/Dashboard'
+import Executive from './components/Executive'
+import Feed from './components/Feed'
 import Recipients from './components/Recipients'
 import Sources from './components/Sources'
 import BusinessUnits from './components/BusinessUnits'
@@ -12,6 +14,8 @@ import Scoring from './components/Scoring'
 
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+  { id: 'executive', label: 'Executive View', icon: '👔' },
+  { id: 'feed', label: 'Intel Feed', icon: '📡' },
   { id: 'pipeline', label: 'Run Digest', icon: '▶' },
   { id: 'recipients', label: 'Recipients', icon: '📧' },
   { id: 'sources', label: 'Sources', icon: '🔗' },
@@ -29,6 +33,8 @@ export default function App() {
   const renderPage = () => {
     switch (activePage) {
       case 'dashboard': return <Dashboard />
+      case 'executive': return <Executive />
+      case 'feed': return <Feed />
       case 'pipeline': return <Pipeline />
       case 'recipients': return <Recipients />
       case 'sources': return <Sources />

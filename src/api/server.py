@@ -578,6 +578,205 @@ def update_scoring(weights: dict):
     return get_scoring_weights()
 
 
+# ── Export (V2.1 Phase C) ────────────────────────────────────────────
+
+@app.get("/api/export/excel")
+def export_excel(start_date: str | None = None, end_date: str | None = None):
+    """Export signals, trends, and keywords as an Excel workbook."""
+    from src.export.excel_export import export_signals_excel
+    from fastapi.responses import StreamingResponse
+    try:
+        buffer = export_signals_excel(start_date=start_date, end_date=end_date)
+        filename = f"vpg-intel-{datetime.now().strftime('%Y%m%d')}.xlsx"
+        return StreamingResponse(
+            buffer,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
+        )
+    except ImportError as e:
+        raise HTTPException(500, str(e))
+
+
+@app.get("/api/export/pptx")
+def export_pptx(start_date: str | None = None, end_date: str | None = None, max_signals: int = 10):
+    """Export intelligence as a PowerPoint presentation."""
+    from src.export.pptx_export import export_signals_pptx
+    from fastapi.responses import StreamingResponse
+    try:
+        buffer = export_signals_pptx(start_date=start_date, end_date=end_date, max_signals=max_signals)
+        filename = f"vpg-intel-{datetime.now().strftime('%Y%m%d')}.pptx"
+        return StreamingResponse(
+            buffer,
+            media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
+        )
+    except ImportError as e:
+        raise HTTPException(500, str(e))
+
+
+# ── Intelligence Feed (V2.1 Phase C) ────────────────────────────────
+
+@app.get("/api/feed")
+def intelligence_feed(start_date: str | None = None, end_date: str | None = None,
+                      bu_id: str | None = None, signal_type: str | None = None,
+                      industry_id: str | None = None, min_score: float = 0,
+                      limit: int = 50):
+    """Get a filterable feed of scored signals with full analysis data.
+
+    Powers the Intelligence Feed UI component.
+    """
+    conn = get_connection()
+    try:
+        query = """
+            SELECT s.id, s.title, s.url, s.source_name, s.source_tier,
+                   s.published_at, s.collected_at, s.image_url,
+                   sa.signal_type, sa.headline, sa.what_summary, sa.why_it_matters,
+                   sa.quick_win, sa.suggested_owner, sa.estimated_impact,
+                   sa.score_composite, sa.score_revenue_impact, sa.score_time_sensitivity,
+                   sa.score_strategic_alignment, sa.score_competitive_pressure,
+                   sa.validation_level
+            FROM signals s
+            JOIN signal_analysis sa ON s.id = sa.signal_id
+            WHERE s.status IN ('scored', 'published')
+        """
+        params: list = []
+
+        if min_score > 0:
+            query += " AND sa.score_composite >= ?"
+            params.append(min_score)
+        if start_date:
+            query += " AND s.collected_at >= ?"
+            params.append(start_date)
+        if end_date:
+            query += " AND s.collected_at <= ?"
+            params.append(end_date + " 23:59:59")
+        if signal_type:
+            query += " AND sa.signal_type = ?"
+            params.append(signal_type)
+        if bu_id:
+            query += " AND s.id IN (SELECT signal_id FROM signal_bus WHERE bu_id = ?)"
+            params.append(bu_id)
+        if industry_id:
+            query += " AND s.id IN (SELECT signal_id FROM signal_industries WHERE industry_id = ?)"
+            params.append(industry_id)
+
+        query += " ORDER BY sa.score_composite DESC LIMIT ?"
+        params.append(limit)
+
+        rows = conn.execute(query, params).fetchall()
+
+        signals = []
+        for row in rows:
+            sig_id = row[0]
+            bus = conn.execute(
+                "SELECT bu_id FROM signal_bus WHERE signal_id = ?", (sig_id,)
+            ).fetchall()
+            inds = conn.execute(
+                "SELECT industry_id FROM signal_industries WHERE signal_id = ?", (sig_id,)
+            ).fetchall()
+
+            signals.append({
+                "id": sig_id, "title": row[1], "url": row[2],
+                "source_name": row[3], "source_tier": row[4],
+                "published_at": row[5], "collected_at": row[6], "image_url": row[7],
+                "signal_type": row[8], "headline": row[9],
+                "what_summary": row[10], "why_it_matters": row[11],
+                "quick_win": row[12], "suggested_owner": row[13],
+                "estimated_impact": row[14],
+                "score_composite": row[15], "score_revenue_impact": row[16],
+                "score_time_sensitivity": row[17], "score_strategic_alignment": row[18],
+                "score_competitive_pressure": row[19],
+                "validation_level": row[20],
+                "bus": [b[0] for b in bus],
+                "industries": [i[0] for i in inds],
+            })
+
+        return {"signals": signals, "total": len(signals)}
+    finally:
+        conn.close()
+
+
+# ── BU Executive Dashboard Data (V2.1 Phase C) ──────────────────────
+
+@app.get("/api/executive/bu-summary")
+def bu_executive_summary():
+    """Get per-BU signal summary for the executive dashboard."""
+    conn = get_connection()
+    try:
+        bu_config = get_business_units()
+        bu_names = {bu["id"]: bu for bu in bu_config.get("business_units", [])}
+
+        # Get signal counts and scores per BU
+        rows = conn.execute("""
+            SELECT sb.bu_id, COUNT(*) as cnt,
+                   AVG(sa.score_composite) as avg_score,
+                   MAX(sa.score_composite) as max_score
+            FROM signal_bus sb
+            JOIN signal_analysis sa ON sb.signal_id = sa.signal_id
+            JOIN signals s ON sb.signal_id = s.id
+            WHERE s.status IN ('scored', 'published')
+            GROUP BY sb.bu_id
+            ORDER BY avg_score DESC
+        """).fetchall()
+
+        summaries = []
+        for row in rows:
+            bu_id = row[0]
+            bu_info = bu_names.get(bu_id, {})
+
+            # Top signal types for this BU
+            type_rows = conn.execute("""
+                SELECT sa.signal_type, COUNT(*) as cnt
+                FROM signal_bus sb
+                JOIN signal_analysis sa ON sb.signal_id = sa.signal_id
+                JOIN signals s ON sb.signal_id = s.id
+                WHERE sb.bu_id = ? AND s.status IN ('scored', 'published')
+                GROUP BY sa.signal_type ORDER BY cnt DESC LIMIT 3
+            """, (bu_id,)).fetchall()
+
+            # Top signal for this BU
+            top_signal = conn.execute("""
+                SELECT sa.headline, sa.score_composite
+                FROM signal_bus sb
+                JOIN signal_analysis sa ON sb.signal_id = sa.signal_id
+                JOIN signals s ON sb.signal_id = s.id
+                WHERE sb.bu_id = ? AND s.status IN ('scored', 'published')
+                ORDER BY sa.score_composite DESC LIMIT 1
+            """, (bu_id,)).fetchone()
+
+            summaries.append({
+                "bu_id": bu_id,
+                "bu_name": bu_info.get("name", bu_id),
+                "bu_short": bu_info.get("short_name", bu_id),
+                "color": bu_info.get("color", "#2E75B6"),
+                "signal_count": row[1],
+                "avg_score": round(row[2] or 0, 1),
+                "max_score": round(row[3] or 0, 1),
+                "top_types": [{"type": t[0], "count": t[1]} for t in type_rows],
+                "top_signal": {
+                    "headline": top_signal[0], "score": round(top_signal[1] or 0, 1)
+                } if top_signal else None,
+            })
+
+        # Overall stats
+        total_signals = conn.execute(
+            "SELECT COUNT(*) FROM signals WHERE status IN ('scored', 'published')"
+        ).fetchone()[0]
+        avg_all = conn.execute(
+            "SELECT AVG(score_composite) FROM signal_analysis"
+        ).fetchone()[0]
+
+        return {
+            "bu_summaries": summaries,
+            "total_signals": total_signals,
+            "overall_avg_score": round(avg_all or 0, 1),
+            "bus_with_signals": len(summaries),
+            "generated_at": datetime.now().isoformat(),
+        }
+    finally:
+        conn.close()
+
+
 # ── Pipeline Control ─────────────────────────────────────────────────
 
 def _run_pipeline_bg(dry_run: bool = False, pdf_mode: bool = False):

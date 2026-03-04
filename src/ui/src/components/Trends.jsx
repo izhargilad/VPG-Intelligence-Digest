@@ -71,13 +71,20 @@ export default function Trends() {
   const [history, setHistory] = useState(null)
   const [historyLoading, setHistoryLoading] = useState(false)
   const [activeFilter, setActiveFilter] = useState('all')
+  const [dateRange, setDateRange] = useState({ start: '', end: '' })
 
-  useEffect(() => {
-    fetch('/api/trends?limit=50')
+  const loadTrends = () => {
+    setLoading(true)
+    const params = new URLSearchParams({ limit: '50' })
+    if (dateRange.start) params.set('start_date', dateRange.start)
+    if (dateRange.end) params.set('end_date', dateRange.end)
+    fetch(`/api/trends?${params}`)
       .then(r => r.json())
       .then(setData)
       .finally(() => setLoading(false))
-  }, [])
+  }
+
+  useEffect(loadTrends, [dateRange])
 
   const loadHistory = (trendKey) => {
     setSelectedTrend(trendKey)
@@ -134,7 +141,31 @@ export default function Trends() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-vpg-navy mb-6">Trends & Insights</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-vpg-navy">Trends & Insights</h2>
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-gray-500">From:</label>
+          <input
+            type="date" value={dateRange.start}
+            onChange={e => setDateRange({ ...dateRange, start: e.target.value })}
+            className="border rounded px-2 py-1 text-xs"
+          />
+          <label className="text-xs text-gray-500">To:</label>
+          <input
+            type="date" value={dateRange.end}
+            onChange={e => setDateRange({ ...dateRange, end: e.target.value })}
+            className="border rounded px-2 py-1 text-xs"
+          />
+          {(dateRange.start || dateRange.end) && (
+            <button
+              onClick={() => setDateRange({ start: '', end: '' })}
+              className="text-xs text-gray-400 hover:text-red-500"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-4 gap-4 mb-6">
