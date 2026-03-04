@@ -14,6 +14,7 @@ export default function Executive() {
   const [data, setData] = useState(null)
   const [trends, setTrends] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [exportError, setExportError] = useState(null)
 
   useEffect(() => {
     Promise.all([
@@ -27,8 +28,25 @@ export default function Executive() {
       .finally(() => setLoading(false))
   }, [])
 
-  const handleExport = (format) => {
-    window.open(`/api/export/${format}`, '_blank')
+  const handleExport = async (format) => {
+    setExportError(null)
+    try {
+      const resp = await fetch(`/api/export/${format}`)
+      if (!resp.ok) {
+        const err = await resp.json()
+        setExportError(err.detail || `Export failed (${resp.status})`)
+        return
+      }
+      const blob = await resp.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = resp.headers.get('content-disposition')?.split('filename=')[1] || `export.${format}`
+      a.click()
+      window.URL.revokeObjectURL(url)
+    } catch (e) {
+      setExportError(`Export failed: ${e.message}`)
+    }
   }
 
   if (loading) return <div className="text-center py-12 text-gray-500">Loading executive dashboard...</div>
@@ -69,6 +87,15 @@ export default function Executive() {
           </button>
         </div>
       </div>
+
+      {exportError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-4 text-sm flex justify-between items-start">
+          <div>
+            <strong>Export Error:</strong> {exportError}
+          </div>
+          <button onClick={() => setExportError(null)} className="text-red-400 hover:text-red-600 ml-4">&times;</button>
+        </div>
+      )}
 
       {/* Top-level stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">

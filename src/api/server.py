@@ -80,19 +80,54 @@ _pipeline_status = {
 
 
 @app.on_event("startup")
-def _cleanup_stale_runs():
-    """Mark any pipeline runs stuck in 'running' as 'failed' (from prior crash/restart)."""
+def _startup():
+    """Initialize DB, seed industries/keywords from config if empty, clean stale runs."""
     try:
         conn = get_connection()
         init_db()
+
+        # Clean up stale pipeline runs (from prior crash/restart)
         conn.execute(
             "UPDATE pipeline_runs SET status = 'failed', completed_at = datetime('now') "
             "WHERE status = 'running'"
         )
         conn.commit()
+
+        # Auto-seed industries + keywords from config if DB tables are empty
+        _auto_seed_industries(conn)
+
         conn.close()
     except Exception as e:
-        logger.warning("Could not clean up stale pipeline runs: %s", e)
+        logger.warning("Startup initialization error: %s", e)
+
+
+def _auto_seed_industries(conn):
+    """Seed industries and keywords from config/industries.json if DB is empty."""
+    try:
+        count = conn.execute("SELECT COUNT(*) FROM industries").fetchone()[0]
+        if count > 0:
+            return  # Already seeded
+
+        logger.info("Industries table is empty — auto-seeding from config/industries.json")
+        config = get_industries()
+        for ind in config.get("industries", []):
+            upsert_industry(conn, ind)
+            # Seed keywords for this industry
+            for kw in ind.get("keywords", []):
+                try:
+                    conn.execute(
+                        "INSERT OR IGNORE INTO keywords (keyword, industry_id, source) "
+                        "VALUES (?, ?, 'seeded')",
+                        (kw.lower(), ind["id"]),
+                    )
+                except Exception:
+                    pass
+        conn.commit()
+        seeded = len(config.get("industries", []))
+        kw_count = conn.execute("SELECT COUNT(*) FROM keywords").fetchone()[0]
+        logger.info("Auto-seeded %d industries and %d keywords from config", seeded, kw_count)
+    except Exception as e:
+        logger.warning("Could not auto-seed industries: %s", e)
 
 
 # ── Pydantic Models ──────────────────────────────────────────────────
@@ -580,38 +615,69 @@ def update_scoring(weights: dict):
 
 # ── Export (V2.1 Phase C) ────────────────────────────────────────────
 
+@app.get("/api/export/check")
+def export_check():
+    """Check which export formats are available (have required packages installed)."""
+    excel_ok = False
+    pptx_ok = False
+    try:
+        import openpyxl  # noqa: F401
+        excel_ok = True
+    except ImportError:
+        pass
+    try:
+        import pptx  # noqa: F401
+        pptx_ok = True
+    except ImportError:
+        pass
+    return {
+        "excel": {"available": excel_ok, "install": "pip install openpyxl"},
+        "pptx": {"available": pptx_ok, "install": "pip install python-pptx"},
+    }
+
+
 @app.get("/api/export/excel")
 def export_excel(start_date: str | None = None, end_date: str | None = None):
     """Export signals, trends, and keywords as an Excel workbook."""
+    try:
+        import openpyxl  # noqa: F401
+    except ImportError:
+        raise HTTPException(
+            422,
+            detail="Excel export requires the 'openpyxl' package. "
+                   "Install it with: pip install openpyxl"
+        )
     from src.export.excel_export import export_signals_excel
     from fastapi.responses import StreamingResponse
-    try:
-        buffer = export_signals_excel(start_date=start_date, end_date=end_date)
-        filename = f"vpg-intel-{datetime.now().strftime('%Y%m%d')}.xlsx"
-        return StreamingResponse(
-            buffer,
-            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            headers={"Content-Disposition": f"attachment; filename={filename}"},
-        )
-    except ImportError as e:
-        raise HTTPException(500, str(e))
+    buffer = export_signals_excel(start_date=start_date, end_date=end_date)
+    filename = f"vpg-intel-{datetime.now().strftime('%Y%m%d')}.xlsx"
+    return StreamingResponse(
+        buffer,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
 
 
 @app.get("/api/export/pptx")
 def export_pptx(start_date: str | None = None, end_date: str | None = None, max_signals: int = 10):
     """Export intelligence as a PowerPoint presentation."""
+    try:
+        import pptx  # noqa: F401
+    except ImportError:
+        raise HTTPException(
+            422,
+            detail="PowerPoint export requires the 'python-pptx' package. "
+                   "Install it with: pip install python-pptx"
+        )
     from src.export.pptx_export import export_signals_pptx
     from fastapi.responses import StreamingResponse
-    try:
-        buffer = export_signals_pptx(start_date=start_date, end_date=end_date, max_signals=max_signals)
-        filename = f"vpg-intel-{datetime.now().strftime('%Y%m%d')}.pptx"
-        return StreamingResponse(
-            buffer,
-            media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-            headers={"Content-Disposition": f"attachment; filename={filename}"},
-        )
-    except ImportError as e:
-        raise HTTPException(500, str(e))
+    buffer = export_signals_pptx(start_date=start_date, end_date=end_date, max_signals=max_signals)
+    filename = f"vpg-intel-{datetime.now().strftime('%Y%m%d')}.pptx"
+    return StreamingResponse(
+        buffer,
+        media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
 
 
 # ── Intelligence Feed (V2.1 Phase C) ────────────────────────────────
