@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 
-const API = 'http://localhost:8000/api'
+const API = '/api'
 
 const PRIORITY_STYLES = {
   1: { bg: 'bg-red-50 border-red-300', badge: 'bg-red-600 text-white', label: 'Critical' },
