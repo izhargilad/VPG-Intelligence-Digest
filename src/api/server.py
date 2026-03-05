@@ -15,6 +15,7 @@ Run with: python -m src.api.server
 import logging
 import threading
 from datetime import datetime
+from io import BytesIO
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -57,7 +58,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="VPG Intelligence Digest",
     description="Management UI for the VPG Weekly Intelligence Digest",
-    version="2.2.0",
+    version="2.3.0",
 )
 
 # CORS — allow the React dev server and local access
@@ -96,9 +97,63 @@ def _startup():
         # Auto-seed industries + keywords from config if DB tables are empty
         _auto_seed_industries(conn)
 
+        # Migrate: add dismissed/handled columns to signals if missing (V2.3)
+        _migrate_v23(conn)
+
         conn.close()
     except Exception as e:
         logger.warning("Startup initialization error: %s", e)
+
+
+def _migrate_v23(conn):
+    """Add V2.3 columns (dismissed, handled) to signals + reddit_subreddits table."""
+    try:
+        cols = {row[1] for row in conn.execute("PRAGMA table_info(signals)").fetchall()}
+        for col, ddl in [
+            ("dismissed", "INTEGER NOT NULL DEFAULT 0"),
+            ("dismissed_at", "DATETIME"),
+            ("handled", "INTEGER NOT NULL DEFAULT 0"),
+            ("handled_at", "DATETIME"),
+            ("handled_by", "TEXT DEFAULT ''"),
+        ]:
+            if col not in cols:
+                conn.execute(f"ALTER TABLE signals ADD COLUMN {col} {ddl}")
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS reddit_subreddits (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                category TEXT DEFAULT '',
+                active INTEGER NOT NULL DEFAULT 1,
+                notes TEXT DEFAULT '',
+                created_at DATETIME NOT NULL DEFAULT (datetime('now')),
+                updated_at DATETIME NOT NULL DEFAULT (datetime('now'))
+            )
+        """)
+        conn.commit()
+        # Seed default subreddits if table is empty
+        count = conn.execute("SELECT COUNT(*) FROM reddit_subreddits").fetchone()[0]
+        if count == 0:
+            from src.collector.reddit_collector import DEFAULT_SUBREDDITS
+            _CATEGORIES = {
+                "robotics": "Robotics & Automation", "Automate": "Robotics & Automation", "ROS": "Robotics & Automation",
+                "aerospace": "Aerospace & Defense", "DefenseIndustry": "Aerospace & Defense",
+                "electricvehicles": "Automotive & EV", "SelfDrivingCars": "Automotive & EV", "automotive": "Automotive & EV",
+                "metalworking": "Steel & Metals", "manufacturing": "Manufacturing", "Machinists": "Manufacturing",
+                "electronics": "Sensors & Instrumentation", "sensors": "Sensors & Instrumentation", "ECE": "Sensors & Instrumentation",
+                "materials": "Materials Science", "MaterialsScience": "Materials Science",
+                "engineering": "Test & Measurement",
+                "SupplyChain": "Trade & Tariffs", "Economics": "Trade & Tariffs",
+                "mining": "Mining & Heavy Equipment", "HeavyEquipment": "Mining & Heavy Equipment",
+            }
+            for sub in DEFAULT_SUBREDDITS:
+                cat = _CATEGORIES.get(sub, "General")
+                conn.execute(
+                    "INSERT OR IGNORE INTO reddit_subreddits (name, category) VALUES (?, ?)",
+                    (sub, cat)
+                )
+            conn.commit()
+    except Exception as e:
+        logger.warning("V2.3 migration: %s", e)
 
 
 def _auto_seed_industries(conn):
@@ -637,8 +692,10 @@ def export_check():
 
 
 @app.get("/api/export/excel")
-def export_excel(start_date: str | None = None, end_date: str | None = None):
-    """Export signals, trends, and keywords as an Excel workbook."""
+def export_excel(start_date: str | None = None, end_date: str | None = None,
+                 bu_id: str | None = None, signal_type: str | None = None,
+                 industry_id: str | None = None, min_score: float = 0):
+    """Export signals, trends, and keywords as an Excel workbook with applied filters."""
     try:
         import openpyxl  # noqa: F401
     except ImportError:
@@ -649,7 +706,11 @@ def export_excel(start_date: str | None = None, end_date: str | None = None):
         )
     from src.export.excel_export import export_signals_excel
     from fastapi.responses import StreamingResponse
-    buffer = export_signals_excel(start_date=start_date, end_date=end_date)
+    buffer = export_signals_excel(
+        start_date=start_date, end_date=end_date,
+        bu_id=bu_id, signal_type=signal_type,
+        industry_id=industry_id, min_score=min_score,
+    )
     filename = f"vpg-intel-{datetime.now().strftime('%Y%m%d')}.xlsx"
     return StreamingResponse(
         buffer,
@@ -659,8 +720,11 @@ def export_excel(start_date: str | None = None, end_date: str | None = None):
 
 
 @app.get("/api/export/pptx")
-def export_pptx(start_date: str | None = None, end_date: str | None = None, max_signals: int = 10):
-    """Export intelligence as a PowerPoint presentation."""
+def export_pptx(start_date: str | None = None, end_date: str | None = None,
+                bu_id: str | None = None, signal_type: str | None = None,
+                industry_id: str | None = None, min_score: float = 0,
+                max_signals: int = 10):
+    """Export intelligence as a PowerPoint presentation with applied filters."""
     try:
         import pptx  # noqa: F401
     except ImportError:
@@ -671,7 +735,12 @@ def export_pptx(start_date: str | None = None, end_date: str | None = None, max_
         )
     from src.export.pptx_export import export_signals_pptx
     from fastapi.responses import StreamingResponse
-    buffer = export_signals_pptx(start_date=start_date, end_date=end_date, max_signals=max_signals)
+    buffer = export_signals_pptx(
+        start_date=start_date, end_date=end_date,
+        bu_id=bu_id, signal_type=signal_type,
+        industry_id=industry_id, min_score=min_score,
+        max_signals=max_signals,
+    )
     filename = f"vpg-intel-{datetime.now().strftime('%Y%m%d')}.pptx"
     return StreamingResponse(
         buffer,
@@ -704,6 +773,7 @@ def intelligence_feed(start_date: str | None = None, end_date: str | None = None
             FROM signals s
             JOIN signal_analysis sa ON s.id = sa.signal_id
             WHERE s.status IN ('scored', 'published')
+              AND COALESCE(s.dismissed, 0) = 0
         """
         params: list = []
 
@@ -731,6 +801,7 @@ def intelligence_feed(start_date: str | None = None, end_date: str | None = None
 
         rows = conn.execute(query, params).fetchall()
 
+        # Also fetch source links for each signal (validations)
         signals = []
         for row in rows:
             sig_id = row[0]
@@ -739,6 +810,10 @@ def intelligence_feed(start_date: str | None = None, end_date: str | None = None
             ).fetchall()
             inds = conn.execute(
                 "SELECT industry_id FROM signal_industries WHERE signal_id = ?", (sig_id,)
+            ).fetchall()
+            sources = conn.execute(
+                "SELECT corroborating_url, corroborating_source, corroborating_title "
+                "FROM signal_validations WHERE signal_id = ?", (sig_id,)
             ).fetchall()
 
             signals.append({
@@ -755,6 +830,9 @@ def intelligence_feed(start_date: str | None = None, end_date: str | None = None
                 "validation_level": row[20],
                 "bus": [b[0] for b in bus],
                 "industries": [i[0] for i in inds],
+                "source_links": [{"url": s[0], "source": s[1], "title": s[2]} for s in sources],
+                "dismissed": 0,
+                "handled": 0,
             })
 
         return {"signals": signals, "total": len(signals)}
@@ -1129,6 +1207,424 @@ def get_patterns():
         return detect_patterns(conn)
     finally:
         conn.close()
+
+
+# ── Signal Status Management (V2.3) ─────────────────────────────────
+
+@app.post("/api/signals/{signal_id}/dismiss")
+def dismiss_signal(signal_id: int):
+    """Mark a signal as not-relevant. Removes from views/stats but kept in DB."""
+    conn = get_connection()
+    try:
+        row = conn.execute("SELECT id FROM signals WHERE id = ?", (signal_id,)).fetchone()
+        if not row:
+            raise HTTPException(404, f"Signal {signal_id} not found")
+        conn.execute(
+            "UPDATE signals SET dismissed = 1, dismissed_at = datetime('now') WHERE id = ?",
+            (signal_id,)
+        )
+        conn.commit()
+        return {"signal_id": signal_id, "dismissed": True}
+    finally:
+        conn.close()
+
+
+@app.post("/api/signals/{signal_id}/restore")
+def restore_signal(signal_id: int):
+    """Restore a previously dismissed signal."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE signals SET dismissed = 0, dismissed_at = NULL WHERE id = ?",
+            (signal_id,)
+        )
+        conn.commit()
+        return {"signal_id": signal_id, "dismissed": False}
+    finally:
+        conn.close()
+
+
+@app.post("/api/signals/{signal_id}/handle")
+def handle_signal(signal_id: int, handled_by: str = ""):
+    """Mark a signal as read/handled for review tracking."""
+    conn = get_connection()
+    try:
+        row = conn.execute("SELECT id FROM signals WHERE id = ?", (signal_id,)).fetchone()
+        if not row:
+            raise HTTPException(404, f"Signal {signal_id} not found")
+        conn.execute(
+            "UPDATE signals SET handled = 1, handled_at = datetime('now'), handled_by = ? WHERE id = ?",
+            (handled_by, signal_id)
+        )
+        conn.commit()
+        return {"signal_id": signal_id, "handled": True, "handled_by": handled_by}
+    finally:
+        conn.close()
+
+
+@app.post("/api/signals/{signal_id}/unhandle")
+def unhandle_signal(signal_id: int):
+    """Remove handled mark from a signal."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE signals SET handled = 0, handled_at = NULL, handled_by = '' WHERE id = ?",
+            (signal_id,)
+        )
+        conn.commit()
+        return {"signal_id": signal_id, "handled": False}
+    finally:
+        conn.close()
+
+
+# ── Competitor Pulse (V2.3) ─────────────────────────────────────────
+
+MONITORED_COMPETITORS = [
+    "TT Electronics", "HBK", "Hottinger", "Zemic", "Rice Lake",
+    "Kistler", "Kyowa", "NMB", "Omega", "Novanta",
+    "Flintec", "Sunrise Instruments", "Figure AI", "Boston Dynamics",
+    "Mettler Toledo", "Siemens", "Honeywell",
+]
+
+
+@app.get("/api/executive/competitor-pulse")
+def competitor_pulse(start_date: str | None = None, end_date: str | None = None,
+                     bu_id: str | None = None, industry_id: str | None = None):
+    """Top competitors by signal count with trend direction."""
+    conn = get_connection()
+    try:
+        results = []
+        for comp in MONITORED_COMPETITORS:
+            query = """
+                SELECT COUNT(*), AVG(sa.score_composite)
+                FROM signals s
+                JOIN signal_analysis sa ON s.id = sa.signal_id
+                WHERE s.status IN ('scored', 'published')
+                  AND COALESCE(s.dismissed, 0) = 0
+                  AND (LOWER(s.title) LIKE ? OR LOWER(s.raw_content) LIKE ?
+                       OR LOWER(sa.headline) LIKE ? OR LOWER(sa.what_summary) LIKE ?)
+            """
+            like = f"%{comp.lower()}%"
+            params = [like, like, like, like]
+            if start_date:
+                query += " AND s.collected_at >= ?"
+                params.append(start_date)
+            if end_date:
+                query += " AND s.collected_at <= ?"
+                params.append(end_date + " 23:59:59")
+            if bu_id:
+                query += " AND s.id IN (SELECT signal_id FROM signal_bus WHERE bu_id = ?)"
+                params.append(bu_id)
+            if industry_id:
+                query += " AND s.id IN (SELECT signal_id FROM signal_industries WHERE industry_id = ?)"
+                params.append(industry_id)
+
+            row = conn.execute(query, params).fetchone()
+            count = row[0] or 0
+            if count == 0:
+                continue
+
+            # Trend: compare recent 2 weeks vs prior 2 weeks
+            recent = conn.execute(
+                "SELECT COUNT(*) FROM signals s JOIN signal_analysis sa ON s.id = sa.signal_id "
+                "WHERE s.status IN ('scored','published') AND COALESCE(s.dismissed,0)=0 "
+                "AND (LOWER(s.title) LIKE ? OR LOWER(sa.headline) LIKE ?) "
+                "AND s.collected_at >= date('now', '-14 days')",
+                (like, like)
+            ).fetchone()[0]
+            older = conn.execute(
+                "SELECT COUNT(*) FROM signals s JOIN signal_analysis sa ON s.id = sa.signal_id "
+                "WHERE s.status IN ('scored','published') AND COALESCE(s.dismissed,0)=0 "
+                "AND (LOWER(s.title) LIKE ? OR LOWER(sa.headline) LIKE ?) "
+                "AND s.collected_at >= date('now', '-28 days') AND s.collected_at < date('now', '-14 days')",
+                (like, like)
+            ).fetchone()[0]
+
+            if recent > older:
+                trend = "up"
+            elif recent < older:
+                trend = "down"
+            else:
+                trend = "stable"
+
+            results.append({
+                "competitor": comp,
+                "signal_count": count,
+                "avg_score": round(row[1] or 0, 1),
+                "trend": trend,
+                "recent_signals": recent,
+            })
+
+        results.sort(key=lambda x: x["signal_count"], reverse=True)
+        return {"competitors": results[:10], "total_monitored": len(MONITORED_COMPETITORS)}
+    finally:
+        conn.close()
+
+
+# ── Pipeline Last Run (V2.3) ────────────────────────────────────────
+
+@app.get("/api/pipeline/last-run")
+def pipeline_last_run():
+    """Get the timestamp of the last completed pipeline run."""
+    conn = get_connection()
+    try:
+        row = conn.execute(
+            "SELECT started_at, completed_at, status, run_type, signals_collected, signals_scored "
+            "FROM pipeline_runs ORDER BY started_at DESC LIMIT 1"
+        ).fetchone()
+        if not row:
+            return {"last_run": None}
+        return {
+            "last_run": {
+                "started_at": row[0], "completed_at": row[1],
+                "status": row[2], "run_type": row[3],
+                "signals_collected": row[4], "signals_scored": row[5],
+            }
+        }
+    finally:
+        conn.close()
+
+
+# ── Reddit Subreddit Management (V2.3) ─────────────────────────────
+
+class SubredditCreate(BaseModel):
+    name: str
+    category: str = ""
+    notes: str = ""
+
+
+class SubredditUpdate(BaseModel):
+    category: str | None = None
+    active: bool | None = None
+    notes: str | None = None
+
+
+@app.get("/api/reddit/subreddits")
+def list_subreddits():
+    """Get all managed subreddits."""
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            "SELECT id, name, category, active, notes, created_at, updated_at "
+            "FROM reddit_subreddits ORDER BY category, name"
+        ).fetchall()
+        subs = []
+        for r in rows:
+            subs.append({
+                "id": r[0], "name": r[1], "category": r[2],
+                "active": bool(r[3]), "notes": r[4],
+                "created_at": r[5], "updated_at": r[6],
+            })
+        return {"subreddits": subs, "total": len(subs)}
+    finally:
+        conn.close()
+
+
+@app.post("/api/reddit/subreddits")
+def add_subreddit(sub: SubredditCreate):
+    """Add a new subreddit to monitor."""
+    conn = get_connection()
+    try:
+        existing = conn.execute(
+            "SELECT id FROM reddit_subreddits WHERE name = ?", (sub.name,)
+        ).fetchone()
+        if existing:
+            raise HTTPException(400, f"Subreddit r/{sub.name} already exists")
+        conn.execute(
+            "INSERT INTO reddit_subreddits (name, category, notes) VALUES (?, ?, ?)",
+            (sub.name, sub.category, sub.notes)
+        )
+        conn.commit()
+        return {"name": sub.name, "status": "added"}
+    finally:
+        conn.close()
+
+
+@app.put("/api/reddit/subreddits/{sub_id}")
+def update_subreddit(sub_id: int, updates: SubredditUpdate):
+    """Update a subreddit's settings."""
+    conn = get_connection()
+    try:
+        row = conn.execute("SELECT id FROM reddit_subreddits WHERE id = ?", (sub_id,)).fetchone()
+        if not row:
+            raise HTTPException(404, f"Subreddit {sub_id} not found")
+        update_data = updates.model_dump(exclude_none=True)
+        if "active" in update_data:
+            update_data["active"] = int(update_data["active"])
+        for key, val in update_data.items():
+            conn.execute(
+                f"UPDATE reddit_subreddits SET {key} = ?, updated_at = datetime('now') WHERE id = ?",
+                (val, sub_id)
+            )
+        conn.commit()
+        return {"id": sub_id, "updated": True}
+    finally:
+        conn.close()
+
+
+@app.delete("/api/reddit/subreddits/{sub_id}")
+def delete_subreddit(sub_id: int):
+    """Remove a subreddit from monitoring."""
+    conn = get_connection()
+    try:
+        deleted = conn.execute("DELETE FROM reddit_subreddits WHERE id = ?", (sub_id,)).rowcount
+        conn.commit()
+        if not deleted:
+            raise HTTPException(404, f"Subreddit {sub_id} not found")
+        return {"deleted": sub_id}
+    finally:
+        conn.close()
+
+
+# ── Recommendations Export (V2.3) ───────────────────────────────────
+
+@app.get("/api/export/recommendations/excel")
+def export_recommendations_excel():
+    """Export recommendations as Excel workbook."""
+    try:
+        import openpyxl  # noqa: F401
+    except ImportError:
+        raise HTTPException(422, detail="Install openpyxl: pip install openpyxl")
+    from src.analyzer.recommendations import generate_recommendations
+    from fastapi.responses import StreamingResponse
+
+    conn = get_connection()
+    try:
+        recs_data = generate_recommendations(conn)
+    finally:
+        conn.close()
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Recommendations"
+    ws.append(["Priority", "Type", "Title", "Description", "Action", "Owner", "Score"])
+    priority_map = {1: "Critical", 2: "High", 3: "Medium"}
+    for rec in recs_data.get("recommendations", []):
+        ws.append([
+            priority_map.get(rec.get("priority", 3), "Medium"),
+            rec.get("type", ""), rec.get("title", ""),
+            rec.get("description", ""), rec.get("action", ""),
+            rec.get("owner", ""), rec.get("score", 0),
+        ])
+
+    from openpyxl.styles import Font, PatternFill
+    navy_fill = PatternFill(start_color="1B2A4A", end_color="1B2A4A", fill_type="solid")
+    for cell in ws[1]:
+        cell.fill = navy_fill
+        cell.font = Font(name="Arial", bold=True, color="FFFFFF", size=10)
+    for col in ws.columns:
+        max_len = max(len(str(c.value or "")) for c in col)
+        ws.column_dimensions[col[0].column_letter].width = min(max_len + 4, 60)
+
+    buffer = BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+    filename = f"vpg-recommendations-{datetime.now().strftime('%Y%m%d')}.xlsx"
+    return StreamingResponse(
+        buffer,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@app.get("/api/export/recommendations/pptx")
+def export_recommendations_pptx():
+    """Export recommendations as PowerPoint presentation."""
+    try:
+        import pptx as pptx_mod  # noqa: F401
+    except ImportError:
+        raise HTTPException(422, detail="Install python-pptx: pip install python-pptx")
+    from pptx import Presentation
+    from pptx.util import Inches, Pt
+    from pptx.dml.color import RGBColor
+    from src.analyzer.recommendations import generate_recommendations
+    from fastapi.responses import StreamingResponse
+
+    conn = get_connection()
+    try:
+        recs_data = generate_recommendations(conn)
+    finally:
+        conn.close()
+
+    prs = Presentation()
+    prs.slide_width = Inches(10)
+    prs.slide_height = Inches(7.5)
+
+    # Title slide
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    bg = slide.background.fill
+    bg.solid()
+    bg.fore_color.rgb = RGBColor(27, 42, 74)
+    tb = slide.shapes.add_textbox(Inches(1), Inches(2.5), Inches(8), Inches(1.5))
+    p = tb.text_frame.paragraphs[0]
+    p.text = "VPG Strategic Recommendations"
+    p.font.size = Pt(32)
+    p.font.bold = True
+    p.font.color.rgb = RGBColor(255, 255, 255)
+    p2 = tb.text_frame.add_paragraph()
+    p2.text = f"Generated {datetime.now().strftime('%B %d, %Y')}"
+    p2.font.size = Pt(16)
+    p2.font.color.rgb = RGBColor(46, 117, 182)
+
+    priority_colors = {1: RGBColor(229, 57, 53), 2: RGBColor(245, 124, 0), 3: RGBColor(46, 117, 182)}
+    priority_labels = {1: "CRITICAL", 2: "HIGH", 3: "MEDIUM"}
+
+    for rec in recs_data.get("recommendations", [])[:12]:
+        slide = prs.slides.add_slide(prs.slide_layouts[6])
+        pri = rec.get("priority", 3)
+        # Priority badge
+        hdr = slide.shapes.add_textbox(Inches(0.5), Inches(0.3), Inches(9), Inches(0.5))
+        hp = hdr.text_frame.paragraphs[0]
+        r1 = hp.add_run()
+        r1.text = f"{priority_labels.get(pri, 'MEDIUM')}  "
+        r1.font.size = Pt(11)
+        r1.font.bold = True
+        r1.font.color.rgb = priority_colors.get(pri, RGBColor(46, 117, 182))
+        r2 = hp.add_run()
+        r2.text = rec.get("type", "")
+        r2.font.size = Pt(11)
+        r2.font.color.rgb = RGBColor(100, 100, 100)
+
+        # Title
+        ttl = slide.shapes.add_textbox(Inches(0.5), Inches(0.8), Inches(9), Inches(0.8))
+        ttl.text_frame.word_wrap = True
+        tp = ttl.text_frame.paragraphs[0]
+        tp.text = rec.get("title", "")
+        tp.font.size = Pt(20)
+        tp.font.bold = True
+        tp.font.color.rgb = RGBColor(27, 42, 74)
+
+        # Description
+        desc = slide.shapes.add_textbox(Inches(0.5), Inches(1.8), Inches(9), Inches(1.5))
+        desc.text_frame.word_wrap = True
+        dp = desc.text_frame.paragraphs[0]
+        dp.text = rec.get("description", "")[:400]
+        dp.font.size = Pt(12)
+        dp.font.color.rgb = RGBColor(60, 60, 60)
+
+        # Action
+        act = slide.shapes.add_textbox(Inches(0.5), Inches(3.5), Inches(9), Inches(1.5))
+        act.text_frame.word_wrap = True
+        ap = act.text_frame.paragraphs[0]
+        ar1 = ap.add_run()
+        ar1.text = "ACTION: "
+        ar1.font.size = Pt(12)
+        ar1.font.bold = True
+        ar1.font.color.rgb = RGBColor(232, 121, 47)
+        ar2 = ap.add_run()
+        ar2.text = rec.get("action", "")[:300]
+        ar2.font.size = Pt(12)
+        ar2.font.color.rgb = RGBColor(60, 60, 60)
+
+    buffer = BytesIO()
+    prs.save(buffer)
+    buffer.seek(0)
+    filename = f"vpg-recommendations-{datetime.now().strftime('%Y%m%d')}.pptx"
+    return StreamingResponse(
+        buffer,
+        media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
 
 
 # ── Serve React Frontend ────────────────────────────────────────────

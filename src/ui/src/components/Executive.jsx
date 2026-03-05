@@ -10,28 +10,63 @@ const SIGNAL_TYPE_LABELS = {
   'trade-tariff': { label: 'Trade/Tariff', icon: '\uD83C\uDF0D', color: '#455A64' },
 }
 
+const TREND_ICONS = { up: '\u2191', down: '\u2193', stable: '\u2192' }
+const TREND_COLORS = { up: 'text-red-600', down: 'text-green-600', stable: 'text-gray-500' }
+
 export default function Executive() {
   const [data, setData] = useState(null)
   const [trends, setTrends] = useState(null)
+  const [competitors, setCompetitors] = useState(null)
+  const [busUnits, setBusUnits] = useState([])
+  const [industries, setIndustries] = useState([])
   const [loading, setLoading] = useState(true)
   const [exportError, setExportError] = useState(null)
+  const [compExpanded, setCompExpanded] = useState(false)
+  const [filters, setFilters] = useState({ bu_id: '', industry_id: '', start_date: '', end_date: '' })
+
+  const loadData = () => {
+    setLoading(true)
+    const fp = new URLSearchParams()
+    if (filters.bu_id) fp.set('bu_id', filters.bu_id)
+    if (filters.industry_id) fp.set('industry_id', filters.industry_id)
+    if (filters.start_date) fp.set('start_date', filters.start_date)
+    if (filters.end_date) fp.set('end_date', filters.end_date)
+    const qs = fp.toString() ? `?${fp}` : ''
+
+    Promise.all([
+      fetch(`/api/executive/bu-summary`).then(r => r.json()),
+      fetch(`/api/trends?limit=10`).then(r => r.json()),
+      fetch(`/api/executive/competitor-pulse${qs}`).then(r => r.json()).catch(() => ({ competitors: [] })),
+    ])
+      .then(([buData, trendData, compData]) => {
+        setData(buData)
+        setTrends(trendData)
+        setCompetitors(compData)
+      })
+      .finally(() => setLoading(false))
+  }
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/executive/bu-summary').then(r => r.json()),
-      fetch('/api/trends?limit=10').then(r => r.json()),
-    ])
-      .then(([buData, trendData]) => {
-        setData(buData)
-        setTrends(trendData)
-      })
-      .finally(() => setLoading(false))
+      fetch('/api/business-units').then(r => r.json()),
+      fetch('/api/industries').then(r => r.json()),
+    ]).then(([buData, indData]) => {
+      setBusUnits(buData.business_units || [])
+      setIndustries(indData.industries || [])
+    })
   }, [])
+
+  useEffect(loadData, [filters])
 
   const handleExport = async (format) => {
     setExportError(null)
     try {
-      const resp = await fetch(`/api/export/${format}`)
+      const params = new URLSearchParams()
+      if (filters.bu_id) params.set('bu_id', filters.bu_id)
+      if (filters.industry_id) params.set('industry_id', filters.industry_id)
+      if (filters.start_date) params.set('start_date', filters.start_date)
+      if (filters.end_date) params.set('end_date', filters.end_date)
+      const resp = await fetch(`/api/export/${format}?${params}`)
       if (!resp.ok) {
         const err = await resp.json()
         setExportError(err.detail || `Export failed (${resp.status})`)
@@ -59,13 +94,12 @@ export default function Executive() {
 
   const summaries = data.bu_summaries || []
   const risingTrends = (trends?.rising || []).slice(0, 5)
-
-  // Score distribution for summary bar
   const maxSignals = Math.max(...summaries.map(s => s.signal_count), 1)
+  const compList = competitors?.competitors || []
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-2xl font-bold text-vpg-navy">Executive Dashboard</h2>
           <p className="text-sm text-gray-500 mt-1">
@@ -90,12 +124,44 @@ export default function Executive() {
 
       {exportError && (
         <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-4 text-sm flex justify-between items-start">
-          <div>
-            <strong>Export Error:</strong> {exportError}
-          </div>
+          <div><strong>Export Error:</strong> {exportError}</div>
           <button onClick={() => setExportError(null)} className="text-red-400 hover:text-red-600 ml-4">&times;</button>
         </div>
       )}
+
+      {/* Filters */}
+      <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+        <div className="grid grid-cols-4 gap-3">
+          <div>
+            <label className="block text-[10px] font-semibold text-gray-500 uppercase mb-1">Business Unit</label>
+            <select value={filters.bu_id} onChange={e => setFilters({ ...filters, bu_id: e.target.value })}
+              className="w-full border rounded px-2 py-1.5 text-xs">
+              <option value="">All BUs</option>
+              {busUnits.map(bu => <option key={bu.id} value={bu.id}>{bu.short_name || bu.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-[10px] font-semibold text-gray-500 uppercase mb-1">Industry</label>
+            <select value={filters.industry_id} onChange={e => setFilters({ ...filters, industry_id: e.target.value })}
+              className="w-full border rounded px-2 py-1.5 text-xs">
+              <option value="">All Industries</option>
+              {industries.map(ind => <option key={ind.id} value={ind.id}>{ind.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-[10px] font-semibold text-gray-500 uppercase mb-1">From</label>
+            <input type="date" value={filters.start_date}
+              onChange={e => setFilters({ ...filters, start_date: e.target.value })}
+              className="w-full border rounded px-2 py-1.5 text-xs" />
+          </div>
+          <div>
+            <label className="block text-[10px] font-semibold text-gray-500 uppercase mb-1">To</label>
+            <input type="date" value={filters.end_date}
+              onChange={e => setFilters({ ...filters, end_date: e.target.value })}
+              className="w-full border rounded px-2 py-1.5 text-xs" />
+          </div>
+        </div>
+      </div>
 
       {/* Top-level stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
@@ -111,6 +177,50 @@ export default function Executive() {
           <div className="text-3xl font-bold text-vpg-accent">{data.bus_with_signals}/9</div>
           <div className="text-xs text-gray-500 uppercase tracking-wide mt-1">BUs with Active Signals</div>
         </div>
+      </div>
+
+      {/* Competitor Pulse */}
+      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-vpg-navy">Competitor Pulse</h3>
+          {compList.length > 5 && (
+            <button onClick={() => setCompExpanded(!compExpanded)}
+              className="text-xs text-vpg-blue hover:underline">
+              {compExpanded ? 'Show top 5' : `Show all ${compList.length}`}
+            </button>
+          )}
+        </div>
+        {compList.length > 0 ? (
+          <div className="space-y-3">
+            {(compExpanded ? compList : compList.slice(0, 5)).map(comp => (
+              <div key={comp.competitor} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                <div className="w-40 flex-shrink-0">
+                  <div className="text-sm font-medium text-vpg-navy">{comp.competitor}</div>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 bg-gray-200 rounded-full h-4 overflow-hidden">
+                      <div className="h-full rounded-full bg-vpg-blue transition-all"
+                        style={{ width: `${Math.min((comp.signal_count / Math.max(...compList.map(c => c.signal_count), 1)) * 100, 100)}%` }} />
+                    </div>
+                    <span className="text-sm font-semibold text-vpg-navy w-8 text-right">{comp.signal_count}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 w-24 justify-end flex-shrink-0">
+                  <span className="text-xs text-gray-500">Avg {comp.avg_score}</span>
+                  <span className={`text-lg font-bold ${TREND_COLORS[comp.trend] || 'text-gray-500'}`}
+                    title={`Trend: ${comp.trend}`}>
+                    {TREND_ICONS[comp.trend] || '\u2192'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-4 text-gray-400 text-sm">
+            No competitor signals detected. Run the pipeline to collect data.
+          </div>
+        )}
       </div>
 
       {/* BU Signal Breakdown */}

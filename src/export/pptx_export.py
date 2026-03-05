@@ -205,7 +205,24 @@ def _add_signal_slide(prs, pptx_mod, signal):
         run2.font.color.rgb = RGBColor(60, 60, 60)
         y += 0.7
 
-    # Source + BUs
+    # Source links
+    source_links = signal.get("source_links", [])
+    if source_links:
+        links_box = slide.shapes.add_textbox(Inches(0.5), Inches(y), Inches(9), Inches(0.5))
+        tf = links_box.text_frame
+        tf.word_wrap = True
+        p = tf.paragraphs[0]
+        run1 = p.add_run()
+        run1.text = "SOURCES: "
+        run1.font.size = Pt(9)
+        run1.font.bold = True
+        run1.font.color.rgb = RGBColor(100, 100, 100)
+        run2 = p.add_run()
+        run2.text = " | ".join(source_links[:5])
+        run2.font.size = Pt(8)
+        run2.font.color.rgb = RGBColor(46, 117, 182)
+
+    # BUs
     bu_str = ", ".join(signal.get("bus", []))
     if bu_str:
         footer_box = slide.shapes.add_textbox(Inches(0.5), Inches(6.3), Inches(9), Inches(0.3))
@@ -267,6 +284,8 @@ def _add_bu_breakdown_slide(prs, pptx_mod, bu_data):
 
 
 def export_signals_pptx(start_date: str | None = None, end_date: str | None = None,
+                        bu_id: str | None = None, signal_type: str | None = None,
+                        industry_id: str | None = None, min_score: float = 0,
                         max_signals: int = 10,
                         output_path: Path | None = None) -> BytesIO | Path:
     """Export intelligence to a PowerPoint presentation.
@@ -297,10 +316,12 @@ def export_signals_pptx(start_date: str | None = None, end_date: str | None = No
         query = """
             SELECT s.id, s.title, sa.signal_type, sa.headline, sa.score_composite,
                    sa.what_summary, sa.why_it_matters, sa.quick_win,
-                   sa.suggested_owner, sa.estimated_impact, sa.validation_level
+                   sa.suggested_owner, sa.estimated_impact, sa.validation_level,
+                   s.url
             FROM signals s
             JOIN signal_analysis sa ON s.id = sa.signal_id
             WHERE s.status IN ('scored', 'published')
+              AND COALESCE(s.dismissed, 0) = 0
         """
         params = []
         if start_date:
@@ -309,23 +330,45 @@ def export_signals_pptx(start_date: str | None = None, end_date: str | None = No
         if end_date:
             query += " AND s.collected_at <= ?"
             params.append(end_date + " 23:59:59")
+        if signal_type:
+            query += " AND sa.signal_type = ?"
+            params.append(signal_type)
+        if min_score > 0:
+            query += " AND sa.score_composite >= ?"
+            params.append(min_score)
+        if bu_id:
+            query += " AND s.id IN (SELECT signal_id FROM signal_bus WHERE bu_id = ?)"
+            params.append(bu_id)
+        if industry_id:
+            query += " AND s.id IN (SELECT signal_id FROM signal_industries WHERE industry_id = ?)"
+            params.append(industry_id)
         query += " ORDER BY sa.score_composite DESC"
 
         rows = conn.execute(query, params).fetchall()
 
-        # Enrich with BU data
+        # Enrich with BU data and source links
         signals = []
         for row in rows:
             bus = conn.execute(
                 "SELECT bu_id FROM signal_bus WHERE signal_id = ?", (row[0],)
             ).fetchall()
+            # Collect all source links
+            source_links = [row[11]] if row[11] else []
+            validations = conn.execute(
+                "SELECT corroborating_url FROM signal_validations WHERE signal_id = ?",
+                (row[0],)
+            ).fetchall()
+            source_links.extend(v[0] for v in validations if v[0])
+
             signals.append({
                 "id": row[0], "title": row[1], "signal_type": row[2],
                 "headline": row[3], "score_composite": row[4] or 0,
                 "what_summary": row[5], "why_it_matters": row[6],
                 "quick_win": row[7], "suggested_owner": row[8],
                 "estimated_impact": row[9], "validation_level": row[10],
+                "url": row[11],
                 "bus": [b[0] for b in bus],
+                "source_links": source_links,
             })
 
         # Compute stats

@@ -12,6 +12,7 @@ import Digests from './components/Digests'
 import Trends from './components/Trends'
 import Scoring from './components/Scoring'
 import Recommendations from './components/Recommendations'
+import Reddit from './components/Reddit'
 
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: '📊' },
@@ -24,6 +25,7 @@ const NAV_ITEMS = [
   { id: 'business-units', label: 'Business Units', icon: '🏢' },
   { id: 'industries', label: 'Industries', icon: '🏭' },
   { id: 'keywords', label: 'Keywords', icon: '🔑' },
+  { id: 'reddit', label: 'Reddit', icon: '🔴' },
   { id: 'scoring', label: 'Scoring', icon: '🎚' },
   { id: 'trends', label: 'Trends', icon: '📈' },
   { id: 'digests', label: 'Digest History', icon: '📰' },
@@ -44,6 +46,7 @@ export default function App() {
       case 'business-units': return <BusinessUnits />
       case 'industries': return <Industries />
       case 'keywords': return <Keywords />
+      case 'reddit': return <Reddit />
       case 'scoring': return <Scoring />
       case 'trends': return <Trends />
       case 'digests': return <Digests />
@@ -61,7 +64,7 @@ export default function App() {
             <p className="text-sm text-blue-300">Management Console</p>
           </div>
           <div className="text-xs text-blue-400">
-            v2.2
+            v2.3
           </div>
         </div>
       </header>

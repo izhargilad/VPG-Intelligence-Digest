@@ -16,6 +16,8 @@ export default function Pipeline() {
   const [running, setRunning] = useState(false)
   const [paused, setPaused] = useState(false)
   const [pdfMode, setPdfMode] = useState(true)
+  const [lastRun, setLastRun] = useState(null)
+  const [dateRange, setDateRange] = useState({ start: '', end: '' })
   const pollRef = useRef(null)
 
   const checkStatus = () => {
@@ -28,22 +30,31 @@ export default function Pipeline() {
         if (!data.running && pollRef.current) {
           clearInterval(pollRef.current)
           pollRef.current = null
+          fetchLastRun()
         }
       })
       .catch(() => {})
   }
 
+  const fetchLastRun = () => {
+    fetch('/api/pipeline/last-run')
+      .then(r => r.json())
+      .then(d => setLastRun(d.last_run))
+      .catch(() => {})
+  }
+
   useEffect(() => {
     checkStatus()
+    fetchLastRun()
     return () => { if (pollRef.current) clearInterval(pollRef.current) }
   }, [])
 
   const runPipeline = async (dryRun) => {
     try {
-      const res = await fetch(
-        `/api/pipeline/run?dry_run=${dryRun}&pdf_mode=${pdfMode}`,
-        { method: 'POST' }
-      )
+      const params = new URLSearchParams({ dry_run: dryRun, pdf_mode: pdfMode })
+      if (dateRange.start) params.set('start_date', dateRange.start)
+      if (dateRange.end) params.set('end_date', dateRange.end)
+      const res = await fetch(`/api/pipeline/run?${params}`, { method: 'POST' })
       if (res.ok) {
         setRunning(true)
         setPaused(false)
@@ -91,6 +102,55 @@ export default function Pipeline() {
     <div>
       <h2 className="text-2xl font-bold text-vpg-navy mb-6">Run Digest Pipeline</h2>
 
+      {/* Last Run Indicator */}
+      {lastRun && (
+        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className={`w-2.5 h-2.5 rounded-full ${
+                lastRun.status === 'completed' ? 'bg-green-500' :
+                lastRun.status === 'failed' ? 'bg-red-500' : 'bg-yellow-500'
+              }`} />
+              <span className="text-sm font-semibold text-vpg-navy">Last Run</span>
+            </div>
+            <span className="text-sm text-gray-600">
+              {lastRun.started_at ? new Date(lastRun.started_at).toLocaleString() : 'N/A'}
+            </span>
+            <span className={`text-xs px-2 py-0.5 rounded font-semibold ${
+              lastRun.status === 'completed' ? 'bg-green-100 text-green-700' :
+              lastRun.status === 'failed' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+            }`}>
+              {lastRun.status?.toUpperCase()}
+            </span>
+            {lastRun.signals_collected != null && (
+              <span className="text-xs text-gray-500">
+                {lastRun.signals_collected} collected / {lastRun.signals_scored || 0} scored
+              </span>
+            )}
+            <span className="text-xs text-gray-400">{lastRun.run_type}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Date Range */}
+      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-semibold text-vpg-navy">Collection Date Range:</span>
+          <div className="flex items-center gap-2">
+            <input type="date" value={dateRange.start}
+              onChange={e => setDateRange({ ...dateRange, start: e.target.value })}
+              disabled={running}
+              className="border rounded px-2 py-1.5 text-xs" />
+            <span className="text-xs text-gray-400">to</span>
+            <input type="date" value={dateRange.end}
+              onChange={e => setDateRange({ ...dateRange, end: e.target.value })}
+              disabled={running}
+              className="border rounded px-2 py-1.5 text-xs" />
+          </div>
+          <span className="text-xs text-gray-400">(leave empty for default 7-day window)</span>
+        </div>
+      </div>
+
       {/* Delivery Format Toggle */}
       <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
         <div className="flex items-center gap-4">
@@ -116,7 +176,7 @@ export default function Pipeline() {
               className="text-vpg-blue"
             />
             <span className="text-sm">PDF Attachment</span>
-            <span className="text-xs text-gray-500">(recommended — bypasses spam filters)</span>
+            <span className="text-xs text-gray-500">(recommended)</span>
           </label>
         </div>
       </div>

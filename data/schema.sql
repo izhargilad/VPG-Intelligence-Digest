@@ -23,7 +23,12 @@ CREATE TABLE IF NOT EXISTS signals (
     raw_content TEXT,                       -- Full article text if scraped
     image_url TEXT,                         -- Source article image
     image_local_path TEXT,                  -- Cached local image path
-    status TEXT NOT NULL DEFAULT 'new'      -- new, validated, scored, published, archived
+    status TEXT NOT NULL DEFAULT 'new',      -- new, validated, scored, published, archived
+    dismissed INTEGER NOT NULL DEFAULT 0,   -- 1 = marked as not-relevant (V2.3)
+    dismissed_at DATETIME,                  -- When it was dismissed
+    handled INTEGER NOT NULL DEFAULT 0,     -- 1 = marked as read/actioned (V2.3)
+    handled_at DATETIME,                    -- When it was handled
+    handled_by TEXT DEFAULT ''              -- Who handled it (role/name)
 );
 
 CREATE INDEX IF NOT EXISTS idx_signals_status ON signals(status);
@@ -282,3 +287,18 @@ CREATE TABLE IF NOT EXISTS signal_industries (
 
 CREATE INDEX IF NOT EXISTS idx_signal_industries_signal ON signal_industries(signal_id);
 CREATE INDEX IF NOT EXISTS idx_signal_industries_industry ON signal_industries(industry_id);
+
+-- ============================================================
+-- Reddit subreddit management (V2.3)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS reddit_subreddits (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,               -- Subreddit name (without r/)
+    category TEXT DEFAULT '',                -- Grouping label
+    active INTEGER NOT NULL DEFAULT 1,       -- 0/1 boolean
+    notes TEXT DEFAULT '',
+    created_at DATETIME NOT NULL DEFAULT (datetime('now')),
+    updated_at DATETIME NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_reddit_subs_name ON reddit_subreddits(name);

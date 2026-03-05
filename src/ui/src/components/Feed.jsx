@@ -33,6 +33,7 @@ export default function Feed() {
   const [industries, setIndustries] = useState([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState(null)
+  const [exportError, setExportError] = useState(null)
   const [filters, setFilters] = useState({
     signal_type: '', bu_id: '', industry_id: '',
     min_score: 0, start_date: '', end_date: '',
@@ -70,11 +71,47 @@ export default function Feed() {
   const buNameMap = {}
   busUnits.forEach(bu => { buNameMap[bu.id] = bu.short_name || bu.name })
 
-  const handleExport = (format) => {
-    const params = new URLSearchParams()
-    if (filters.start_date) params.set('start_date', filters.start_date)
-    if (filters.end_date) params.set('end_date', filters.end_date)
-    window.open(`/api/export/${format}?${params}`, '_blank')
+  const handleExport = async (format) => {
+    setExportError(null)
+    try {
+      const params = new URLSearchParams()
+      if (filters.start_date) params.set('start_date', filters.start_date)
+      if (filters.end_date) params.set('end_date', filters.end_date)
+      if (filters.bu_id) params.set('bu_id', filters.bu_id)
+      if (filters.signal_type) params.set('signal_type', filters.signal_type)
+      if (filters.industry_id) params.set('industry_id', filters.industry_id)
+      if (filters.min_score > 0) params.set('min_score', filters.min_score)
+      const resp = await fetch(`/api/export/${format}?${params}`)
+      if (!resp.ok) {
+        const err = await resp.json()
+        setExportError(err.detail || `Export failed (${resp.status})`)
+        return
+      }
+      const blob = await resp.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = resp.headers.get('content-disposition')?.split('filename=')[1] || `export.${format}`
+      a.click()
+      window.URL.revokeObjectURL(url)
+    } catch (e) {
+      setExportError(`Export failed: ${e.message}`)
+    }
+  }
+
+  const dismissSignal = async (signalId) => {
+    await fetch(`/api/signals/${signalId}/dismiss`, { method: 'POST' })
+    setSignals(prev => prev.filter(s => s.id !== signalId))
+  }
+
+  const handleSignal = async (signalId) => {
+    await fetch(`/api/signals/${signalId}/handle`, { method: 'POST' })
+    setSignals(prev => prev.map(s => s.id === signalId ? { ...s, handled: 1 } : s))
+  }
+
+  const unhandleSignal = async (signalId) => {
+    await fetch(`/api/signals/${signalId}/unhandle`, { method: 'POST' })
+    setSignals(prev => prev.map(s => s.id === signalId ? { ...s, handled: 0 } : s))
   }
 
   return (
@@ -99,6 +136,13 @@ export default function Feed() {
           </button>
         </div>
       </div>
+
+      {exportError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 mb-4 text-sm flex justify-between items-center">
+          <span>{exportError}</span>
+          <button onClick={() => setExportError(null)} className="text-red-400 hover:text-red-600">&times;</button>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
@@ -178,7 +222,7 @@ export default function Feed() {
             const isExpanded = expanded === signal.id
 
             return (
-              <div key={signal.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <div key={signal.id} className={`bg-white rounded-lg shadow-sm overflow-hidden ${signal.handled ? 'opacity-70' : ''}`}>
                 <div
                   className="flex items-center gap-3 px-5 py-3 cursor-pointer hover:bg-gray-50"
                   onClick={() => setExpanded(isExpanded ? null : signal.id)}
@@ -193,6 +237,9 @@ export default function Feed() {
                       <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold ${valBadge.color}`}>
                         {valBadge.label}
                       </span>
+                      {signal.handled ? (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded font-semibold bg-green-100 text-green-700">HANDLED</span>
+                      ) : null}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
                       {signal.bus.map(buId => (
@@ -247,12 +294,47 @@ export default function Feed() {
                       <span className="text-gray-400">Strategic: {(signal.score_strategic_alignment || 0).toFixed(1)}</span>
                       <span className="text-gray-400">Competitive: {(signal.score_competitive_pressure || 0).toFixed(1)}</span>
                     </div>
-                    {signal.url && (
-                      <a href={signal.url} target="_blank" rel="noopener noreferrer"
-                        className="text-xs text-vpg-blue hover:underline">
-                        View Source Article &rarr;
-                      </a>
-                    )}
+
+                    {/* Source Links */}
+                    <div className="flex flex-wrap gap-2">
+                      {signal.url && (
+                        <a href={signal.url} target="_blank" rel="noopener noreferrer"
+                          className="text-xs text-vpg-blue hover:underline">
+                          Primary Source &rarr;
+                        </a>
+                      )}
+                      {(signal.source_links || []).map((link, i) => (
+                        <a key={i} href={link.url} target="_blank" rel="noopener noreferrer"
+                          className="text-xs text-gray-500 hover:text-vpg-blue hover:underline">
+                          {link.source || `Source ${i + 1}`} &rarr;
+                        </a>
+                      ))}
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="flex gap-2 pt-2 border-t border-gray-200">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); dismissSignal(signal.id) }}
+                        className="text-xs px-3 py-1.5 rounded bg-red-50 text-red-600 hover:bg-red-100 font-medium"
+                      >
+                        Dismiss (Not Relevant)
+                      </button>
+                      {signal.handled ? (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); unhandleSignal(signal.id) }}
+                          className="text-xs px-3 py-1.5 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 font-medium"
+                        >
+                          Unmark Handled
+                        </button>
+                      ) : (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleSignal(signal.id) }}
+                          className="text-xs px-3 py-1.5 rounded bg-green-50 text-green-700 hover:bg-green-100 font-medium"
+                        >
+                          Mark as Handled
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

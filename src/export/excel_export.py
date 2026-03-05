@@ -56,12 +56,18 @@ def _auto_width(ws):
 
 
 def export_signals_excel(start_date: str | None = None, end_date: str | None = None,
+                         bu_id: str | None = None, signal_type: str | None = None,
+                         industry_id: str | None = None, min_score: float = 0,
                          output_path: Path | None = None) -> BytesIO | Path:
-    """Export scored signals to an Excel workbook.
+    """Export scored signals to an Excel workbook with optional filters.
 
     Args:
         start_date: Optional YYYY-MM-DD start filter.
         end_date: Optional YYYY-MM-DD end filter.
+        bu_id: Filter by business unit.
+        signal_type: Filter by signal type.
+        industry_id: Filter by industry.
+        min_score: Minimum composite score.
         output_path: If provided, saves to file and returns Path. Otherwise returns BytesIO.
 
     Returns:
@@ -83,7 +89,7 @@ def export_signals_excel(start_date: str | None = None, end_date: str | None = N
         headers = ["ID", "Title", "Signal Type", "Headline", "Composite Score",
                     "Revenue Impact", "Time Sensitivity", "Strategic Alignment",
                     "Competitive Pressure", "Validation", "BUs", "Source", "URL",
-                    "Published", "Quick Win", "Owner", "Est. Impact"]
+                    "Published", "Quick Win", "Owner", "Est. Impact", "Source Links"]
         ws_signals.append(headers)
 
         query = """
@@ -95,6 +101,7 @@ def export_signals_excel(start_date: str | None = None, end_date: str | None = N
             FROM signals s
             JOIN signal_analysis sa ON s.id = sa.signal_id
             WHERE s.status IN ('scored', 'published')
+              AND COALESCE(s.dismissed, 0) = 0
         """
         params = []
         if start_date:
@@ -103,24 +110,44 @@ def export_signals_excel(start_date: str | None = None, end_date: str | None = N
         if end_date:
             query += " AND s.collected_at <= ?"
             params.append(end_date + " 23:59:59")
+        if signal_type:
+            query += " AND sa.signal_type = ?"
+            params.append(signal_type)
+        if min_score > 0:
+            query += " AND sa.score_composite >= ?"
+            params.append(min_score)
+        if bu_id:
+            query += " AND s.id IN (SELECT signal_id FROM signal_bus WHERE bu_id = ?)"
+            params.append(bu_id)
+        if industry_id:
+            query += " AND s.id IN (SELECT signal_id FROM signal_industries WHERE industry_id = ?)"
+            params.append(industry_id)
         query += " ORDER BY sa.score_composite DESC"
 
         rows = conn.execute(query, params).fetchall()
 
         for row in rows:
             sig_id = row[0]
-            # Get BU names
             bus = conn.execute(
                 "SELECT bu_id FROM signal_bus WHERE signal_id = ?", (sig_id,)
             ).fetchall()
             bu_str = ", ".join(b[0] for b in bus)
+
+            # Collect source links (primary URL + validation sources)
+            source_links = [row[11]] if row[11] else []
+            validations = conn.execute(
+                "SELECT corroborating_url FROM signal_validations WHERE signal_id = ?",
+                (sig_id,)
+            ).fetchall()
+            source_links.extend(v[0] for v in validations if v[0])
+            links_str = " | ".join(source_links)
 
             ws_signals.append([
                 sig_id, row[1], row[2], row[3],
                 round(row[4] or 0, 1), round(row[5] or 0, 1), round(row[6] or 0, 1),
                 round(row[7] or 0, 1), round(row[8] or 0, 1),
                 row[9], bu_str, row[10], row[11], row[12],
-                row[13], row[14], row[15],
+                row[13], row[14], row[15], links_str,
             ])
 
         _style_header(ws_signals, openpyxl)
@@ -187,6 +214,14 @@ def export_signals_excel(start_date: str | None = None, end_date: str | None = N
             ws_summary.append(["Start Date", start_date])
         if end_date:
             ws_summary.append(["End Date", end_date])
+        if bu_id:
+            ws_summary.append(["BU Filter", bu_id])
+        if signal_type:
+            ws_summary.append(["Signal Type Filter", signal_type])
+        if industry_id:
+            ws_summary.append(["Industry Filter", industry_id])
+        if min_score > 0:
+            ws_summary.append(["Min Score Filter", str(min_score)])
         ws_summary.append([])
 
         total_signals = conn.execute("SELECT COUNT(*) FROM signals").fetchone()[0]

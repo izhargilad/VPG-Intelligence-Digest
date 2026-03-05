@@ -21,6 +21,7 @@ export default function Recommendations() {
   const [patterns, setPatterns] = useState(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('recommendations')
+  const [exportError, setExportError] = useState(null)
 
   useEffect(() => {
     Promise.all([
@@ -33,16 +34,58 @@ export default function Recommendations() {
     })
   }, [])
 
+  const handleExport = async (format) => {
+    setExportError(null)
+    try {
+      const resp = await fetch(`${API}/export/recommendations/${format}`)
+      if (!resp.ok) {
+        const err = await resp.json()
+        setExportError(err.detail || `Export failed (${resp.status})`)
+        return
+      }
+      const blob = await resp.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = resp.headers.get('content-disposition')?.split('filename=')[1] || `recommendations.${format}`
+      a.click()
+      window.URL.revokeObjectURL(url)
+    } catch (e) {
+      setExportError(`Export failed: ${e.message}`)
+    }
+  }
+
   if (loading) return <div className="p-6 text-gray-500">Loading recommendations...</div>
 
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-1">AI Recommendations & Pattern Detection</h2>
-        <p className="text-sm text-gray-500">
-          Strategic recommendations generated from signal patterns, trends, and coverage analysis
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 mb-1">AI Recommendations & Pattern Detection</h2>
+            <p className="text-sm text-gray-500">
+              Strategic recommendations generated from signal patterns, trends, and coverage analysis
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => handleExport('excel')}
+              className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-green-700">
+              Export Excel
+            </button>
+            <button onClick={() => handleExport('pptx')}
+              className="bg-vpg-accent text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-orange-600">
+              Export PPTX
+            </button>
+          </div>
+        </div>
       </div>
+
+      {exportError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm flex justify-between items-center">
+          <span>{exportError}</span>
+          <button onClick={() => setExportError(null)} className="text-red-400 hover:text-red-600">&times;</button>
+        </div>
+      )}
 
       {/* Tab switcher */}
       <div className="flex gap-2">
