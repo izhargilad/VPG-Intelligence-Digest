@@ -189,6 +189,46 @@
       "keywords": ["physical AI", "embodied AI", "humanoid robot", "Figure AI", "Boston Dynamics", "Agility Robotics", "tactile sensing", "force feedback", "sensor fusion", "digital twin", "sim-to-real", "foundation model robotics", "dexterous manipulation", "torque sensing robot", "AI robotics", "Tesla Optimus", "NVIDIA Isaac", "physical intelligence"],
       "priority": 1,
       "active": true
+    },
+    {
+      "id": "agriculture",
+      "name": "Agriculture & Precision Farming",
+      "category": "Agriculture",
+      "description": "Precision agriculture, smart farming, livestock weighing, grain handling, agricultural automation, yield monitoring, soil sensing",
+      "relevant_bus": ["vpg-onboard-weighing", "blh-nobel", "vpg-force-sensors"],
+      "keywords": ["precision agriculture", "smart farming", "livestock weighing", "grain weighing", "agricultural sensor", "yield monitoring", "soil moisture sensor", "harvest automation", "farm equipment", "precision ag", "feed management", "silo weighing", "crop monitoring", "agricultural robotics", "John Deere", "AGCO", "CNH Industrial", "agricultural IoT"],
+      "priority": 2,
+      "active": true
+    },
+    {
+      "id": "sports-performance",
+      "name": "Sports & Performance",
+      "category": "Sports & Human Performance",
+      "description": "Athlete performance measurement, sports biomechanics, impact testing for equipment, wearable sports tech, force plate testing, sports safety",
+      "relevant_bus": ["dts", "vpg-force-sensors", "micro-measurements"],
+      "keywords": ["sports sensor", "force plate", "athlete performance", "sports biomechanics", "impact testing", "wearable sports", "gait analysis", "sports equipment testing", "helmet testing", "protective gear", "motion capture", "sports science", "performance monitoring", "sports wearable", "exercise equipment", "sports safety"],
+      "priority": 2,
+      "active": true
+    },
+    {
+      "id": "communication-telecom",
+      "name": "Communication & Telecom",
+      "category": "Communications",
+      "description": "Telecommunications infrastructure, 5G/6G networks, satellite communications, signal processing, fiber optics, RF systems, precision timing",
+      "relevant_bus": ["vpg-foil-resistors", "pacific-instruments", "vpg-force-sensors"],
+      "keywords": ["5G infrastructure", "6G", "telecom equipment", "satellite communication", "signal processing", "fiber optic", "RF system", "antenna", "base station", "precision timing", "network equipment", "optical sensor", "communication tower", "Ericsson", "Nokia Networks", "Qualcomm", "telecom sensor"],
+      "priority": 2,
+      "active": true
+    },
+    {
+      "id": "infrastructure",
+      "name": "Infrastructure & Construction",
+      "category": "Infrastructure",
+      "description": "Bridges, tunnels, dams, roads, buildings, construction monitoring, civil structures, seismic monitoring, smart cities",
+      "relevant_bus": ["micro-measurements", "blh-nobel", "vpg-force-sensors"],
+      "keywords": ["bridge monitoring", "tunnel construction", "dam monitoring", "smart infrastructure", "construction sensor", "building monitoring", "seismic sensor", "foundation load", "pile testing", "road weighing", "smart city", "infrastructure monitoring", "civil structure", "wind turbine tower", "construction automation", "infrastructure IoT"],
+      "priority": 2,
+      "active": true
     }
   ],
   "categories": [
@@ -209,6 +249,10 @@
     "Environmental Services",
     "Defense & Safety",
     "Consumer Technology",
-    "Emerging Technologies"
+    "Emerging Technologies",
+    "Agriculture",
+    "Sports & Human Performance",
+    "Communications",
+    "Infrastructure"
   ]
 }

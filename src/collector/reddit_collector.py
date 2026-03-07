@@ -51,6 +51,22 @@ DEFAULT_SUBREDDITS = [
     # Mining & Heavy Equipment
     "mining",
     "HeavyEquipment",
+    # Agriculture
+    "agriculture",
+    "PrecisionAg",
+    "farming",
+    # Sports & Performance
+    "SportsScience",
+    "Biomechanics",
+    "sportsmedicine",
+    # Communication & Telecom
+    "telecom",
+    "5G",
+    "rfelectronics",
+    # Infrastructure & Construction
+    "Construction",
+    "civilengineering",
+    "infrastructure",
 ]
 
 # Minimum upvotes for a post to be considered a signal

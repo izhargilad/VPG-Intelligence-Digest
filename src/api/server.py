@@ -144,6 +144,10 @@ def _migrate_v23(conn):
                 "engineering": "Test & Measurement",
                 "SupplyChain": "Trade & Tariffs", "Economics": "Trade & Tariffs",
                 "mining": "Mining & Heavy Equipment", "HeavyEquipment": "Mining & Heavy Equipment",
+                "agriculture": "Agriculture", "PrecisionAg": "Agriculture", "farming": "Agriculture",
+                "SportsScience": "Sports & Performance", "Biomechanics": "Sports & Performance", "sportsmedicine": "Sports & Performance",
+                "telecom": "Communication & Telecom", "5G": "Communication & Telecom", "rfelectronics": "Communication & Telecom",
+                "Construction": "Infrastructure & Construction", "civilengineering": "Infrastructure & Construction", "infrastructure": "Infrastructure & Construction",
             }
             for sub in DEFAULT_SUBREDDITS:
                 cat = _CATEGORIES.get(sub, "General")
