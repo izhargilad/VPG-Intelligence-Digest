@@ -161,16 +161,25 @@ def _migrate_v23(conn):
 
 
 def _auto_seed_industries(conn):
-    """Seed industries and keywords from config/industries.json if DB is empty."""
-    try:
-        count = conn.execute("SELECT COUNT(*) FROM industries").fetchone()[0]
-        if count > 0:
-            return  # Already seeded
+    """Sync industries and keywords from config/industries.json into DB.
 
-        logger.info("Industries table is empty — auto-seeding from config/industries.json")
+    Uses upsert logic — new industries are added, existing ones are updated.
+    This runs on every startup so config file changes are always reflected.
+    """
+    try:
         config = get_industries()
-        for ind in config.get("industries", []):
+        config_industries = config.get("industries", [])
+        if not config_industries:
+            return
+
+        existing_ids = {
+            row[0] for row in conn.execute("SELECT id FROM industries").fetchall()
+        }
+        added = 0
+        for ind in config_industries:
             upsert_industry(conn, ind)
+            if ind["id"] not in existing_ids:
+                added += 1
             # Seed keywords for this industry
             for kw in ind.get("keywords", []):
                 try:
@@ -182,11 +191,12 @@ def _auto_seed_industries(conn):
                 except Exception:
                     pass
         conn.commit()
-        seeded = len(config.get("industries", []))
+        total = conn.execute("SELECT COUNT(*) FROM industries").fetchone()[0]
         kw_count = conn.execute("SELECT COUNT(*) FROM keywords").fetchone()[0]
-        logger.info("Auto-seeded %d industries and %d keywords from config", seeded, kw_count)
+        if added > 0:
+            logger.info("Synced industries from config: %d new, %d total, %d keywords", added, total, kw_count)
     except Exception as e:
-        logger.warning("Could not auto-seed industries: %s", e)
+        logger.warning("Could not sync industries: %s", e)
 
 
 # ── Pydantic Models ──────────────────────────────────────────────────
