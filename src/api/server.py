@@ -130,32 +130,30 @@ def _migrate_v23(conn):
             )
         """)
         conn.commit()
-        # Seed default subreddits if table is empty
-        count = conn.execute("SELECT COUNT(*) FROM reddit_subreddits").fetchone()[0]
-        if count == 0:
-            from src.collector.reddit_collector import DEFAULT_SUBREDDITS
-            _CATEGORIES = {
-                "robotics": "Robotics & Automation", "Automate": "Robotics & Automation", "ROS": "Robotics & Automation",
-                "aerospace": "Aerospace & Defense", "DefenseIndustry": "Aerospace & Defense",
-                "electricvehicles": "Automotive & EV", "SelfDrivingCars": "Automotive & EV", "automotive": "Automotive & EV",
-                "metalworking": "Steel & Metals", "manufacturing": "Manufacturing", "Machinists": "Manufacturing",
-                "electronics": "Sensors & Instrumentation", "sensors": "Sensors & Instrumentation", "ECE": "Sensors & Instrumentation",
-                "materials": "Materials Science", "MaterialsScience": "Materials Science",
-                "engineering": "Test & Measurement",
-                "SupplyChain": "Trade & Tariffs", "Economics": "Trade & Tariffs",
-                "mining": "Mining & Heavy Equipment", "HeavyEquipment": "Mining & Heavy Equipment",
-                "agriculture": "Agriculture", "PrecisionAg": "Agriculture", "farming": "Agriculture",
-                "SportsScience": "Sports & Performance", "Biomechanics": "Sports & Performance", "sportsmedicine": "Sports & Performance",
-                "telecom": "Communication & Telecom", "5G": "Communication & Telecom", "rfelectronics": "Communication & Telecom",
-                "Construction": "Infrastructure & Construction", "civilengineering": "Infrastructure & Construction", "infrastructure": "Infrastructure & Construction",
-            }
-            for sub in DEFAULT_SUBREDDITS:
-                cat = _CATEGORIES.get(sub, "General")
-                conn.execute(
-                    "INSERT OR IGNORE INTO reddit_subreddits (name, category) VALUES (?, ?)",
-                    (sub, cat)
-                )
-            conn.commit()
+        # Sync subreddits from DEFAULT_SUBREDDITS — insert any missing ones
+        from src.collector.reddit_collector import DEFAULT_SUBREDDITS
+        _CATEGORIES = {
+            "robotics": "Robotics & Automation", "Automate": "Robotics & Automation", "ROS": "Robotics & Automation",
+            "aerospace": "Aerospace & Defense", "DefenseIndustry": "Aerospace & Defense",
+            "electricvehicles": "Automotive & EV", "SelfDrivingCars": "Automotive & EV", "automotive": "Automotive & EV",
+            "metalworking": "Steel & Metals", "manufacturing": "Manufacturing", "Machinists": "Manufacturing",
+            "electronics": "Sensors & Instrumentation", "sensors": "Sensors & Instrumentation", "ECE": "Sensors & Instrumentation",
+            "materials": "Materials Science", "MaterialsScience": "Materials Science",
+            "engineering": "Test & Measurement",
+            "SupplyChain": "Trade & Tariffs", "Economics": "Trade & Tariffs",
+            "mining": "Mining & Heavy Equipment", "HeavyEquipment": "Mining & Heavy Equipment",
+            "agriculture": "Agriculture", "PrecisionAg": "Agriculture", "farming": "Agriculture",
+            "SportsScience": "Sports & Performance", "Biomechanics": "Sports & Performance", "sportsmedicine": "Sports & Performance",
+            "telecom": "Communication & Telecom", "5G": "Communication & Telecom", "rfelectronics": "Communication & Telecom",
+            "Construction": "Infrastructure & Construction", "civilengineering": "Infrastructure & Construction", "infrastructure": "Infrastructure & Construction",
+        }
+        for sub in DEFAULT_SUBREDDITS:
+            cat = _CATEGORIES.get(sub, "General")
+            conn.execute(
+                "INSERT OR IGNORE INTO reddit_subreddits (name, category) VALUES (?, ?)",
+                (sub, cat)
+            )
+        conn.commit()
     except Exception as e:
         logger.warning("V2.3 migration: %s", e)
 
