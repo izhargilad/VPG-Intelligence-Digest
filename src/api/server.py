@@ -82,8 +82,9 @@ _pipeline_status = {
 
 @app.on_event("startup")
 def _startup():
-    """Initialize DB, seed industries/keywords from config if empty, clean stale runs."""
+    """Initialize DB, seed industries/keywords from config, clean stale runs."""
     try:
+        print("[STARTUP] Initializing database...")
         conn = get_connection()
         init_db()
 
@@ -94,14 +95,24 @@ def _startup():
         )
         conn.commit()
 
-        # Auto-seed industries + keywords from config if DB tables are empty
+        # Migrate FIRST: add dismissed/handled columns + reddit table (V2.3)
+        print("[STARTUP] Running V2.3 migration...")
+        _migrate_v23(conn)
+
+        # Sync industries + keywords from config
+        print("[STARTUP] Syncing industries from config...")
         _auto_seed_industries(conn)
 
-        # Migrate: add dismissed/handled columns to signals if missing (V2.3)
-        _migrate_v23(conn)
+        ind_count = conn.execute("SELECT COUNT(*) FROM industries").fetchone()[0]
+        kw_count = conn.execute("SELECT COUNT(*) FROM keywords").fetchone()[0]
+        sub_count = conn.execute("SELECT COUNT(*) FROM reddit_subreddits").fetchone()[0]
+        print(f"[STARTUP] DB ready: {ind_count} industries, {kw_count} keywords, {sub_count} subreddits")
 
         conn.close()
     except Exception as e:
+        print(f"[STARTUP] ERROR: {e}")
+        import traceback
+        traceback.print_exc()
         logger.warning("Startup initialization error: %s", e)
 
 
@@ -155,6 +166,9 @@ def _migrate_v23(conn):
             )
         conn.commit()
     except Exception as e:
+        print(f"[STARTUP] V2.3 migration error: {e}")
+        import traceback
+        traceback.print_exc()
         logger.warning("V2.3 migration: %s", e)
 
 
@@ -168,16 +182,22 @@ def _auto_seed_industries(conn):
         config = get_industries()
         config_industries = config.get("industries", [])
         if not config_industries:
+            print("[STARTUP] No industries found in config/industries.json!")
             return
 
         existing_ids = {
             row[0] for row in conn.execute("SELECT id FROM industries").fetchall()
         }
+        print(f"[STARTUP] Config has {len(config_industries)} industries, DB has {len(existing_ids)}")
         added = 0
         for ind in config_industries:
-            upsert_industry(conn, ind)
-            if ind["id"] not in existing_ids:
-                added += 1
+            try:
+                upsert_industry(conn, ind)
+                if ind["id"] not in existing_ids:
+                    added += 1
+                    print(f"[STARTUP]   + Added industry: {ind['id']} ({ind['name']})")
+            except Exception as e:
+                print(f"[STARTUP]   ! Failed to upsert industry {ind['id']}: {e}")
             # Seed keywords for this industry
             for kw in ind.get("keywords", []):
                 try:
@@ -191,9 +211,11 @@ def _auto_seed_industries(conn):
         conn.commit()
         total = conn.execute("SELECT COUNT(*) FROM industries").fetchone()[0]
         kw_count = conn.execute("SELECT COUNT(*) FROM keywords").fetchone()[0]
-        if added > 0:
-            logger.info("Synced industries from config: %d new, %d total, %d keywords", added, total, kw_count)
+        print(f"[STARTUP] Sync complete: {added} new industries, {total} total, {kw_count} keywords")
     except Exception as e:
+        print(f"[STARTUP] Industry sync ERROR: {e}")
+        import traceback
+        traceback.print_exc()
         logger.warning("Could not sync industries: %s", e)
 
 
@@ -1217,6 +1239,32 @@ def get_patterns():
     conn = get_connection()
     try:
         return detect_patterns(conn)
+    finally:
+        conn.close()
+
+
+# ── Admin / Sync (V2.3) ─────────────────────────────────────────────
+
+@app.post("/api/admin/sync-config")
+def sync_config():
+    """Force-sync industries, keywords, and subreddits from config files into DB.
+
+    Use this if startup sync failed or after editing config files while
+    the server is running.
+    """
+    conn = get_connection()
+    try:
+        _migrate_v23(conn)
+        _auto_seed_industries(conn)
+        ind_count = conn.execute("SELECT COUNT(*) FROM industries").fetchone()[0]
+        kw_count = conn.execute("SELECT COUNT(*) FROM keywords").fetchone()[0]
+        sub_count = conn.execute("SELECT COUNT(*) FROM reddit_subreddits").fetchone()[0]
+        return {
+            "status": "synced",
+            "industries": ind_count,
+            "keywords": kw_count,
+            "subreddits": sub_count,
+        }
     finally:
         conn.close()
 
