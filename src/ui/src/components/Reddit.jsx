@@ -134,9 +134,14 @@ export default function Reddit() {
         <div className="space-y-6">
           {Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b)).map(([category, catSubs]) => (
             <div key={category} className="bg-white rounded-lg shadow-sm overflow-hidden">
-              <div className="px-5 py-3 bg-gray-50 border-b">
-                <span className="font-semibold text-vpg-navy">{category}</span>
-                <span className="text-xs text-gray-400 ml-2">{catSubs.length} subreddits</span>
+              <div className="px-5 py-3 bg-gray-50 border-b flex items-center justify-between">
+                <div>
+                  <span className="font-semibold text-vpg-navy">{category}</span>
+                  <span className="text-xs text-gray-400 ml-2">{catSubs.length} subreddits</span>
+                </div>
+                <span className="text-xs font-medium text-vpg-blue">
+                  {catSubs.reduce((sum, s) => sum + (s.signal_count || 0), 0)} total signals
+                </span>
               </div>
               <div className="divide-y">
                 {catSubs.map(sub => (
@@ -169,6 +174,13 @@ export default function Reddit() {
                               sub.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
                             }`}>
                               {sub.active ? 'ACTIVE' : 'DISABLED'}
+                            </span>
+                            <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${
+                              sub.signal_count > 10 ? 'bg-blue-100 text-blue-700' :
+                              sub.signal_count > 0 ? 'bg-gray-100 text-gray-600' :
+                              'bg-gray-50 text-gray-400'
+                            }`}>
+                              {sub.signal_count || 0} signal{sub.signal_count !== 1 ? 's' : ''}
                             </span>
                           </div>
                           {sub.notes && <p className="text-xs text-gray-400 mt-0.5">{sub.notes}</p>}

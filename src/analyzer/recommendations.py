@@ -88,11 +88,59 @@ def generate_recommendations(conn=None, max_recommendations: int = 15) -> dict:
             conn.close()
 
 
+def _get_trend_links(conn, trend_key: str) -> list[dict]:
+    """Get top signal links for a trend, using the latest snapshot's top signal."""
+    links = []
+    # Find recent top signals associated with this trend key
+    # Trend key format: "bu_id:signal_type", "type:signal_type", "bu:bu_id", "competitor:name"
+    trend_row = conn.execute(
+        "SELECT id FROM trends WHERE trend_key = ?", (trend_key,)
+    ).fetchone()
+    if trend_row:
+        snapshots = conn.execute(
+            "SELECT top_signal_id FROM trend_snapshots WHERE trend_id = ? "
+            "ORDER BY year DESC, week_number DESC LIMIT 3",
+            (trend_row[0],),
+        ).fetchall()
+        seen = set()
+        for snap in snapshots:
+            if snap[0] and snap[0] not in seen:
+                seen.add(snap[0])
+                sig = conn.execute(
+                    "SELECT s.url, s.source_name, sa.headline FROM signals s "
+                    "LEFT JOIN signal_analysis sa ON s.id = sa.signal_id WHERE s.id = ?",
+                    (snap[0],),
+                ).fetchone()
+                if sig and sig[0]:
+                    links.append({
+                        "url": sig[0],
+                        "source": sig[1] or "Source",
+                        "title": sig[2] or "",
+                    })
+    return links
+
+
+def _get_signal_links(conn, signal_id: int, primary_url: str | None,
+                      source_name: str | None) -> list[dict]:
+    """Get all relevant links for a signal (primary + corroborating sources)."""
+    links = []
+    if primary_url:
+        links.append({"url": primary_url, "source": source_name or "Primary Source"})
+    corroborating = conn.execute(
+        "SELECT corroborating_url, corroborating_source FROM signal_validations WHERE signal_id = ?",
+        (signal_id,),
+    ).fetchall()
+    for row in corroborating:
+        if row[0]:
+            links.append({"url": row[0], "source": row[1] or "Source"})
+    return links
+
+
 def _cross_bu_recommendations(conn) -> list[dict]:
     """Find signals relevant to multiple BUs — collaboration opportunities."""
     rows = conn.execute("""
         SELECT s.id, sa.headline, sa.signal_type, sa.score_composite,
-               GROUP_CONCAT(sb.bu_id) as bus
+               GROUP_CONCAT(sb.bu_id) as bus, s.url, s.source_name
         FROM signals s
         JOIN signal_analysis sa ON s.id = sa.signal_id
         JOIN signal_bus sb ON s.id = sb.signal_id
@@ -111,6 +159,7 @@ def _cross_bu_recommendations(conn) -> list[dict]:
     for row in rows:
         bus = row[4].split(",") if row[4] else []
         bu_labels = [bu_names.get(b, b) for b in bus]
+        links = _get_signal_links(conn, row[0], row[5], row[6])
         recs.append({
             "type": "cross-bu",
             "priority": 2 if row[3] >= HIGH_SCORE_THRESHOLD else 3,
@@ -125,6 +174,7 @@ def _cross_bu_recommendations(conn) -> list[dict]:
             "bus": bus,
             "score": row[3] or 0,
             "key": f"cross-bu-{row[0]}",
+            "links": links,
         })
 
     return recs
@@ -134,7 +184,8 @@ def _high_impact_recommendations(conn) -> list[dict]:
     """Flag high-scoring signals that need immediate action."""
     rows = conn.execute("""
         SELECT s.id, sa.headline, sa.signal_type, sa.score_composite,
-               sa.quick_win, sa.suggested_owner, sa.estimated_impact
+               sa.quick_win, sa.suggested_owner, sa.estimated_impact,
+               s.url, s.source_name
         FROM signals s
         JOIN signal_analysis sa ON s.id = sa.signal_id
         WHERE s.status IN ('scored', 'published')
@@ -145,6 +196,7 @@ def _high_impact_recommendations(conn) -> list[dict]:
 
     recs = []
     for row in rows:
+        links = _get_signal_links(conn, row[0], row[7], row[8])
         recs.append({
             "type": "high-impact",
             "priority": 1,
@@ -158,6 +210,7 @@ def _high_impact_recommendations(conn) -> list[dict]:
             "signal_id": row[0],
             "score": row[3] or 0,
             "key": f"high-impact-{row[0]}",
+            "links": links,
         })
 
     return recs
@@ -220,6 +273,8 @@ def _trend_recommendations(conn) -> list[dict]:
     for row in rows:
         momentum = row[2]
         priority = 1 if momentum == "spike" else 2
+        # Get top signal links for this trend
+        trend_links = _get_trend_links(conn, row[0])
         recs.append({
             "type": "trend-alert",
             "priority": priority,
@@ -236,6 +291,7 @@ def _trend_recommendations(conn) -> list[dict]:
             "trend_key": row[0],
             "score": row[5] or 0,
             "key": f"trend-{row[0]}",
+            "links": trend_links,
         })
 
     return recs

@@ -38,6 +38,7 @@ from src.db import (
     insert_pipeline_run,
     insert_signal,
     save_signal_bus,
+    save_signal_industries,
     update_signal_status,
 )
 from src.delivery.gmail import send_email
@@ -214,6 +215,41 @@ def stage_validate(conn) -> int:
     return validated
 
 
+def _match_signal_industries(conn, signal: dict) -> list[dict]:
+    """Match a signal to industries using the keywords table.
+
+    Checks signal title + summary against active keywords linked to industries.
+    Returns list of dicts with industry_id, relevance_score, matched_keywords.
+    """
+    text = f"{signal.get('title', '')} {signal.get('summary', '')}".lower()
+    if not text.strip():
+        return []
+
+    rows = conn.execute(
+        "SELECT keyword, industry_id FROM keywords WHERE active = 1 AND industry_id IS NOT NULL"
+    ).fetchall()
+
+    # Group keywords by industry
+    industry_hits: dict[str, list[str]] = {}
+    for kw_row in rows:
+        kw = kw_row[0].lower()
+        ind_id = kw_row[1]
+        if kw in text:
+            industry_hits.setdefault(ind_id, []).append(kw)
+
+    matches = []
+    for ind_id, keywords in industry_hits.items():
+        relevance = min(0.4 + len(keywords) * 0.2, 1.0)
+        matches.append({
+            "industry_id": ind_id,
+            "relevance_score": round(relevance, 3),
+            "matched_keywords": ",".join(keywords),
+        })
+
+    matches.sort(key=lambda x: x["relevance_score"], reverse=True)
+    return matches
+
+
 def stage_score(conn) -> list[dict]:
     """Stage 3 & 4: Score and analyze validated signals with AI.
 
@@ -259,6 +295,12 @@ def stage_score(conn) -> list[dict]:
             # Persist analysis to DB
             insert_analysis(conn, signal["id"], analysis)
             save_signal_bus(conn, signal["id"], analysis.get("bu_matches", []))
+
+            # Match signal to industries via keywords
+            industry_matches = _match_signal_industries(conn, signal)
+            if industry_matches:
+                save_signal_industries(conn, signal["id"], industry_matches)
+
             update_signal_status(conn, signal["id"], "scored")
 
             # Only include signals above the threshold

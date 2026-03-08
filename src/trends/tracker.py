@@ -45,7 +45,7 @@ def update_trends(conn=None) -> dict:
         # Get all scored signals from the current week
         signals = conn.execute("""
             SELECT s.id, s.title, s.summary, sa.signal_type,
-                   sa.score_composite, sa.headline
+                   sa.score_composite, sa.headline, s.published_at
             FROM signals s
             JOIN signal_analysis sa ON s.id = sa.signal_id
             WHERE s.status IN ('scored', 'published')
@@ -60,6 +60,16 @@ def update_trends(conn=None) -> dict:
         bu_assoc = defaultdict(list)
         for row in conn.execute("SELECT signal_id, bu_id FROM signal_bus"):
             bu_assoc[row[0]].append(row[1])
+
+        # Get industry associations
+        ind_assoc = defaultdict(list)
+        for row in conn.execute("SELECT signal_id, industry_id FROM signal_industries"):
+            ind_assoc[row[0]].append(row[1])
+
+        # Get industry names
+        ind_names = {}
+        for row in conn.execute("SELECT id, name FROM industries"):
+            ind_names[row[0]] = row[1]
 
         # Build trend aggregations
         aggregations = defaultdict(lambda: {"count": 0, "scores": [], "signal_ids": []})
@@ -118,6 +128,16 @@ def update_trends(conn=None) -> dict:
                     comp_agg["count"] += 1
                     comp_agg["scores"].append(score)
                     comp_agg["signal_ids"].append(sig_id)
+
+            # Trend by industry
+            for ind_id in ind_assoc.get(sig_id, []):
+                ind_key = f"industry:{ind_id}"
+                ind_agg = aggregations[ind_key]
+                ind_agg["trend_type"] = "industry"
+                ind_agg["label"] = ind_names.get(ind_id, ind_id)
+                ind_agg["count"] += 1
+                ind_agg["scores"].append(score)
+                ind_agg["signal_ids"].append(sig_id)
 
         # Upsert trends and create snapshots
         trends_updated = 0
@@ -217,10 +237,13 @@ def get_trend_summary(conn=None, limit: int = 20,
                       end_date: str | None = None) -> dict:
     """Get a summary of current trends for display.
 
+    Dates filter on signal published_at (the actual publication date of
+    the underlying signals), not the trend's internal last_seen timestamp.
+
     Args:
         limit: Max trends to return.
-        start_date: Optional YYYY-MM-DD start filter on last_seen.
-        end_date: Optional YYYY-MM-DD end filter on last_seen.
+        start_date: Optional YYYY-MM-DD start filter on signal published dates.
+        end_date: Optional YYYY-MM-DD end filter on signal published dates.
 
     Returns:
         Dict with rising, declining, new, and spike trends.
@@ -230,23 +253,16 @@ def get_trend_summary(conn=None, limit: int = 20,
         conn = get_connection()
 
     try:
+        # When date filters are provided, re-aggregate from actual signal data
+        # to ensure we're filtering by published_at (not collected_at)
+        if start_date or end_date:
+            return _get_trends_by_published_date(conn, limit, start_date, end_date)
+
         query = """
             SELECT trend_key, trend_type, label, occurrence_count,
                    week_over_week_change, avg_score, max_score, momentum,
                    first_seen, last_seen
             FROM trends
-        """
-        clauses = []
-        params: list = []
-        if start_date:
-            clauses.append("last_seen >= ?")
-            params.append(start_date)
-        if end_date:
-            clauses.append("last_seen <= ?")
-            params.append(end_date)
-        if clauses:
-            query += " WHERE " + " AND ".join(clauses)
-        query += """
             ORDER BY
                 CASE momentum
                     WHEN 'spike' THEN 1
@@ -258,8 +274,7 @@ def get_trend_summary(conn=None, limit: int = 20,
                 occurrence_count DESC
             LIMIT ?
         """
-        params.append(limit)
-        rows = conn.execute(query, params).fetchall()
+        rows = conn.execute(query, [limit]).fetchall()
 
         trends = []
         for row in rows:
@@ -286,6 +301,72 @@ def get_trend_summary(conn=None, limit: int = 20,
     finally:
         if close_conn:
             conn.close()
+
+
+def _get_trends_by_published_date(conn, limit: int,
+                                   start_date: str | None,
+                                   end_date: str | None) -> dict:
+    """Re-aggregate trend data filtered by signal published_at dates."""
+    date_clause = ""
+    params: list = []
+    if start_date:
+        date_clause += " AND COALESCE(s.published_at, s.collected_at) >= ?"
+        params.append(start_date)
+    if end_date:
+        date_clause += " AND COALESCE(s.published_at, s.collected_at) <= ?"
+        params.append(end_date + " 23:59:59")
+
+    # Get trends that have signals in the date range via snapshots
+    # We join through trend_snapshots -> trends to get matching trend IDs,
+    # but actually count signals directly for accuracy
+    query = f"""
+        SELECT t.trend_key, t.trend_type, t.label,
+               COUNT(DISTINCT s.id) as signal_count,
+               t.week_over_week_change, AVG(sa.score_composite) as avg_score,
+               MAX(sa.score_composite) as max_score, t.momentum,
+               t.first_seen, t.last_seen
+        FROM trends t
+        JOIN trend_snapshots ts ON t.id = ts.trend_id
+        JOIN signals s ON ts.top_signal_id = s.id
+        JOIN signal_analysis sa ON s.id = sa.signal_id
+        WHERE s.status IN ('scored', 'published')
+          {date_clause}
+        GROUP BY t.trend_key
+        ORDER BY
+            CASE t.momentum
+                WHEN 'spike' THEN 1
+                WHEN 'rising' THEN 2
+                WHEN 'new' THEN 3
+                WHEN 'stable' THEN 4
+                WHEN 'declining' THEN 5
+            END,
+            signal_count DESC
+        LIMIT ?
+    """
+    params.append(limit)
+    rows = conn.execute(query, params).fetchall()
+
+    trends = []
+    for row in rows:
+        trends.append({
+            "key": row[0],
+            "type": row[1],
+            "label": row[2],
+            "count": row[3],
+            "change_pct": row[4],
+            "avg_score": row[5],
+            "max_score": row[6],
+            "momentum": row[7],
+            "first_seen": row[8],
+            "last_seen": row[9],
+        })
+
+    return {
+        "trends": trends,
+        "rising": [t for t in trends if t["momentum"] in ("rising", "spike")],
+        "new": [t for t in trends if t["momentum"] == "new"],
+        "declining": [t for t in trends if t["momentum"] == "declining"],
+    }
 
 
 def get_trend_history(trend_key: str, weeks: int = 12, conn=None) -> list[dict]:

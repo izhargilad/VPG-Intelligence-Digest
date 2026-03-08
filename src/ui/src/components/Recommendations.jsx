@@ -133,6 +133,17 @@ export default function Recommendations() {
                       <p className="text-sm text-gray-800 mt-1">{rec.action}</p>
                       {rec.owner && <p className="text-xs text-gray-500 mt-1">Owner: {rec.owner}</p>}
                     </div>
+                    {rec.links && rec.links.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase">Sources:</span>
+                        {rec.links.map((link, li) => (
+                          <a key={li} href={link.url} target="_blank" rel="noopener noreferrer"
+                            className="text-xs text-vpg-blue hover:underline">
+                            {link.title || link.source || `Source ${li + 1}`} &rarr;
+                          </a>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   {rec.score > 0 && (
                     <div className="text-right flex-shrink-0">

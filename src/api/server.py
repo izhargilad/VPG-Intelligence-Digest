@@ -680,6 +680,108 @@ def list_trends(limit: int = 30, start_date: str | None = None, end_date: str | 
     return get_trend_summary(limit=limit, start_date=start_date, end_date=end_date)
 
 
+@app.get("/api/trends/sentiment")
+def trends_sentiment():
+    """Get sentiment/momentum breakdown per BU and per Industry.
+
+    Returns aggregated signal counts, average scores, and momentum
+    indicators grouped by Business Unit and Industry.
+    """
+    conn = get_connection()
+    try:
+        bu_config = get_business_units()
+        bu_names = {bu["id"]: bu.get("short_name", bu["name"])
+                    for bu in bu_config.get("business_units", [])}
+
+        # BU sentiment: count, avg score, momentum per BU
+        bu_rows = conn.execute("""
+            SELECT sb.bu_id, COUNT(*) as cnt,
+                   AVG(sa.score_composite) as avg_score,
+                   SUM(CASE WHEN sa.signal_type = 'competitive-threat' THEN 1 ELSE 0 END) as threats,
+                   SUM(CASE WHEN sa.signal_type = 'revenue-opportunity' THEN 1 ELSE 0 END) as opps,
+                   SUM(CASE WHEN sa.signal_type IN ('technology-trend', 'market-shift') THEN 1 ELSE 0 END) as shifts
+            FROM signal_bus sb
+            JOIN signal_analysis sa ON sb.signal_id = sa.signal_id
+            JOIN signals s ON sb.signal_id = s.id
+            WHERE s.status IN ('scored', 'published')
+              AND COALESCE(s.dismissed, 0) = 0
+            GROUP BY sb.bu_id
+            ORDER BY avg_score DESC
+        """).fetchall()
+
+        bu_sentiment = []
+        for r in bu_rows:
+            total = r[1]
+            threats = r[3]
+            opps = r[4]
+            sentiment_score = (opps - threats) / max(total, 1)
+            if sentiment_score > 0.2:
+                sentiment = "positive"
+            elif sentiment_score < -0.2:
+                sentiment = "negative"
+            else:
+                sentiment = "neutral"
+
+            bu_sentiment.append({
+                "id": r[0],
+                "name": bu_names.get(r[0], r[0]),
+                "signal_count": total,
+                "avg_score": round(r[2] or 0, 1),
+                "threats": threats,
+                "opportunities": opps,
+                "shifts": r[5],
+                "sentiment": sentiment,
+                "sentiment_score": round(sentiment_score, 2),
+            })
+
+        # Industry sentiment
+        ind_rows = conn.execute("""
+            SELECT si.industry_id, i.name, COUNT(*) as cnt,
+                   AVG(sa.score_composite) as avg_score,
+                   SUM(CASE WHEN sa.signal_type = 'competitive-threat' THEN 1 ELSE 0 END) as threats,
+                   SUM(CASE WHEN sa.signal_type = 'revenue-opportunity' THEN 1 ELSE 0 END) as opps
+            FROM signal_industries si
+            JOIN industries i ON si.industry_id = i.id
+            JOIN signal_analysis sa ON si.signal_id = sa.signal_id
+            JOIN signals s ON si.signal_id = s.id
+            WHERE s.status IN ('scored', 'published')
+              AND COALESCE(s.dismissed, 0) = 0
+            GROUP BY si.industry_id
+            ORDER BY avg_score DESC
+        """).fetchall()
+
+        ind_sentiment = []
+        for r in ind_rows:
+            total = r[2]
+            threats = r[4]
+            opps = r[5]
+            sentiment_score = (opps - threats) / max(total, 1)
+            if sentiment_score > 0.2:
+                sentiment = "positive"
+            elif sentiment_score < -0.2:
+                sentiment = "negative"
+            else:
+                sentiment = "neutral"
+
+            ind_sentiment.append({
+                "id": r[0],
+                "name": r[1],
+                "signal_count": total,
+                "avg_score": round(r[3] or 0, 1),
+                "threats": threats,
+                "opportunities": opps,
+                "sentiment": sentiment,
+                "sentiment_score": round(sentiment_score, 2),
+            })
+
+        return {
+            "bu_sentiment": bu_sentiment,
+            "industry_sentiment": ind_sentiment,
+        }
+    finally:
+        conn.close()
+
+
 @app.get("/api/trends/{trend_key:path}/history")
 def trend_history(trend_key: str, weeks: int = 12):
     """Get week-by-week history for a specific trend."""
@@ -803,7 +905,8 @@ def intelligence_feed(start_date: str | None = None, end_date: str | None = None
                    sa.quick_win, sa.suggested_owner, sa.estimated_impact,
                    sa.score_composite, sa.score_revenue_impact, sa.score_time_sensitivity,
                    sa.score_strategic_alignment, sa.score_competitive_pressure,
-                   sa.validation_level
+                   sa.validation_level,
+                   COALESCE(s.dismissed, 0), COALESCE(s.handled, 0)
             FROM signals s
             JOIN signal_analysis sa ON s.id = sa.signal_id
             WHERE s.status IN ('scored', 'published')
@@ -815,10 +918,10 @@ def intelligence_feed(start_date: str | None = None, end_date: str | None = None
             query += " AND sa.score_composite >= ?"
             params.append(min_score)
         if start_date:
-            query += " AND s.collected_at >= ?"
+            query += " AND COALESCE(s.published_at, s.collected_at) >= ?"
             params.append(start_date)
         if end_date:
-            query += " AND s.collected_at <= ?"
+            query += " AND COALESCE(s.published_at, s.collected_at) <= ?"
             params.append(end_date + " 23:59:59")
         if signal_type:
             query += " AND sa.signal_type = ?"
@@ -865,8 +968,8 @@ def intelligence_feed(start_date: str | None = None, end_date: str | None = None
                 "bus": [b[0] for b in bus],
                 "industries": [i[0] for i in inds],
                 "source_links": [{"url": s[0], "source": s[1], "title": s[2]} for s in sources],
-                "dismissed": 0,
-                "handled": 0,
+                "dismissed": row[21],
+                "handled": row[22],
             })
 
         return {"signals": signals, "total": len(signals)}
@@ -1461,19 +1564,35 @@ class SubredditUpdate(BaseModel):
 
 @app.get("/api/reddit/subreddits")
 def list_subreddits():
-    """Get all managed subreddits."""
+    """Get all managed subreddits with signal counts."""
     conn = get_connection()
     try:
         rows = conn.execute(
             "SELECT id, name, category, active, notes, created_at, updated_at "
             "FROM reddit_subreddits ORDER BY category, name"
         ).fetchall()
+
+        # Count valid signals per subreddit (source_name = 'Reddit r/<name>')
+        signal_counts = {}
+        count_rows = conn.execute(
+            "SELECT source_name, COUNT(*) FROM signals "
+            "WHERE source_name LIKE 'Reddit r/%' "
+            "  AND status IN ('scored', 'published') "
+            "  AND COALESCE(dismissed, 0) = 0 "
+            "GROUP BY source_name"
+        ).fetchall()
+        for cr in count_rows:
+            # Extract subreddit name from 'Reddit r/name'
+            sub_name = cr[0].replace("Reddit r/", "")
+            signal_counts[sub_name.lower()] = cr[1]
+
         subs = []
         for r in rows:
             subs.append({
                 "id": r[0], "name": r[1], "category": r[2],
                 "active": bool(r[3]), "notes": r[4],
                 "created_at": r[5], "updated_at": r[6],
+                "signal_count": signal_counts.get(r[1].lower(), 0),
             })
         return {"subreddits": subs, "total": len(subs)}
     finally:
