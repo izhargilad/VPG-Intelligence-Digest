@@ -234,8 +234,7 @@
       "keywords": ["bridge monitoring", "tunnel construction", "dam monitoring", "smart infrastructure", "construction sensor", "building monitoring", "seismic sensor", "foundation load", "pile testing", "road weighing", "smart city", "infrastructure monitoring", "civil structure", "wind turbine tower", "construction automation", "infrastructure IoT"],
       "priority": 2,
       "active": true
-    }
-  ],
+    },
     {
       "id": "oil-gas-energy",
       "name": "Oil, Gas & Energy",

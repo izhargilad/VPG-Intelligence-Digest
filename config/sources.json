@@ -617,8 +617,7 @@
       "active": true,
       "last_check": null,
       "error_count": 0
-    }
-  ],
+    },
     {
       "id": "edn",
       "name": "EDN (AspenCore)",
