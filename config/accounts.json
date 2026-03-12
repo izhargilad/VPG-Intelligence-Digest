@@ -1,0 +1,292 @@
+{
+  "target_accounts": {
+    "semiconductor_ate": {
+      "segment": "Semiconductor ATE Manufacturers",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "accounts": [
+        {
+          "id": "teradyne",
+          "company": "Teradyne",
+          "relevance": "Largest ATE manufacturer; uses precision resistors in test head boards",
+          "signal_keywords": ["Teradyne ATE", "Teradyne test equipment", "Teradyne precision"]
+        },
+        {
+          "id": "advantest",
+          "company": "Advantest",
+          "relevance": "Major ATE; growing in SoC and memory test",
+          "signal_keywords": ["Advantest ATE", "Advantest precision", "Advantest semiconductor"]
+        },
+        {
+          "id": "cohu",
+          "company": "Cohu / Xcerra",
+          "relevance": "ATE and handler systems",
+          "signal_keywords": ["Cohu ATE", "Cohu precision", "Xcerra test"]
+        },
+        {
+          "id": "ni-emerson",
+          "company": "National Instruments (Emerson)",
+          "relevance": "Modular test; PXI instrumentation",
+          "signal_keywords": ["National Instruments precision", "NI PXI", "Emerson test"]
+        },
+        {
+          "id": "keysight",
+          "company": "Keysight Technologies",
+          "relevance": "Precision instruments; oscilloscopes; signal analyzers",
+          "signal_keywords": ["Keysight precision", "Keysight instrumentation", "Keysight test"]
+        },
+        {
+          "id": "rohde-schwarz",
+          "company": "Rohde & Schwarz",
+          "relevance": "T&M instruments; signal generators",
+          "signal_keywords": ["Rohde Schwarz precision", "Rohde Schwarz instrument"]
+        },
+        {
+          "id": "fluke",
+          "company": "Fluke (Fortive)",
+          "relevance": "Calibration; handheld precision",
+          "signal_keywords": ["Fluke calibration", "Fluke precision", "Fortive test"]
+        }
+      ]
+    },
+    "aerospace_defense_space": {
+      "segment": "Aerospace, Defense & Space",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "accounts": [
+        {
+          "id": "lockheed",
+          "company": "Lockheed Martin",
+          "relevance": "Avionics, satellites, weapons systems",
+          "signal_keywords": ["Lockheed avionics", "Lockheed satellite", "Lockheed Martin defense electronics"]
+        },
+        {
+          "id": "northrop",
+          "company": "Northrop Grumman",
+          "relevance": "Space systems, electronic warfare",
+          "signal_keywords": ["Northrop space", "Northrop Grumman EW", "Northrop defense electronics"]
+        },
+        {
+          "id": "rtx",
+          "company": "RTX (Raytheon / Collins Aerospace)",
+          "relevance": "Radar, avionics, missile guidance",
+          "signal_keywords": ["Raytheon precision", "Collins avionics", "RTX defense electronics"]
+        },
+        {
+          "id": "l3harris",
+          "company": "L3Harris Technologies",
+          "relevance": "Communication, ISR, space",
+          "signal_keywords": ["L3Harris electronics", "L3Harris precision", "L3Harris space"]
+        },
+        {
+          "id": "bae",
+          "company": "BAE Systems",
+          "relevance": "Electronic systems, defense platforms",
+          "signal_keywords": ["BAE Systems electronics", "BAE precision", "BAE defense"]
+        },
+        {
+          "id": "spacex",
+          "company": "SpaceX",
+          "relevance": "Starlink, Dragon, launch vehicles",
+          "signal_keywords": ["SpaceX electronics", "SpaceX satellite", "Starlink component"]
+        },
+        {
+          "id": "boeing-defense",
+          "company": "Boeing Defense",
+          "relevance": "Satellites, military aircraft",
+          "signal_keywords": ["Boeing defense electronics", "Boeing satellite"]
+        },
+        {
+          "id": "elbit",
+          "company": "Elbit Systems",
+          "relevance": "Defense electronics, EW, avionics",
+          "signal_keywords": ["Elbit electronics", "Elbit defense", "Elbit avionics"]
+        },
+        {
+          "id": "rafael",
+          "company": "Rafael Advanced Defense",
+          "relevance": "Precision munitions, EO/IR",
+          "signal_keywords": ["Rafael electronics", "Rafael defense", "Rafael precision"]
+        },
+        {
+          "id": "iai",
+          "company": "Israel Aerospace Industries",
+          "relevance": "Space, radar, UAV",
+          "signal_keywords": ["IAI electronics", "IAI space", "IAI defense"]
+        }
+      ]
+    },
+    "ev_automotive_bms": {
+      "segment": "EV / Automotive / BMS",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "accounts": [
+        {
+          "id": "tesla",
+          "company": "Tesla",
+          "relevance": "EV leader; BMS, inverter, charging",
+          "signal_keywords": ["Tesla BMS", "Tesla battery", "Tesla powertrain electronics"]
+        },
+        {
+          "id": "byd",
+          "company": "BYD",
+          "relevance": "EV + battery manufacturer",
+          "signal_keywords": ["BYD battery management", "BYD BMS", "BYD electronics"]
+        },
+        {
+          "id": "catl",
+          "company": "CATL",
+          "relevance": "World's largest battery manufacturer; BMS integration",
+          "signal_keywords": ["CATL BMS", "CATL battery management", "CATL precision"]
+        },
+        {
+          "id": "lg-energy",
+          "company": "LG Energy Solution",
+          "relevance": "EV batteries; BMS development",
+          "signal_keywords": ["LG Energy BMS", "LG battery management"]
+        },
+        {
+          "id": "samsung-sdi",
+          "company": "Samsung SDI",
+          "relevance": "EV and ESS batteries",
+          "signal_keywords": ["Samsung SDI BMS", "Samsung SDI battery"]
+        },
+        {
+          "id": "panasonic-energy",
+          "company": "Panasonic Energy",
+          "relevance": "Battery cells for Tesla and others",
+          "signal_keywords": ["Panasonic EV battery", "Panasonic BMS"]
+        },
+        {
+          "id": "rivian",
+          "company": "Rivian",
+          "relevance": "EV trucks; vertically integrated",
+          "signal_keywords": ["Rivian electronics", "Rivian BMS", "Rivian powertrain"]
+        },
+        {
+          "id": "continental",
+          "company": "Continental AG",
+          "relevance": "Tier-1; BMS, inverters, ADAS",
+          "signal_keywords": ["Continental BMS", "Continental automotive electronics"]
+        },
+        {
+          "id": "bosch",
+          "company": "Bosch",
+          "relevance": "Tier-1; BMS, powertrain electronics",
+          "signal_keywords": ["Bosch BMS", "Bosch EV electronics", "Bosch automotive precision"]
+        },
+        {
+          "id": "adi-bms",
+          "company": "Analog Devices",
+          "relevance": "BMS IC leader; precision analog",
+          "signal_keywords": ["Analog Devices BMS", "ADI precision", "ADI battery management"]
+        },
+        {
+          "id": "ti-bms",
+          "company": "Texas Instruments",
+          "relevance": "BMS ICs, current sense AFEs",
+          "signal_keywords": ["Texas Instruments BMS", "TI current sense", "TI precision"]
+        },
+        {
+          "id": "nxp",
+          "company": "NXP Semiconductors",
+          "relevance": "BMS, automotive MCUs",
+          "signal_keywords": ["NXP BMS", "NXP automotive", "NXP battery management"]
+        },
+        {
+          "id": "infineon",
+          "company": "Infineon Technologies",
+          "relevance": "Power semiconductors, BMS",
+          "signal_keywords": ["Infineon BMS", "Infineon automotive", "Infineon power"]
+        }
+      ]
+    },
+    "medical_devices": {
+      "segment": "Medical Device OEMs",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "accounts": [
+        {
+          "id": "medtronic",
+          "company": "Medtronic",
+          "relevance": "Implantables, patient monitoring",
+          "signal_keywords": ["Medtronic electronics", "Medtronic precision", "Medtronic sensor"]
+        },
+        {
+          "id": "abbott",
+          "company": "Abbott (St. Jude)",
+          "relevance": "Diagnostics, implantables",
+          "signal_keywords": ["Abbott medical device", "Abbott diagnostics", "Abbott precision"]
+        },
+        {
+          "id": "siemens-healthineers",
+          "company": "Siemens Healthineers",
+          "relevance": "Imaging, lab diagnostics",
+          "signal_keywords": ["Siemens Healthineers precision", "Siemens medical electronics"]
+        },
+        {
+          "id": "ge-healthcare",
+          "company": "GE HealthCare",
+          "relevance": "Imaging, monitoring, ultrasound",
+          "signal_keywords": ["GE HealthCare electronics", "GE medical precision"]
+        },
+        {
+          "id": "philips-healthcare",
+          "company": "Philips Healthcare",
+          "relevance": "Patient monitoring, imaging",
+          "signal_keywords": ["Philips Healthcare electronics", "Philips monitoring precision"]
+        },
+        {
+          "id": "boston-scientific",
+          "company": "Boston Scientific",
+          "relevance": "Interventional devices",
+          "signal_keywords": ["Boston Scientific electronics", "Boston Scientific precision"]
+        },
+        {
+          "id": "intuitive-surgical",
+          "company": "Intuitive Surgical",
+          "relevance": "Da Vinci surgical robot",
+          "signal_keywords": ["Intuitive Surgical electronics", "Intuitive precision sensor"]
+        }
+      ]
+    },
+    "metrology_standards": {
+      "segment": "Metrology & National Standards",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "accounts": [
+        {
+          "id": "nist",
+          "company": "NIST (US)",
+          "relevance": "National metrology institute; standard reference",
+          "signal_keywords": ["NIST resistor standard", "NIST metrology", "NIST precision"]
+        },
+        {
+          "id": "nmj-aist",
+          "company": "NMJ / AIST (Japan)",
+          "relevance": "Alpha Electronics partnership for metrology standards",
+          "signal_keywords": ["NMJ metrology", "AIST precision", "Japan metrology standard"]
+        },
+        {
+          "id": "ptb",
+          "company": "PTB (Germany)",
+          "relevance": "German national metrology institute",
+          "signal_keywords": ["PTB resistor standard", "PTB precision", "PTB metrology"]
+        },
+        {
+          "id": "npl",
+          "company": "NPL (UK)",
+          "relevance": "UK national measurement standards",
+          "signal_keywords": ["NPL precision", "NPL metrology", "NPL resistor"]
+        },
+        {
+          "id": "fluke-calibration",
+          "company": "Fluke Calibration",
+          "relevance": "Commercial calibration lab equipment",
+          "signal_keywords": ["Fluke Calibration precision", "Fluke metrology"]
+        },
+        {
+          "id": "keysight-standards",
+          "company": "Keysight (Standards)",
+          "relevance": "Precision calibration instruments",
+          "signal_keywords": ["Keysight calibration", "Keysight metrology", "Keysight standard"]
+        }
+      ]
+    }
+  }
+}

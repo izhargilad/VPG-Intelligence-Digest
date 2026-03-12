@@ -1,0 +1,203 @@
+{
+  "products": [
+    {
+      "bu_id": "vpg-foil-resistors",
+      "category": "Surface Mount Resistors",
+      "series": [
+        {
+          "product_id": "frsm",
+          "name": "FRSM",
+          "technology": "Z1-Foil",
+          "key_specs": "TCR ±0.05 ppm/°C; tolerance ±0.01%; 0603–2512",
+          "application_keywords": ["ATE", "avionics", "medical", "precision instrumentation", "metrology"]
+        },
+        {
+          "product_id": "frsh",
+          "name": "FRSH",
+          "technology": "Z1-Foil",
+          "key_specs": "High temp to +225°C; high power",
+          "application_keywords": ["downhole", "oil & gas", "high-temp electronics", "space"]
+        },
+        {
+          "product_id": "frst",
+          "name": "FRST",
+          "technology": "Z1-Foil",
+          "key_specs": "Wraparound; moisture resistant 85/85 RH",
+          "application_keywords": ["automotive", "humidity environments", "industrial"]
+        },
+        {
+          "product_id": "smr3z1",
+          "name": "SMR3Z1",
+          "technology": "Z1-Foil",
+          "key_specs": "Molded SMD; flexible terminations",
+          "application_keywords": ["high-reliability", "harsh environment", "radiation-tolerant"]
+        },
+        {
+          "product_id": "smrxdz",
+          "name": "SMRxDZ",
+          "technology": "Z1-Foil",
+          "key_specs": "Flexible termination; thermal expansion matched",
+          "application_keywords": ["PCB thermal cycling", "automotive", "aerospace"]
+        },
+        {
+          "product_id": "vsmp",
+          "name": "VSMP",
+          "technology": "Z-Foil",
+          "key_specs": "Ultra-precision SMD; hermetic option",
+          "application_keywords": ["mil-spec", "space grade", "satellite", "weapons systems"]
+        },
+        {
+          "product_id": "vsm",
+          "name": "VSM",
+          "technology": "Z-Foil",
+          "key_specs": "Surface mount; tight TCR",
+          "application_keywords": ["instrumentation", "audio", "test & measurement"]
+        },
+        {
+          "product_id": "rwa-rwb-rwc",
+          "name": "RWA/RWB/RWC",
+          "technology": "Bulk Metal Foil",
+          "key_specs": "Precision SMD; low TCR",
+          "application_keywords": ["general precision", "industrial", "telecom"]
+        },
+        {
+          "product_id": "smnz",
+          "name": "SMNZ",
+          "technology": "Bulk Metal Foil",
+          "key_specs": "Resistor network; matched pairs",
+          "application_keywords": ["amplifier circuits", "DAC/ADC", "voltage dividers"]
+        },
+        {
+          "product_id": "mu-divider",
+          "name": "MU Divider",
+          "technology": "Bulk Metal Foil",
+          "key_specs": "Matched pair in single package",
+          "application_keywords": ["input/feedback amplifiers", "instrumentation"]
+        },
+        {
+          "product_id": "htha-hthg",
+          "name": "HTHA/HTHG",
+          "technology": "Z1-Foil",
+          "key_specs": "Chip for hybrid circuits",
+          "application_keywords": ["hybrid modules", "thick-film hybrid", "MCM"]
+        },
+        {
+          "product_id": "vpr5z-vpr7z",
+          "name": "VPR5Z/VPR7Z",
+          "technology": "Z-Foil",
+          "key_specs": "Power precision SMD",
+          "application_keywords": ["power management", "EV inverter", "motor control"]
+        }
+      ]
+    },
+    {
+      "bu_id": "vpg-foil-resistors",
+      "category": "Through-Hole / Leaded Resistors",
+      "series": [
+        {
+          "product_id": "vha-vhd",
+          "name": "VHA/VHD",
+          "technology": "Z-Foil",
+          "key_specs": "Hermetic; axial; mil-qualified",
+          "application_keywords": ["mil-spec", "QPL", "DSCC", "space", "weapons"]
+        },
+        {
+          "product_id": "vhp-vpr",
+          "name": "VHP/VPR",
+          "technology": "Z-Foil",
+          "key_specs": "High-power axial",
+          "application_keywords": ["power supply", "calibration", "test equipment"]
+        },
+        {
+          "product_id": "s-series",
+          "name": "S Series",
+          "technology": "Bulk Metal Foil",
+          "key_specs": "Axial; standard",
+          "application_keywords": ["lab instruments", "legacy designs", "metrology"]
+        },
+        {
+          "product_id": "y-series-300xxx",
+          "name": "Y Series (300xxx)",
+          "technology": "Z1-Foil",
+          "key_specs": "MIL-PRF-55342; EEE-INST-002",
+          "application_keywords": ["NASA", "ESA", "space missions", "satellite bus"]
+        },
+        {
+          "product_id": "303261-303266",
+          "name": "303261–303266",
+          "technology": "Z1-Foil",
+          "key_specs": "Mil-qualified wraparound chip",
+          "application_keywords": ["defense procurement", "DSCC", "mil-aero"]
+        }
+      ]
+    },
+    {
+      "bu_id": "vpg-foil-resistors",
+      "category": "Current Sense Resistors",
+      "series": [
+        {
+          "product_id": "csm2817",
+          "name": "CSM2817",
+          "technology": "Bulk Metal Foil",
+          "key_specs": "Wide thermal range current sense",
+          "application_keywords": ["BMS", "power conversion", "EV charging"]
+        },
+        {
+          "product_id": "fpr-4-7022",
+          "name": "FPR 4-7022",
+          "technology": "Foil",
+          "key_specs": "Tolerance ±0.1% to ±1.0%",
+          "application_keywords": ["industrial current sensing", "motor drive", "solar inverter"]
+        },
+        {
+          "product_id": "vcs",
+          "name": "VCS",
+          "technology": "Z-Foil",
+          "key_specs": "AEC-Q200; automotive grade",
+          "application_keywords": ["EV battery monitoring", "ADAS", "powertrain"]
+        },
+        {
+          "product_id": "powertron-shunts",
+          "name": "Powertron Shunts",
+          "technology": "Metal element",
+          "key_specs": "High power; low ohmic",
+          "application_keywords": ["energy storage", "grid-tie", "fast charging"]
+        }
+      ]
+    },
+    {
+      "bu_id": "vpg-foil-resistors",
+      "category": "Custom & Specialty",
+      "series": [
+        {
+          "product_id": "custom-chip-networks",
+          "name": "Custom Chip Networks",
+          "technology": "Application-specific resistor arrays on ceramic substrate",
+          "key_specs": "Custom designs",
+          "application_keywords": ["ASIC companion", "hybrid module", "custom analog"]
+        },
+        {
+          "product_id": "precision-trimmers",
+          "name": "Precision Trimming Potentiometers",
+          "technology": "Adjustable foil-based trimmer",
+          "key_specs": "Adjustable",
+          "application_keywords": ["calibration", "zero-adjust", "bridge circuit"]
+        },
+        {
+          "product_id": "resistor-networks",
+          "name": "Resistor Networks",
+          "technology": "Matched arrays in DIP/SIP",
+          "key_specs": "Matched arrays",
+          "application_keywords": ["DAC", "ADC", "instrumentation amplifier", "signal conditioning"]
+        },
+        {
+          "product_id": "alpha-metrology-standards",
+          "name": "Alpha Electronics Metrology Standards",
+          "technology": "NMJ-traceable reference resistors",
+          "key_specs": "National metrology traceable",
+          "application_keywords": ["national metrology institute", "calibration lab", "standards"]
+        }
+      ]
+    }
+  ]
+}

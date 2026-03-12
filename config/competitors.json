@@ -1,0 +1,235 @@
+{
+  "competitors": [
+    {
+      "id": "isabellenhutte",
+      "company": "Isabellenhütte Heusler",
+      "hq": "Dillenburg, Germany",
+      "tier": 1,
+      "relevant_bus": ["vpg-foil-resistors"],
+      "key_products": "ISA-WELD shunt; precision alloys; BMS current sense; IVT-S module",
+      "monitor_keywords": ["Isabellenhütte precision", "ISA shunt", "IVT-S battery", "Isabellenhütte automotive"],
+      "threat_areas": ["EV/BMS current sensing", "automotive shunts"],
+      "active": true
+    },
+    {
+      "id": "caddock-bourns",
+      "company": "Caddock Electronics (Bourns)",
+      "hq": "Riverside, CA, USA",
+      "tier": 1,
+      "relevant_bus": ["vpg-foil-resistors"],
+      "key_products": "Film resistors; precision networks; high-voltage dividers (acquired by Bourns 2023)",
+      "monitor_keywords": ["Caddock precision", "Caddock high-voltage", "Bourns Caddock", "Bourns Riedon"],
+      "threat_areas": ["precision networks", "high-voltage dividers"],
+      "active": true
+    },
+    {
+      "id": "bourns-riedon",
+      "company": "Bourns / Riedon",
+      "hq": "Riverside, CA, USA",
+      "tier": 1,
+      "relevant_bus": ["vpg-foil-resistors"],
+      "key_products": "Riedon precision wirewound; BRF power foil; metal foil shunts",
+      "monitor_keywords": ["Bourns Riedon", "BRF power foil", "Riedon precision", "Bourns foil resistor"],
+      "threat_areas": ["power foil resistors", "EV current sensing"],
+      "active": true
+    },
+    {
+      "id": "susumu",
+      "company": "Susumu Co.",
+      "hq": "Kamagaya, Japan",
+      "tier": 1,
+      "relevant_bus": ["vpg-foil-resistors"],
+      "key_products": "Thin-film chip; precision chip; RG-series ultra-precision",
+      "monitor_keywords": ["Susumu precision", "Susumu thin film", "Susumu RG series"],
+      "threat_areas": ["thin-film precision SMD"],
+      "active": true
+    },
+    {
+      "id": "exxelia-ohmcraft",
+      "company": "Exxelia / Ohmcraft",
+      "hq": "Paris, France",
+      "tier": 1,
+      "relevant_bus": ["vpg-foil-resistors"],
+      "key_products": "Micropen thick-film; high-voltage; space-grade",
+      "monitor_keywords": ["Exxelia Ohmcraft", "Ohmcraft precision", "Exxelia space resistor", "Micropen"],
+      "threat_areas": ["space-grade resistors", "high-voltage"],
+      "active": true
+    },
+    {
+      "id": "koa-speer",
+      "company": "KOA Speer Electronics",
+      "hq": "Bradford, PA / Japan",
+      "tier": 1,
+      "relevant_bus": ["vpg-foil-resistors"],
+      "key_products": "Precision metal film; thin-film chip; current sense",
+      "monitor_keywords": ["KOA precision", "KOA Speer resistor", "KOA thin film"],
+      "threat_areas": ["precision thin-film", "current sense"],
+      "active": true
+    },
+    {
+      "id": "tt-electronics-irc",
+      "company": "TT Electronics / IRC",
+      "hq": "Woking, UK",
+      "tier": 1,
+      "relevant_bus": ["vpg-foil-resistors", "micro-measurements"],
+      "key_products": "IRC TaNFilm; precision film; military chip",
+      "monitor_keywords": ["TT Electronics resistor", "IRC precision", "TaNFilm military"],
+      "threat_areas": ["military precision", "precision film"],
+      "active": true
+    },
+    {
+      "id": "vishay-intertechnology",
+      "company": "Vishay Intertechnology",
+      "hq": "Malvern, PA, USA",
+      "tier": 2,
+      "relevant_bus": ["vpg-foil-resistors"],
+      "key_products": "Former parent; thin-film MELF; Dale wirewound; broad passive portfolio",
+      "monitor_keywords": ["Vishay Intertechnology resistor", "Vishay Dale", "Vishay thin film MELF", "Vishay precision"],
+      "threat_areas": ["broad passive portfolio", "brand confusion"],
+      "active": true
+    },
+    {
+      "id": "yageo",
+      "company": "Yageo Corporation",
+      "hq": "Taipei, Taiwan",
+      "tier": 2,
+      "relevant_bus": ["vpg-foil-resistors"],
+      "key_products": "Largest global passive; acquired Pulse, KEMET adjacency; PU shunt series",
+      "monitor_keywords": ["Yageo precision", "Yageo shunt resistor", "Yageo PU series"],
+      "threat_areas": ["volume pricing pressure", "shunt resistors"],
+      "active": true
+    },
+    {
+      "id": "panasonic-passive",
+      "company": "Panasonic (passive division)",
+      "hq": "Osaka, Japan",
+      "tier": 2,
+      "relevant_bus": ["vpg-foil-resistors"],
+      "key_products": "ERA precision thin-film; automotive-grade chip",
+      "monitor_keywords": ["Panasonic ERA resistor", "Panasonic precision", "Panasonic automotive passive"],
+      "threat_areas": ["automotive precision", "thin-film SMD"],
+      "active": true
+    },
+    {
+      "id": "rohm",
+      "company": "Rohm Semiconductor",
+      "hq": "Kyoto, Japan",
+      "tier": 2,
+      "relevant_bus": ["vpg-foil-resistors"],
+      "key_products": "Low-power precision chip; automotive shunt",
+      "monitor_keywords": ["Rohm precision resistor", "Rohm shunt", "Rohm automotive"],
+      "threat_areas": ["automotive shunt"],
+      "active": true
+    },
+    {
+      "id": "te-connectivity",
+      "company": "TE Connectivity",
+      "hq": "Schaffhausen, Switzerland",
+      "tier": 2,
+      "relevant_bus": ["vpg-foil-resistors"],
+      "key_products": "CRGP precision; M55342 mil-grade",
+      "monitor_keywords": ["TE Connectivity resistor", "TE precision", "TE Connectivity mil-grade"],
+      "threat_areas": ["mil-grade resistors"],
+      "active": true
+    },
+    {
+      "id": "walsin",
+      "company": "Walsin Technology",
+      "hq": "Taipei, Taiwan",
+      "tier": 2,
+      "relevant_bus": ["vpg-foil-resistors"],
+      "key_products": "High-volume precision chip; cost competitor in Asia",
+      "monitor_keywords": ["Walsin precision", "Walsin resistor", "Walsin thin film"],
+      "threat_areas": ["Asian cost competition"],
+      "active": true
+    },
+    {
+      "id": "ohmite",
+      "company": "Ohmite",
+      "hq": "Warrenville, IL, USA",
+      "tier": 2,
+      "relevant_bus": ["vpg-foil-resistors"],
+      "key_products": "Power resistors; thick film; chassis mount",
+      "monitor_keywords": ["Ohmite precision", "Ohmite power resistor"],
+      "threat_areas": ["power resistors"],
+      "active": true
+    },
+    {
+      "id": "stackpole-sei",
+      "company": "Stackpole / SEI",
+      "hq": "Raleigh, NC, USA",
+      "tier": 2,
+      "relevant_bus": ["vpg-foil-resistors"],
+      "key_products": "Precision metal-film chip; current sense",
+      "monitor_keywords": ["Stackpole precision", "SEI resistor"],
+      "threat_areas": ["precision metal-film", "current sense"],
+      "active": true
+    },
+    {
+      "id": "viking-tech",
+      "company": "Viking Tech",
+      "hq": "Kaohsiung, Taiwan",
+      "tier": 2,
+      "relevant_bus": ["vpg-foil-resistors"],
+      "key_products": "Precision thin-film; automotive-grade",
+      "monitor_keywords": ["Viking Tech resistor", "Viking precision"],
+      "threat_areas": ["Asian automotive thin-film"],
+      "active": true
+    },
+    {
+      "id": "hbk",
+      "company": "HBK (Hottinger Brüel & Kjær)",
+      "hq": "Darmstadt, Germany",
+      "tier": 1,
+      "relevant_bus": ["vpg-force-sensors", "micro-measurements", "blh-nobel"],
+      "key_products": "Load cells, strain gages, weighing systems",
+      "monitor_keywords": ["HBK", "Hottinger", "load cell", "strain"],
+      "threat_areas": ["force sensors", "strain gages", "process weighing"],
+      "active": true
+    },
+    {
+      "id": "kistler",
+      "company": "Kistler",
+      "hq": "Winterthur, Switzerland",
+      "tier": 1,
+      "relevant_bus": ["vpg-force-sensors", "dts"],
+      "key_products": "Piezoelectric sensors, force measurement, crash test",
+      "monitor_keywords": ["Kistler", "force", "torque", "sensor"],
+      "threat_areas": ["force sensors", "crash test"],
+      "active": true
+    },
+    {
+      "id": "zemic",
+      "company": "Zemic",
+      "hq": "Hanzhong, China",
+      "tier": 2,
+      "relevant_bus": ["vpg-force-sensors", "blh-nobel", "vpg-onboard-weighing"],
+      "key_products": "Load cells, weighing sensors",
+      "monitor_keywords": ["Zemic", "load cell", "weighing", "sensor"],
+      "threat_areas": ["low-cost load cells"],
+      "active": true
+    },
+    {
+      "id": "rice-lake",
+      "company": "Rice Lake Weighing",
+      "hq": "Rice Lake, WI, USA",
+      "tier": 1,
+      "relevant_bus": ["vpg-onboard-weighing", "blh-nobel"],
+      "key_products": "Weighing systems, load cells, scales",
+      "monitor_keywords": ["Rice Lake", "weighing", "load cell", "scale"],
+      "threat_areas": ["weighing systems"],
+      "active": true
+    },
+    {
+      "id": "flintec",
+      "company": "Flintec",
+      "hq": "Cardiff, UK",
+      "tier": 2,
+      "relevant_bus": ["vpg-force-sensors", "blh-nobel"],
+      "key_products": "Load cells, force measurement",
+      "monitor_keywords": ["Flintec", "load cell", "weighing", "force measurement"],
+      "threat_areas": ["load cells"],
+      "active": true
+    }
+  ]
+}

@@ -1,0 +1,196 @@
+{
+  "distributors": [
+    {
+      "id": "digi-key",
+      "name": "Digi-Key Electronics",
+      "type": "global_authorized",
+      "specialty": "Precision trimming center",
+      "coverage": "Global",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "monitor_keywords": ["Digi-Key VPG", "Digi-Key Vishay Foil", "Digi-Key precision resistor"],
+      "active": true
+    },
+    {
+      "id": "arrow",
+      "name": "Arrow Electronics",
+      "type": "global_authorized",
+      "coverage": "Global",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "monitor_keywords": ["Arrow VPG", "Arrow Foil Resistors", "Arrow precision passive"],
+      "active": true
+    },
+    {
+      "id": "avnet-farnell",
+      "name": "Avnet / Farnell",
+      "type": "global_authorized",
+      "coverage": "Global / EU",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "monitor_keywords": ["Avnet VPG", "Farnell Vishay Foil", "Avnet precision"],
+      "active": true
+    },
+    {
+      "id": "mouser",
+      "name": "Mouser Electronics",
+      "type": "global_catalog",
+      "coverage": "Global",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "monitor_keywords": ["Mouser VPG", "Mouser precision resistor", "Mouser foil"],
+      "active": true
+    },
+    {
+      "id": "tti",
+      "name": "TTI Inc.",
+      "type": "authorized_specialist",
+      "coverage": "North America / EU",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "monitor_keywords": ["TTI Vishay Foil", "TTI VPG", "TTI precision passive"],
+      "active": true
+    },
+    {
+      "id": "future-electronics",
+      "name": "Future Electronics",
+      "type": "global_authorized",
+      "coverage": "Global",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "monitor_keywords": ["Future Electronics VPG", "Future precision resistor"],
+      "active": true
+    },
+    {
+      "id": "rhopoint",
+      "name": "Rhopoint Components",
+      "type": "specialist_authorized",
+      "coverage": "UK / EU",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "monitor_keywords": ["Rhopoint VPG", "Rhopoint Vishay Foil", "Rhopoint precision"],
+      "active": true
+    },
+    {
+      "id": "saturnstone",
+      "name": "Saturnstone",
+      "type": "regional_distributor",
+      "coverage": "Taiwan / APAC",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "monitor_keywords": ["Saturnstone VPG", "Saturnstone foil resistor"],
+      "active": true
+    },
+    {
+      "id": "intron-korea",
+      "name": "INTRON (Korea)",
+      "type": "regional_distributor",
+      "coverage": "South Korea",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "monitor_keywords": ["INTRON VPG", "INTRON Vishay Foil"],
+      "active": true
+    },
+    {
+      "id": "whistler",
+      "name": "Whistler Technology",
+      "type": "cots_specialist",
+      "coverage": "UK",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "monitor_keywords": ["Whistler VPG", "Whistler precision COTS"],
+      "active": true
+    },
+    {
+      "id": "es-components",
+      "name": "ES Components",
+      "type": "authorized_distributor",
+      "coverage": "North America",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "monitor_keywords": ["ES Components VPG", "ES Components foil resistor"],
+      "active": true
+    }
+  ],
+  "strategic_partners": [
+    {
+      "id": "adi-ic-partner",
+      "company": "Analog Devices",
+      "type": "ic_design_partner",
+      "opportunity": "Co-design reference circuits pairing ADI BMS ICs with VPG current sense resistors",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "monitor_keywords": ["Analog Devices reference design", "ADI evaluation board"],
+      "active": true
+    },
+    {
+      "id": "ti-ic-partner",
+      "company": "Texas Instruments",
+      "type": "ic_design_partner",
+      "opportunity": "Reference BMS designs using TI AFEs with VPG VCS/CSM shunts",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "monitor_keywords": ["TI reference design", "TI BMS evaluation kit"],
+      "active": true
+    },
+    {
+      "id": "renesas-ic-partner",
+      "company": "Intersil (Renesas)",
+      "type": "ic_design_partner",
+      "opportunity": "Existing FRSM + ISL28617 demo; expand to new precision amplifier platforms",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "monitor_keywords": ["Renesas precision amplifier", "Renesas evaluation platform"],
+      "active": true
+    },
+    {
+      "id": "maxim-ic-partner",
+      "company": "Maxim (Analog Devices)",
+      "type": "ic_design_partner",
+      "opportunity": "Precision DAC/ADC reference designs",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "monitor_keywords": ["Maxim precision", "Maxim DAC reference design"],
+      "active": true
+    },
+    {
+      "id": "eda-platforms",
+      "company": "Altium / Cadence / Mentor",
+      "type": "eda_simulation",
+      "opportunity": "Include VPG component libraries in major EDA platforms",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "monitor_keywords": ["Altium component library", "Cadence passive model"],
+      "active": true
+    },
+    {
+      "id": "keysight-oem",
+      "company": "Keysight Technologies",
+      "type": "test_equipment_oem",
+      "opportunity": "Qualified precision resistor supplier for bench instruments",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "monitor_keywords": ["Keysight supplier", "Keysight component qualification"],
+      "active": true
+    },
+    {
+      "id": "ni-oem",
+      "company": "National Instruments (Emerson)",
+      "type": "test_equipment_oem",
+      "opportunity": "Certified component for NI modular instruments",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "monitor_keywords": ["NI certified component", "NI supplier qualification"],
+      "active": true
+    },
+    {
+      "id": "space-integrators",
+      "company": "SpaceX / Blue Origin / L3Harris",
+      "type": "space_integrator",
+      "opportunity": "Qualified supplier for NewSpace constellation electronics",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "monitor_keywords": ["NewSpace component", "LEO satellite electronics qualification"],
+      "active": true
+    },
+    {
+      "id": "auto-tier1",
+      "company": "Continental / Bosch / ZF",
+      "type": "automotive_tier1",
+      "opportunity": "AEC-Q200 qualified supplier for next-gen BMS platforms",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "monitor_keywords": ["Tier-1 BMS supplier qualification", "automotive passive supplier"],
+      "active": true
+    },
+    {
+      "id": "research-labs",
+      "company": "Sandia / ORNL / NASA JPL",
+      "type": "research_lab",
+      "opportunity": "Radiation testing qualification; extreme environment validation",
+      "relevant_bus": ["vpg-foil-resistors"],
+      "monitor_keywords": ["NASA JPL component", "Sandia qualification", "radiation test"],
+      "active": true
+    }
+  ]
+}

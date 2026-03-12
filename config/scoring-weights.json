@@ -110,6 +110,28 @@
       "action_template": "Supply chain impact + India production advantage talking points"
     }
   ],
+  "bu_overrides": {
+    "vpg-foil-resistors": {
+      "scoring_dimensions": {
+        "revenue_impact": {
+          "weight": 0.30,
+          "rationale": "Individual design wins range $50K–$500K+ but volume is lower than commodity; weight slightly below default"
+        },
+        "time_sensitivity": {
+          "weight": 0.20,
+          "rationale": "Longer design-in cycles (6–18 months) reduce urgency vs. transactional BUs; early intelligence matters more"
+        },
+        "strategic_alignment": {
+          "weight": 0.30,
+          "rationale": "Semiconductor ATE, aerospace/defense, and EV/BMS are declared growth vectors; weight increased"
+        },
+        "competitive_pressure": {
+          "weight": 0.20,
+          "rationale": "Isabellenhütte and Bourns/Riedon aggressively targeting EV space; competitive monitoring is critical"
+        }
+      }
+    }
+  },
   "validation_levels": [
     {
       "id": "verified",

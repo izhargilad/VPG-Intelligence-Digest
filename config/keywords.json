@@ -1,0 +1,67 @@
+{
+  "keyword_sets": {
+    "vpg-foil-resistors": {
+      "product_technology": [
+        "Bulk Metal Foil", "BMF", "Z-Foil", "Z1-Foil", "Z1 Foil Technology",
+        "Vishay Foil Resistors", "VFR", "Alpha Electronics resistor", "Powertron resistor", "APR resistor",
+        "FRSM", "FRSH", "FRST", "SMR3Z1", "SMRxDZ", "VSMP", "VSM", "VPR5Z", "VPR7Z",
+        "SMNZ", "MU divider", "VHA", "VHD", "VHP", "CSM2817", "FPR 4-7022",
+        "VCS current sense", "VCS resistor", "303261", "303266", "HTHA", "HTHG",
+        "RWA", "RWB", "RWC",
+        "foil resistor", "precision foil", "bulk metal resistor", "ultra-precision resistor",
+        "hermetic resistor", "space-grade resistor"
+      ],
+      "performance_specs": [
+        "TCR ppm", "temperature coefficient of resistance", "load-life stability",
+        "long-term stability resistor", "noise-free resistor", "thermal EMF",
+        "voltage coefficient resistor", "ESD immunity resistor",
+        "power coefficient of resistance", "PCR resistor",
+        "precision tolerance", "tight tolerance resistor", "zero TCR", "sub-ppm TCR",
+        "±0.005% tolerance", "±0.01% tolerance", "±0.02% tolerance"
+      ],
+      "applications": [
+        "precision instrumentation", "automatic test equipment", "ATE precision",
+        "semiconductor test", "wafer probe", "burn-in test",
+        "metrology standard", "calibration reference", "bridge circuit", "Wheatstone bridge",
+        "voltage divider precision", "precision amplifier", "instrumentation amplifier",
+        "DAC precision resistor", "ADC precision",
+        "current sense shunt", "current sensing precision", "precision power supply",
+        "high-end audio resistor", "audiophile grade",
+        "precision weighing", "strain gage circuit", "data acquisition precision"
+      ],
+      "market_industry": [
+        "precision resistor market", "resistor market forecast",
+        "passive component market", "passive component shortage",
+        "resistor supply chain", "resistor lead time", "resistor price increase",
+        "precision passive demand", "mil-spec passive market", "space-grade passive market",
+        "AEC-Q200 passive", "automotive passive component", "EV passive component",
+        "BMS component market", "current sensor market", "shunt resistor market"
+      ],
+      "competitor_actions": [
+        "Isabellenhütte new product", "Isabellenhütte automotive",
+        "Caddock launch", "Bourns Riedon foil", "Bourns precision",
+        "Susumu precision launch", "Exxelia Ohmcraft",
+        "KOA Speer precision", "TT Electronics IRC",
+        "Vishay Intertechnology resistor launch", "Yageo precision shunt",
+        "Panasonic ERA new", "Rohm precision launch",
+        "TE Connectivity resistor", "Walsin precision",
+        "Stackpole precision", "Viking Tech precision"
+      ],
+      "regulatory_compliance": [
+        "MIL-PRF-55342", "EEE-INST-002", "DSCC qualified", "QPL update",
+        "AEC-Q200 qualification", "ESA ESCC",
+        "RoHS resistor", "REACH compliance passive",
+        "ITAR passive component", "export control resistor",
+        "DLA procurement", "NASA qualified passive",
+        "radiation-hardened passive", "tin whisker mitigation", "conflict mineral passive"
+      ],
+      "trade_macro": [
+        "US-China tariff electronics", "India electronics manufacturing",
+        "passive component tariff", "resistor tariff",
+        "nearshoring electronics", "reshoring passive components",
+        "CHIPS Act passive", "semiconductor supply chain passive",
+        "Israel electronics manufacturing", "Japan electronics passive"
+      ]
+    }
+  }
+}
