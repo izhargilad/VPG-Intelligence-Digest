@@ -1811,7 +1811,11 @@ def export_recommendations_pptx():
 UI_BUILD_DIR = PROJECT_ROOT / "src" / "ui" / "build"
 
 if UI_BUILD_DIR.exists():
-    app.mount("/static", StaticFiles(directory=str(UI_BUILD_DIR / "static")), name="static")
+    # Vite builds to "assets/", Create React App builds to "static/"
+    for static_dir_name in ("assets", "static"):
+        static_dir = UI_BUILD_DIR / static_dir_name
+        if static_dir.exists():
+            app.mount(f"/{static_dir_name}", StaticFiles(directory=str(static_dir)), name=static_dir_name)
 
     @app.get("/{full_path:path}")
     def serve_react(full_path: str):
