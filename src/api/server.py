@@ -58,7 +58,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="VPG Intelligence Digest",
     description="Management UI for the VPG Weekly Intelligence Digest",
-    version="2.3.0",
+    version="3.0.0",
 )
 
 # CORS — allow the React dev server and local access
@@ -1804,6 +1804,181 @@ def export_recommendations_pptx():
         media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
         headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
+
+
+# ── Phase 3: Feedback & Scoring Refinement ─────────────────────────
+
+@app.get("/api/feedback/summary")
+def feedback_summary():
+    """Get feedback summary and scoring adjustment data."""
+    from src.feedback.scoring_refinement import get_feedback_summary, compute_scoring_adjustments
+    conn = get_connection()
+    try:
+        summary = get_feedback_summary(conn)
+        adjustments = compute_scoring_adjustments(conn)
+        return {"feedback": summary, "adjustments": adjustments}
+    finally:
+        conn.close()
+
+
+@app.post("/api/feedback")
+def submit_feedback(body: dict):
+    """Submit thumbs-up/down feedback for a signal."""
+    signal_id = body.get("signal_id")
+    rating = body.get("rating")  # "up" or "down"
+    email = body.get("email", "anonymous")
+    comment = body.get("comment", "")
+
+    if not signal_id or rating not in ("up", "down"):
+        raise HTTPException(400, "signal_id and rating ('up'/'down') required")
+
+    conn = get_connection()
+    try:
+        conn.execute(
+            "INSERT INTO feedback (signal_id, recipient_email, rating, comment) VALUES (?, ?, ?, ?)",
+            (signal_id, email, rating, comment),
+        )
+        conn.commit()
+        return {"status": "ok", "signal_id": signal_id, "rating": rating}
+    finally:
+        conn.close()
+
+
+# ── Phase 3: Pre-Event Intelligence Packs ──────────────────────────
+
+@app.get("/api/events")
+def list_events():
+    """List all configured events."""
+    from src.events.intel_packs import list_events as _list, get_upcoming_events
+    return {"events": _list(), "upcoming": get_upcoming_events(90)}
+
+
+@app.post("/api/events")
+def create_event(body: dict):
+    """Add a new event."""
+    from src.events.intel_packs import add_event
+    required = ["id", "name", "start_date"]
+    for field in required:
+        if field not in body:
+            raise HTTPException(400, f"Missing required field: {field}")
+    return add_event(body)
+
+
+@app.put("/api/events/{event_id}")
+def update_event_endpoint(event_id: str, body: dict):
+    """Update an existing event."""
+    from src.events.intel_packs import update_event
+    result = update_event(event_id, body)
+    if result is None:
+        raise HTTPException(404, f"Event '{event_id}' not found")
+    return result
+
+
+@app.delete("/api/events/{event_id}")
+def delete_event_endpoint(event_id: str):
+    """Delete an event."""
+    from src.events.intel_packs import delete_event
+    if not delete_event(event_id):
+        raise HTTPException(404, f"Event '{event_id}' not found")
+    return {"status": "deleted", "event_id": event_id}
+
+
+@app.get("/api/events/{event_id}/intel-pack")
+def get_intel_pack(event_id: str):
+    """Generate a pre-event intelligence pack."""
+    from src.events.intel_packs import generate_intel_pack
+    conn = get_connection()
+    try:
+        return generate_intel_pack(event_id, conn)
+    finally:
+        conn.close()
+
+
+# ── Phase 3: Outreach Templates ────────────────────────────────────
+
+@app.get("/api/outreach/{signal_id}")
+def get_outreach_templates(signal_id: int):
+    """Generate outreach templates for a signal."""
+    from src.outreach.templates import generate_outreach
+    conn = get_connection()
+    try:
+        return generate_outreach(signal_id, conn)
+    finally:
+        conn.close()
+
+
+@app.post("/api/outreach/batch")
+def batch_outreach(body: dict):
+    """Generate outreach templates for multiple signals."""
+    from src.outreach.templates import generate_batch_outreach
+    signal_ids = body.get("signal_ids", [])
+    if not signal_ids:
+        raise HTTPException(400, "signal_ids list required")
+    conn = get_connection()
+    try:
+        return {"results": generate_batch_outreach(signal_ids, conn)}
+    finally:
+        conn.close()
+
+
+# ── Phase 3: India Production Advantage Monitor ────────────────────
+
+@app.get("/api/india/monitor")
+def india_monitor():
+    """Get India production advantage intelligence."""
+    from src.india.monitor import analyze_india_signals
+    conn = get_connection()
+    try:
+        return analyze_india_signals(conn)
+    finally:
+        conn.close()
+
+
+@app.get("/api/india/talking-points/{signal_id}")
+def india_talking_points(signal_id: int):
+    """Get India-specific talking points for a signal."""
+    from src.india.monitor import get_india_talking_points_for_signal
+    conn = get_connection()
+    try:
+        return get_india_talking_points_for_signal(signal_id, conn)
+    finally:
+        conn.close()
+
+
+# ── Phase 3: Monthly Effectiveness Reports ─────────────────────────
+
+@app.get("/api/reports/monthly")
+def monthly_report(year: int = None, month: int = None):
+    """Generate a monthly effectiveness report."""
+    from src.reports.monthly import generate_monthly_report
+    conn = get_connection()
+    try:
+        return generate_monthly_report(year, month, conn)
+    finally:
+        conn.close()
+
+
+# ── Phase 3: Meeting Prep Briefs ───────────────────────────────────
+
+@app.get("/api/accounts")
+def list_target_accounts():
+    """List all configured target accounts."""
+    from src.reports.meeting_prep import list_target_accounts
+    return {"accounts": list_target_accounts()}
+
+
+@app.get("/api/accounts/{account_key}/meeting-brief")
+def get_meeting_brief(account_key: str):
+    """Generate a meeting prep brief for a target account."""
+    from src.reports.meeting_prep import generate_meeting_brief
+    conn = get_connection()
+    try:
+        result = generate_meeting_brief(account_key, conn)
+        if "error" in result:
+            raise HTTPException(404, result["error"])
+        return result
+    finally:
+        conn.close()
 
 
 # ── Serve React Frontend ────────────────────────────────────────────
