@@ -1,6 +1,7 @@
 """Tests for Phase 4 features: battle cards, customer triggers, keyword expansion,
 feedback-driven scoring integration, and digest template enhancements."""
 
+import hashlib
 import sqlite3
 from datetime import datetime, timedelta
 from unittest.mock import patch
@@ -53,7 +54,7 @@ def _insert_signal(conn, title, summary="", source="test", signal_type="competit
     conn.execute(
         "INSERT INTO signals (external_id, title, summary, url, source_name, source_type, collected_at, status) "
         "VALUES (?, ?, ?, ?, ?, 'rss', ?, ?)",
-        (f"ext-{hash(t) % 10000}", t, s, f"https://example.com/{hash(t) % 1000}", source, now, status),
+        (f"ext-{hashlib.sha256(t.encode()).hexdigest()[:16]}", t, s, f"https://example.com/{hash(t) % 1000}", source, now, status),
     )
     sig_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
     conn.execute(
