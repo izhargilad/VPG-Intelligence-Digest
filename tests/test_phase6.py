@@ -547,6 +547,7 @@ class TestPipelineDeliveryLogging:
     @patch("src.pipeline.get_connection")
     def test_stage_deliver_logs_results(self, mock_conn, mock_send, mock_recips, tmp_path):
         conn = _setup_db(tmp_path)
+        db_path = tmp_path / "test.db"
         mock_conn.return_value = conn
 
         mock_recips.return_value = {
@@ -563,8 +564,11 @@ class TestPipelineDeliveryLogging:
         assert len(results) == 1
         assert results[0]["status"] == "sent"
 
-        # Verify delivery was logged
-        row = conn.execute("SELECT * FROM delivery_log").fetchone()
+        # Use a new connection since stage_deliver closes its own
+        verify_conn = sqlite3.connect(str(db_path))
+        verify_conn.row_factory = sqlite3.Row
+        row = verify_conn.execute("SELECT * FROM delivery_log").fetchone()
+        verify_conn.close()
         assert row is not None
         assert row["recipient_email"] == "test@example.com"
         assert row["status"] == "sent"
@@ -622,8 +626,18 @@ class TestEndToEnd:
              patch("src.pipeline.get_scoring_weights") as mock_weights, \
              patch("src.pipeline.get_business_units") as mock_bus:
 
-            conn = _setup_db(tmp_path)
-            mock_conn_fn.return_value = conn
+            # Setup DB once; return new connections each time (stage_deliver opens its own)
+            _setup_db(tmp_path)
+            db_file = str(tmp_path / "test.db")
+
+            def _make_conn(*a, **kw):
+                c = sqlite3.connect(db_file)
+                c.row_factory = sqlite3.Row
+                c.execute("PRAGMA journal_mode=WAL")
+                c.execute("PRAGMA foreign_keys=ON")
+                return c
+
+            mock_conn_fn.side_effect = _make_conn
 
             # RSS returns test signals
             mock_rss.return_value = [
@@ -706,22 +720,40 @@ class TestEmailRendering:
     def test_digest_renders_feedback_links(self):
         from src.composer.composer import build_digest_context, render_digest
 
-        signals = [{
-            "id": 42,
-            "title": "Test Signal",
-            "headline": "Kistler launches new sensor",
-            "what_summary": "Kistler announced a new force sensor.",
-            "why_it_matters": "Direct competitor to VPG Force Sensors.",
-            "quick_win": "Schedule competitive analysis meeting.",
-            "signal_type": "competitive-threat",
-            "composite_score": 9.2,
-            "bu_matches": [{"bu_id": "vpg-force-sensors", "relevance_score": 0.95}],
-            "url": "http://example.com/kistler",
-            "validation_level": "verified",
-            "source_count": 3,
-            "suggested_owner": "VP Sales",
-            "estimated_impact": "$500K-$1M",
-        }]
+        # Need 2+ signals so one goes to signal_of_week and one to bu_sections
+        # (bu_sections action cards contain the feedback links)
+        signals = [
+            {
+                "id": 42,
+                "title": "Test Signal",
+                "headline": "Kistler launches new sensor",
+                "what_summary": "Kistler announced a new force sensor.",
+                "why_it_matters": "Direct competitor to VPG Force Sensors.",
+                "quick_win": "Schedule competitive analysis meeting.",
+                "signal_type": "competitive-threat",
+                "composite_score": 9.2,
+                "bu_matches": [{"bu_id": "vpg-force-sensors", "relevance_score": 0.95}],
+                "url": "http://example.com/kistler",
+                "validation_level": "verified",
+                "source_count": 3,
+                "suggested_owner": "VP Sales",
+                "estimated_impact": "$500K-$1M",
+            },
+            {
+                "id": 43,
+                "title": "Second Signal",
+                "headline": "HBK expands into robotics",
+                "what_summary": "HBK announced robotics sensor line.",
+                "why_it_matters": "New competitor entry.",
+                "quick_win": "Brief sales team.",
+                "signal_type": "competitive-threat",
+                "composite_score": 7.5,
+                "bu_matches": [{"bu_id": "vpg-force-sensors", "relevance_score": 0.8}],
+                "url": "http://example.com/hbk",
+                "validation_level": "verified",
+                "source_count": 3,
+            },
+        ]
         bu_config = {
             "business_units": [{"id": "vpg-force-sensors", "name": "VPG Force Sensors", "color": "#B71C1C"}],
             "branding": {"company_name": "VPG"},
@@ -736,8 +768,8 @@ class TestEmailRendering:
         assert "vpg-force-sensors" in html.lower() or "force sensors" in html.lower()
         assert "9.2" in html
 
-        # Feedback links should be present
-        assert "feedback" in html.lower()
+        # Feedback links should be present in BU section action cards
+        assert "Feedback Links" in html or "rating=up" in html or "&#x1F44D;" in html
 
     def test_digest_renders_all_sections(self):
         from src.composer.composer import build_digest_context, render_digest

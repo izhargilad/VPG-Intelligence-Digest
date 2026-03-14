@@ -413,40 +413,41 @@ def stage_deliver(
     except ImportError:
         log_delivery = None
 
-    conn = get_connection()
+    delivery_conn = get_connection()
 
-    for recipient in recipients_config.get("recipients", []):
-        if recipient.get("status") != "active":
-            continue
+    try:
+        for recipient in recipients_config.get("recipients", []):
+            if recipient.get("status") != "active":
+                continue
 
-        pipeline_control.check_point()
+            pipeline_control.check_point()
 
-        result = send_email(
-            to=recipient["email"],
-            subject=subject,
-            html_content=html,
-            cid_images=cid_images,
-            pdf_path=pdf_path,
-        )
-        results.append(result)
-        logger.info("Delivery to %s: %s", recipient["email"], result["status"])
+            result = send_email(
+                to=recipient["email"],
+                subject=subject,
+                html_content=html,
+                cid_images=cid_images,
+                pdf_path=pdf_path,
+            )
+            results.append(result)
+            logger.info("Delivery to %s: %s", recipient["email"], result["status"])
 
-        # Record in delivery_log for monitoring
-        if log_delivery:
-            try:
-                log_delivery(
-                    conn,
-                    digest_id=None,
-                    recipient_email=recipient["email"],
-                    recipient_name=recipient.get("name", ""),
-                    status=result.get("status", "unknown"),
-                    gmail_message_id=result.get("gmail_message_id", ""),
-                    error_message=result.get("error", ""),
-                )
-            except Exception as e:
-                logger.warning("Failed to log delivery for %s: %s", recipient["email"], e)
-
-    conn.close()
+            # Record in delivery_log for monitoring
+            if log_delivery:
+                try:
+                    log_delivery(
+                        delivery_conn,
+                        digest_id=None,
+                        recipient_email=recipient["email"],
+                        recipient_name=recipient.get("name", ""),
+                        status=result.get("status", "unknown"),
+                        gmail_message_id=result.get("gmail_message_id", ""),
+                        error_message=result.get("error", ""),
+                    )
+                except Exception as e:
+                    logger.warning("Failed to log delivery for %s: %s", recipient["email"], e)
+    finally:
+        delivery_conn.close()
 
     sent = sum(1 for r in results if r["status"] == "sent")
     logger.info("Delivered to %d/%d recipients", sent, len(results))
