@@ -49,12 +49,6 @@ export default function Pipeline() {
     return () => { if (pollRef.current) clearInterval(pollRef.current) }
   }, [])
 
-  const startPoll = () => {
-    setRunning(true)
-    setPaused(false)
-    pollRef.current = setInterval(checkStatus, 3000)
-  }
-
   const runPipeline = async (dryRun) => {
     try {
       const params = new URLSearchParams({ dry_run: dryRun, pdf_mode: pdfMode })
@@ -62,43 +56,15 @@ export default function Pipeline() {
       if (dateRange.end) params.set('end_date', dateRange.end)
       const res = await fetch(`/api/pipeline/run?${params}`, { method: 'POST' })
       if (res.ok) {
-        startPoll()
+        setRunning(true)
+        setPaused(false)
+        pollRef.current = setInterval(checkStatus, 3000)
       } else {
         const err = await res.json()
         alert(err.detail || 'Failed to start pipeline')
       }
     } catch (e) {
       alert('Failed to start pipeline: ' + e.message)
-    }
-  }
-
-  const runCollectScore = async (dryRun) => {
-    try {
-      const params = new URLSearchParams({ dry_run: dryRun })
-      const res = await fetch(`/api/pipeline/collect-score?${params}`, { method: 'POST' })
-      if (res.ok) {
-        startPoll()
-      } else {
-        const err = await res.json()
-        alert(err.detail || 'Failed to start collect & score')
-      }
-    } catch (e) {
-      alert('Failed: ' + e.message)
-    }
-  }
-
-  const runSendMail = async () => {
-    try {
-      const params = new URLSearchParams({ pdf_mode: pdfMode })
-      const res = await fetch(`/api/pipeline/send-mail?${params}`, { method: 'POST' })
-      if (res.ok) {
-        startPoll()
-      } else {
-        const err = await res.json()
-        alert(err.detail || 'Failed to start send mail')
-      }
-    } catch (e) {
-      alert('Failed: ' + e.message)
     }
   }
 
@@ -215,73 +181,35 @@ export default function Pipeline() {
         </div>
       </div>
 
-      {/* === STEP 1: Collect & Score === */}
-      <div className="mb-3">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Step 1 — Collect & Score Signals</h3>
-        <div className="grid grid-cols-2 gap-6">
-          <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-vpg-blue">
-            <h3 className="text-lg font-semibold text-vpg-navy mb-2">Dry Run (Seed Data)</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Collect, validate, and score signals using seed data.
-              Good for testing. No emails sent.
-            </p>
-            <button
-              onClick={() => runCollectScore(true)}
-              disabled={running}
-              className="bg-vpg-blue text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {running ? 'Running...' : 'Collect & Score (Dry Run)'}
-            </button>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-vpg-navy">
-            <h3 className="text-lg font-semibold text-vpg-navy mb-2">Live Collection</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Collect from live RSS feeds, scrape websites, validate against 3+ sources, and AI score.
-            </p>
-            <button
-              onClick={() => runCollectScore(false)}
-              disabled={running}
-              className="bg-vpg-navy text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {running ? 'Running...' : 'Collect & Score (Live)'}
-            </button>
-          </div>
+      <div className="grid grid-cols-2 gap-6 mb-8">
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <h3 className="text-lg font-semibold text-vpg-navy mb-2">Dry Run</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Run the pipeline with seed data. No live source collection.
+            Good for testing the full flow end-to-end.
+          </p>
+          <button
+            onClick={() => runPipeline(true)}
+            disabled={running}
+            className="bg-vpg-blue text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {running ? 'Running...' : 'Start Dry Run'}
+          </button>
         </div>
-      </div>
 
-      {/* === STEP 2: Send Mail === */}
-      <div className="mb-8">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 mt-6">Step 2 — Compose & Send Digest</h3>
-        <div className="grid grid-cols-2 gap-6">
-          <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-vpg-accent">
-            <h3 className="text-lg font-semibold text-vpg-navy mb-2">Send Mail</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Compose the digest from scored signals and deliver to active recipients.
-              Review signals in Intel Feed first.
-            </p>
-            <button
-              onClick={runSendMail}
-              disabled={running}
-              className="bg-vpg-accent text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {running ? 'Sending...' : 'Compose & Send Mail'}
-            </button>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-green-500">
-            <h3 className="text-lg font-semibold text-vpg-navy mb-2">Full Pipeline</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Run everything end-to-end in one shot: collect, validate, score, compose, and deliver.
-            </p>
-            <button
-              onClick={() => runPipeline(false)}
-              disabled={running}
-              className="bg-green-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {running ? 'Running...' : 'Run Full Pipeline'}
-            </button>
-          </div>
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <h3 className="text-lg font-semibold text-vpg-navy mb-2">Live Pipeline</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Run the full 6-stage pipeline: collect from live sources,
+            validate, score with AI, compose, and deliver.
+          </p>
+          <button
+            onClick={() => runPipeline(false)}
+            disabled={running}
+            className="bg-vpg-navy text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {running ? 'Running...' : 'Start Live Pipeline'}
+          </button>
         </div>
       </div>
 
@@ -383,12 +311,6 @@ export default function Pipeline() {
             )}
             {status.last_result.signals_scored !== undefined && (
               <p className="text-xs text-gray-600">Signals scored: {status.last_result.signals_scored}</p>
-            )}
-            {status.last_result.signals_in_digest !== undefined && (
-              <p className="text-xs text-gray-600">Signals in digest: {status.last_result.signals_in_digest}</p>
-            )}
-            {status.last_result.recipients_sent !== undefined && (
-              <p className="text-xs text-gray-600">Recipients delivered: {status.last_result.recipients_sent}</p>
             )}
             {status.last_result.pdf_generated && (
               <p className="text-xs text-green-600">PDF digest generated</p>
