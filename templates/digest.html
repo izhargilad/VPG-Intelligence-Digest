@@ -231,6 +231,17 @@
                     {% if signal.url %}
                     Sources: <a href="{{ signal.url }}" target="_blank" style="color:#2E75B6;text-decoration:none;">[Primary]</a>
                     {% endif %}
+                    <!-- Feedback Links -->
+                    <span style="float:right;">
+                      {% if feedback_base_url %}
+                      <a href="{{ feedback_base_url }}?signal_id={{ signal.id }}&rating=up" target="_blank" style="text-decoration:none;font-size:16px;margin-left:8px;" title="Useful">&#x1F44D;</a>
+                      <a href="{{ feedback_base_url }}?signal_id={{ signal.id }}&rating=down" target="_blank" style="text-decoration:none;font-size:16px;margin-left:4px;" title="Not useful">&#x1F44E;</a>
+                      {% else %}
+                      <span style="color:#A0AEC0;font-size:10px;">Rate: </span>
+                      <span style="font-size:14px;cursor:default;" title="Useful">&#x1F44D;</span>
+                      <span style="font-size:14px;cursor:default;" title="Not useful">&#x1F44E;</span>
+                      {% endif %}
+                    </span>
                   </td>
                 </tr>
               </table>
@@ -239,6 +250,81 @@
             </td>
           </tr>
           {% endfor %}
+
+          <!-- COMPETITIVE RADAR -->
+          {% if competitive_signals %}
+          <tr>
+            <td style="padding:28px 40px;border-bottom:1px solid #E2E8F0;background-color:#FFF5F5;">
+              <h2 style="font-family:Georgia,'Times New Roman',serif;color:#B71C1C;font-size:20px;margin:0 0 14px;font-weight:700;">&#x26A0; Competitive Radar</h2>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                {% for signal in competitive_signals %}
+                <tr>
+                  <td style="padding:8px 12px;background-color:#ffffff;border-left:3px solid #B71C1C;margin-bottom:6px;font-size:13px;line-height:1.5;">
+                    <span style="display:inline-block;background-color:#B71C1C;color:#ffffff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">{{ signal.composite_score }}</span>
+                    &nbsp;<strong>{{ signal.headline }}</strong>
+                    <br/><span style="color:#718096;font-size:11px;">{{ signal.what_summary[:120] }}{% if signal.what_summary|length > 120 %}...{% endif %}</span>
+                  </td>
+                </tr>
+                <tr><td style="height:4px;font-size:1px;line-height:1px;">&nbsp;</td></tr>
+                {% endfor %}
+              </table>
+            </td>
+          </tr>
+          {% endif %}
+
+          <!-- TRADE & TARIFF WATCH -->
+          {% if trade_signals %}
+          <tr>
+            <td style="padding:28px 40px;border-bottom:1px solid #E2E8F0;background-color:#F8F9FA;">
+              <h2 style="font-family:Georgia,'Times New Roman',serif;color:#263238;font-size:20px;margin:0 0 6px;font-weight:700;">&#x1F30D; Trade & Tariff Watch</h2>
+              <p style="color:#718096;font-size:12px;margin:0 0 14px;">India production advantage insights for sales enablement</p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                {% for signal in trade_signals %}
+                <tr>
+                  <td style="padding:8px 12px;background-color:#ffffff;border-left:3px solid #263238;font-size:13px;line-height:1.5;">
+                    <span style="display:inline-block;background-color:#263238;color:#ffffff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">{{ signal.composite_score }}</span>
+                    &nbsp;<strong>{{ signal.headline }}</strong>
+                    <br/><span style="color:#718096;font-size:11px;">{{ signal.what_summary[:120] }}{% if signal.what_summary|length > 120 %}...{% endif %}</span>
+                    <br/>
+                    <span style="display:inline-block;margin-top:4px;background-color:#E8F5E9;color:#1B5E20;padding:3px 8px;border-radius:3px;font-size:10px;font-weight:600;">
+                      &#x1F1EE;&#x1F1F3; VPG India Advantage: Tariff-free production, supply chain resilience
+                    </span>
+                  </td>
+                </tr>
+                <tr><td style="height:4px;font-size:1px;line-height:1px;">&nbsp;</td></tr>
+                {% endfor %}
+              </table>
+            </td>
+          </tr>
+          {% endif %}
+
+          <!-- UPCOMING EVENTS -->
+          {% if upcoming_events %}
+          <tr>
+            <td style="padding:28px 40px;border-bottom:1px solid #E2E8F0;">
+              <h2 style="font-family:Georgia,'Times New Roman',serif;color:#1B2A4A;font-size:20px;margin:0 0 14px;font-weight:700;">&#x1F4C5; Upcoming Events & Deadlines</h2>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                {% for event in upcoming_events %}
+                <tr>
+                  <td style="padding:10px 14px;background-color:#F7F9FC;border-left:3px solid #2E75B6;font-size:13px;line-height:1.5;">
+                    <strong style="color:#1B2A4A;">{{ event.name }}</strong>
+                    <span style="color:#718096;font-size:11px;margin-left:8px;">{{ event.days_until }} days away</span>
+                    <br/>
+                    <span style="color:#4A5568;font-size:12px;">{{ event.start_date }} &mdash; {{ event.end_date }} &bull; {{ event.location }}</span>
+                    {% if event.vpg_presence %}
+                    <br/><span style="display:inline-block;margin-top:3px;background-color:#E3F2FD;color:#0D47A1;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;">{{ event.vpg_presence }}</span>
+                    {% endif %}
+                    {% if event.needs_prep %}
+                    <span style="display:inline-block;margin-top:3px;background-color:#FFF3E0;color:#E65100;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;">PREP NEEDED</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                <tr><td style="height:4px;font-size:1px;line-height:1px;">&nbsp;</td></tr>
+                {% endfor %}
+              </table>
+            </td>
+          </tr>
+          {% endif %}
 
           <!-- FOOTER -->
           <tr>

@@ -260,6 +260,29 @@ def build_digest_context(signals: list[dict], bu_config: dict) -> dict:
     if remaining > 0:
         subject += f" + {remaining} more signals"
 
+    # Phase 4: Competitive radar — extract competitor-related signals
+    competitive_signals = [
+        s for s in all_sorted
+        if s.get("signal_type") == "competitive-threat"
+    ][:5]
+
+    # Phase 4: Trade & Tariff watch — extract trade signals + India talking points
+    trade_signals = [
+        s for s in all_sorted
+        if s.get("signal_type") == "trade-tariff"
+    ][:5]
+
+    # Phase 4: Upcoming events
+    upcoming_events = []
+    try:
+        from src.events.intel_packs import get_upcoming_events
+        upcoming_events = get_upcoming_events(days_ahead=60)[:4]
+    except Exception:
+        pass
+
+    # Phase 4: Feedback base URL for thumbs-up/down links
+    feedback_base_url = ""  # Set when deployed, e.g. https://vpg-intel.example.com/api/feedback
+
     return {
         "subject": subject,
         "week_number": week_num,
@@ -270,6 +293,10 @@ def build_digest_context(signals: list[dict], bu_config: dict) -> dict:
         "top_signals": top_signals,
         "signal_of_week": signal_of_week,
         "bu_sections": bu_sections,
+        "competitive_signals": competitive_signals,
+        "trade_signals": trade_signals,
+        "upcoming_events": upcoming_events,
+        "feedback_base_url": feedback_base_url,
         "branding": branding,
         "cid_images": cid_images,
         "colors": {

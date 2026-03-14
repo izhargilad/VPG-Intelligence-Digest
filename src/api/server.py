@@ -58,7 +58,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="VPG Intelligence Digest",
     description="Management UI for the VPG Weekly Intelligence Digest",
-    version="3.0.0",
+    version="4.0.0",
 )
 
 # CORS — allow the React dev server and local access
@@ -1974,6 +1974,77 @@ def get_meeting_brief(account_key: str):
     conn = get_connection()
     try:
         result = generate_meeting_brief(account_key, conn)
+        if "error" in result:
+            raise HTTPException(404, result["error"])
+        return result
+    finally:
+        conn.close()
+
+
+# ── Phase 4: Self-Improving Keyword Expansion ──────────────────────
+
+@app.get("/api/keyword-expansion")
+def get_keyword_expansion():
+    """Analyze feedback to suggest keyword activations/deactivations."""
+    from src.feedback.keyword_expansion import expand_keywords_from_feedback
+    conn = get_connection()
+    try:
+        return expand_keywords_from_feedback(conn, dry_run=True)
+    finally:
+        conn.close()
+
+
+@app.post("/api/keyword-expansion/apply")
+def apply_keyword_expansion():
+    """Apply feedback-based keyword expansion (activate/deactivate keywords)."""
+    from src.feedback.keyword_expansion import expand_keywords_from_feedback
+    conn = get_connection()
+    try:
+        return expand_keywords_from_feedback(conn, dry_run=False)
+    finally:
+        conn.close()
+
+
+# ── Phase 4: Customer Expansion Triggers ────────────────────────────
+
+@app.get("/api/customer-triggers")
+def get_customer_triggers():
+    """Detect customer expansion triggers from recent signals."""
+    from src.analyzer.customer_triggers import detect_customer_triggers
+    conn = get_connection()
+    try:
+        return detect_customer_triggers(conn)
+    finally:
+        conn.close()
+
+
+# ── Phase 4: Competitive Battle Cards ──────────────────────────────
+
+@app.get("/api/battle-cards")
+def get_all_battle_cards():
+    """Get battle cards for all tracked competitors."""
+    from src.analyzer.battle_cards import generate_all_battle_cards, list_competitors
+    conn = get_connection()
+    try:
+        return generate_all_battle_cards(conn)
+    finally:
+        conn.close()
+
+
+@app.get("/api/battle-cards/competitors")
+def get_competitors():
+    """List all tracked competitors."""
+    from src.analyzer.battle_cards import list_competitors
+    return {"competitors": list_competitors()}
+
+
+@app.get("/api/battle-cards/{competitor_key}")
+def get_battle_card(competitor_key: str):
+    """Get battle card for a specific competitor."""
+    from src.analyzer.battle_cards import generate_battle_card
+    conn = get_connection()
+    try:
+        result = generate_battle_card(competitor_key, conn)
         if "error" in result:
             raise HTTPException(404, result["error"])
         return result

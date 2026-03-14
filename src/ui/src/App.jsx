@@ -18,6 +18,9 @@ import Feedback from './components/Feedback'
 import IndiaMonitor from './components/IndiaMonitor'
 import MonthlyReport from './components/MonthlyReport'
 import MeetingPrep from './components/MeetingPrep'
+import BattleCards from './components/BattleCards'
+import CustomerTriggers from './components/CustomerTriggers'
+import KeywordExpansion from './components/KeywordExpansion'
 
 const NAV_SECTIONS = [
   {
@@ -31,8 +34,11 @@ const NAV_SECTIONS = [
     ],
   },
   {
-    label: 'Phase 3',
+    label: 'Advanced',
     items: [
+      { id: 'battle-cards', label: 'Battle Cards', icon: '⚔' },
+      { id: 'customer-triggers', label: 'Customer Triggers', icon: '🎯' },
+      { id: 'keyword-expansion', label: 'Keyword Expansion', icon: '🔄' },
       { id: 'events', label: 'Events & Intel Packs', icon: '🎪' },
       { id: 'india', label: 'India Monitor', icon: '🇮🇳' },
       { id: 'meeting-prep', label: 'Meeting Prep', icon: '🤝' },
@@ -85,6 +91,9 @@ export default function App() {
       case 'india': return <IndiaMonitor />
       case 'monthly-report': return <MonthlyReport />
       case 'meeting-prep': return <MeetingPrep />
+      case 'battle-cards': return <BattleCards />
+      case 'customer-triggers': return <CustomerTriggers />
+      case 'keyword-expansion': return <KeywordExpansion />
       default: return <Dashboard />
     }
   }
@@ -99,7 +108,7 @@ export default function App() {
             <p className="text-sm text-blue-300">Management Console</p>
           </div>
           <div className="text-xs text-blue-400">
-            v3.0
+            v4.0
           </div>
         </div>
       </header>

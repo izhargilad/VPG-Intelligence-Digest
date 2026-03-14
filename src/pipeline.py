@@ -292,6 +292,22 @@ def stage_score(conn) -> list[dict]:
             signal.update(analysis)
             signal["composite_score"] = analysis["composite"]
 
+            # Apply feedback-driven scoring adjustment
+            try:
+                from src.feedback.scoring_refinement import get_score_multiplier
+                multiplier = get_score_multiplier(
+                    signal_type=analysis.get("signal_type", ""),
+                    source_name=signal.get("source_name", ""),
+                    bu_id=analysis.get("bu_matches", [{}])[0].get("bu_id", "") if analysis.get("bu_matches") else "",
+                    conn=conn,
+                )
+                if multiplier != 1.0:
+                    analysis["composite"] = round(analysis["composite"] * multiplier, 2)
+                    analysis["feedback_multiplier"] = multiplier
+                    signal["composite_score"] = analysis["composite"]
+            except Exception:
+                pass  # Feedback refinement is non-blocking
+
             # Persist analysis to DB
             insert_analysis(conn, signal["id"], analysis)
             save_signal_bus(conn, signal["id"], analysis.get("bu_matches", []))
@@ -465,6 +481,19 @@ def run_full_pipeline(pdf_mode: bool = False) -> dict:
             logger.info("Updated hit counts for %d keywords", updated_hits)
         except Exception as e:
             logger.warning("Keyword discovery failed (non-blocking): %s", e)
+
+        # Feedback-driven keyword expansion (auto-activate/deactivate based on feedback)
+        try:
+            from src.feedback.keyword_expansion import expand_keywords_from_feedback
+            kw_expansion = expand_keywords_from_feedback(conn, dry_run=False)
+            if kw_expansion["summary"]["keywords_activated"] or kw_expansion["summary"]["keywords_deactivated"]:
+                logger.info(
+                    "Keyword expansion: %d activated, %d deactivated",
+                    kw_expansion["summary"]["keywords_activated"],
+                    kw_expansion["summary"]["keywords_deactivated"],
+                )
+        except Exception as e:
+            logger.warning("Keyword expansion failed (non-blocking): %s", e)
         pipeline_control.check_point()
 
         # Stage 5: Compose
