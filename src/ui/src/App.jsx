@@ -114,7 +114,7 @@ export default function App() {
             <p className="text-sm text-blue-300">Management Console</p>
           </div>
           <div className="text-xs text-blue-400">
-            v5.0
+            v6.0
           </div>
         </div>
       </header>

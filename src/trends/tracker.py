@@ -159,23 +159,35 @@ def update_trends(conn=None) -> dict:
 
             if existing:
                 trend_id = existing[0]
-                old_count = existing[1]
+                old_total_count = existing[1]
                 old_avg = existing[2] or 0
 
-                # Calculate momentum
-                change = ((count - old_count) / max(old_count, 1)) * 100
-                if count > old_count * 1.5:
+                # Get the PREVIOUS week's snapshot count for week-over-week comparison
+                # (not the accumulated total, which always grows)
+                prev_snapshot = conn.execute(
+                    """SELECT signal_count FROM trend_snapshots
+                       WHERE trend_id = ? AND NOT (week_number = ? AND year = ?)
+                       ORDER BY year DESC, week_number DESC LIMIT 1""",
+                    (trend_id, week_num, year),
+                ).fetchone()
+                prev_count = prev_snapshot[0] if prev_snapshot else count  # default to same = stable
+
+                # Calculate momentum based on week-over-week comparison
+                change = ((count - prev_count) / max(prev_count, 1)) * 100
+                if count > prev_count * 1.5:
                     momentum = "spike"
-                elif count > old_count:
+                elif count > prev_count:
                     momentum = "rising"
-                elif count < old_count:
+                elif count == prev_count:
+                    momentum = "stable"
+                elif count < prev_count * 0.5:
                     momentum = "declining"
                 else:
-                    momentum = "stable"
+                    momentum = "stable"  # small decrease = still stable
 
                 conn.execute("""
                     UPDATE trends SET
-                        last_seen = ?, occurrence_count = occurrence_count + ?,
+                        last_seen = ?, occurrence_count = ?,
                         week_over_week_change = ?, avg_score = ?,
                         max_score = MAX(max_score, ?), momentum = ?,
                         updated_at = datetime('now')

@@ -1145,6 +1145,91 @@ def cancel_pipeline():
     return {"message": "Pipeline cancellation requested"}
 
 
+@app.post("/api/pipeline/collect-score")
+def run_collect_and_score(dry_run: bool = False):
+    """Run collection, validation, and scoring only — NO delivery.
+
+    Use this to gather and score signals first, then review before sending.
+    """
+    if _pipeline_status["running"]:
+        raise HTTPException(409, "Pipeline is already running")
+
+    thread = threading.Thread(
+        target=_run_collect_score_bg,
+        args=(dry_run,),
+        daemon=True,
+    )
+    thread.start()
+
+    return {
+        "message": f"Collect & Score started ({'dry-run' if dry_run else 'live'} mode)",
+        "status_url": "/api/pipeline/status",
+    }
+
+
+def _run_collect_score_bg(dry_run: bool = False):
+    """Background task: collect + validate + score, stop before compose/deliver."""
+    _pipeline_status["running"] = True
+    _pipeline_status["paused"] = False
+    _pipeline_status["current_stage"] = ""
+    _pipeline_status["last_run"] = datetime.now().isoformat()
+    try:
+        if dry_run:
+            from scripts.dry_run import main as dry_run_main
+            dry_run_main(pdf_mode=False, skip_delivery=True)
+            _pipeline_status["last_result"] = {"status": "completed", "mode": "collect-score-dry-run"}
+        else:
+            from src.pipeline import run_collect_score_only
+            result = run_collect_score_only()
+            _pipeline_status["last_result"] = result
+    except Exception as e:
+        _pipeline_status["last_result"] = {"status": "failed", "error": str(e)}
+    finally:
+        _pipeline_status["running"] = False
+        _pipeline_status["paused"] = False
+        _pipeline_status["current_stage"] = ""
+
+
+@app.post("/api/pipeline/send-mail")
+def send_mail_only(pdf_mode: bool = True):
+    """Send the latest composed digest to recipients — delivery only.
+
+    Requires a prior collect-score run to have generated signals.
+    """
+    if _pipeline_status["running"]:
+        raise HTTPException(409, "Pipeline is already running")
+
+    thread = threading.Thread(
+        target=_run_send_mail_bg,
+        args=(pdf_mode,),
+        daemon=True,
+    )
+    thread.start()
+
+    return {
+        "message": f"Send Mail started ({'PDF' if pdf_mode else 'HTML'} format)",
+        "status_url": "/api/pipeline/status",
+    }
+
+
+def _run_send_mail_bg(pdf_mode: bool = True):
+    """Background task: compose digest from scored signals and deliver."""
+    _pipeline_status["running"] = True
+    _pipeline_status["paused"] = False
+    _pipeline_status["current_stage"] = "composition"
+    _pipeline_status["last_run"] = datetime.now().isoformat()
+    try:
+        from src.pipeline import run_compose_and_deliver
+        result = run_compose_and_deliver(pdf_mode=pdf_mode)
+        _pipeline_status["last_result"] = result
+    except Exception as e:
+        _pipeline_status["last_result"] = {"status": "failed", "error": str(e)}
+    finally:
+        _pipeline_status["running"] = False
+        _pipeline_status["paused"] = False
+        _pipeline_status["current_stage"] = ""
+
+
 @app.get("/api/pipeline/status")
 def pipeline_status():
     """Get the current pipeline status."""

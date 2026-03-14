@@ -114,6 +114,21 @@ export default function Feed() {
     setSignals(prev => prev.map(s => s.id === signalId ? { ...s, handled: 0 } : s))
   }
 
+  const [feedbackGiven, setFeedbackGiven] = useState({})
+
+  const submitFeedback = async (signalId, rating) => {
+    try {
+      await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ signal_id: signalId, rating, recipient_email: 'ui-user' })
+      })
+      setFeedbackGiven(prev => ({ ...prev, [signalId]: rating }))
+    } catch (e) {
+      console.error('Feedback failed:', e)
+    }
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -312,7 +327,7 @@ export default function Feed() {
                     </div>
 
                     {/* Action buttons */}
-                    <div className="flex gap-2 pt-2 border-t border-gray-200">
+                    <div className="flex items-center gap-2 pt-2 border-t border-gray-200">
                       <button
                         onClick={(e) => { e.stopPropagation(); dismissSignal(signal.id) }}
                         className="text-xs px-3 py-1.5 rounded bg-red-50 text-red-600 hover:bg-red-100 font-medium"
@@ -334,6 +349,29 @@ export default function Feed() {
                           Mark as Handled
                         </button>
                       )}
+
+                      {/* Feedback — thumbs up / down */}
+                      <div className="ml-auto flex items-center gap-1">
+                        {feedbackGiven[signal.id] ? (
+                          <span className="text-xs text-gray-500 italic">
+                            {feedbackGiven[signal.id] === 'up' ? '👍' : '👎'} Thanks!
+                          </span>
+                        ) : (
+                          <>
+                            <span className="text-xs text-gray-400 mr-1">Rate:</span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); submitFeedback(signal.id, 'up') }}
+                              className="text-lg hover:scale-125 transition-transform"
+                              title="Useful signal"
+                            >👍</button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); submitFeedback(signal.id, 'down') }}
+                              className="text-lg hover:scale-125 transition-transform"
+                              title="Not useful"
+                            >👎</button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}

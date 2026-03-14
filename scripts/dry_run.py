@@ -212,12 +212,13 @@ def setup_logging() -> None:
     )
 
 
-def main(pdf_mode: bool = True):
+def main(pdf_mode: bool = True, skip_delivery: bool = False):
     """Run the dry-run pipeline.
 
     Args:
         pdf_mode: If True (default), generate a PDF and send as attachment.
                   This bypasses enterprise spam filters that scramble HTML.
+        skip_delivery: If True, stop after scoring (no compose/deliver).
     """
     setup_logging()
     logger.info("=== VPG Intelligence Digest — Dry Run (pdf_mode=%s) ===", pdf_mode)
@@ -313,6 +314,16 @@ def main(pdf_mode: bool = True):
         trend_result = update_trends(conn)
         logger.info("Trends: %d updated, %d notable",
                      trend_result["trends_updated"], len(trend_result["notable"]))
+
+        if skip_delivery:
+            complete_pipeline_run(
+                conn, run_id, "completed",
+                signals_collected=inserted,
+                signals_validated=len(new_signals),
+                signals_scored=len(scored_signals),
+            )
+            logger.info("Dry run complete (collect & score only, %d signals)", len(scored_signals))
+            return
 
         # Stage 5: Composition (use main pipeline's compose which supports PDF)
         logger.info("=== Stage 5: Composition ===")

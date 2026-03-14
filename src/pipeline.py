@@ -561,5 +561,165 @@ def run_full_pipeline(pdf_mode: bool = False) -> dict:
         conn.close()
 
 
+def run_collect_score_only() -> dict:
+    """Run collection, validation, and scoring only — no composition or delivery.
+
+    Use this to gather signals first, review in the UI, then send separately.
+    """
+    setup_logging()
+    pipeline_control.reset()
+    logger.info("Starting Collect & Score pipeline (no delivery)")
+
+    conn = get_connection()
+    init_db()
+    run_id = insert_pipeline_run(conn, "collect-score")
+
+    try:
+        collected = stage_collect(conn)
+        pipeline_control.check_point()
+
+        validated = stage_validate(conn)
+        pipeline_control.check_point()
+
+        scored_signals = stage_score(conn)
+        pipeline_control.check_point()
+
+        # Trend analysis
+        logger.info("=== Trend Analysis ===")
+        pipeline_control.current_stage = "trends"
+        trend_result = update_trends(conn)
+        logger.info("Trends: %d updated, %d notable", trend_result["trends_updated"], len(trend_result["notable"]))
+
+        # Keyword discovery
+        try:
+            from src.analyzer.keyword_discovery import auto_import_discovered, update_keyword_hit_counts
+            auto_import_discovered(conn, auto_activate=False)
+            update_keyword_hit_counts(conn)
+        except Exception as e:
+            logger.warning("Keyword discovery failed (non-blocking): %s", e)
+
+        # Feedback keyword expansion
+        try:
+            from src.feedback.keyword_expansion import expand_keywords_from_feedback
+            expand_keywords_from_feedback(conn, dry_run=False)
+        except Exception as e:
+            logger.warning("Keyword expansion failed (non-blocking): %s", e)
+
+        complete_pipeline_run(
+            conn, run_id, "completed",
+            signals_collected=collected,
+            signals_validated=validated,
+            signals_scored=len(scored_signals),
+        )
+
+        logger.info("Collect & Score completed: %d signals scored", len(scored_signals))
+        return {
+            "status": "completed",
+            "mode": "collect-score",
+            "signals_collected": collected,
+            "signals_validated": validated,
+            "signals_scored": len(scored_signals),
+        }
+
+    except PipelineCancelled:
+        logger.warning("Pipeline cancelled by user")
+        complete_pipeline_run(conn, run_id, "cancelled", error_message="Cancelled by user")
+        return {"status": "cancelled"}
+
+    except Exception as e:
+        logger.error("Collect & Score failed: %s", str(e), exc_info=True)
+        complete_pipeline_run(conn, run_id, "failed", error_message=str(e))
+        return {"status": "failed", "error": str(e)}
+
+    finally:
+        pipeline_control.current_stage = ""
+        conn.close()
+
+
+def run_compose_and_deliver(pdf_mode: bool = False) -> dict:
+    """Compose a digest from already-scored signals and deliver to recipients.
+
+    This reads scored signals from the DB (from a prior collect-score run).
+    """
+    setup_logging()
+    pipeline_control.reset()
+    logger.info("Starting Compose & Deliver pipeline (pdf_mode=%s)", pdf_mode)
+
+    conn = get_connection()
+    init_db()
+    run_id = insert_pipeline_run(conn, "send-mail")
+
+    try:
+        # Get scored signals from DB
+        scored_rows = conn.execute("""
+            SELECT s.*, sa.signal_type, sa.headline, sa.what_summary,
+                   sa.why_it_matters, sa.quick_win, sa.suggested_owner,
+                   sa.estimated_impact, sa.score_composite,
+                   sa.score_revenue_impact, sa.score_time_sensitivity,
+                   sa.score_strategic_alignment, sa.score_competitive_pressure,
+                   sa.validation_level, sa.source_count, sa.outreach_template
+            FROM signals s
+            JOIN signal_analysis sa ON s.id = sa.signal_id
+            WHERE s.status IN ('scored', 'published')
+              AND COALESCE(s.dismissed, 0) = 0
+            ORDER BY sa.score_composite DESC
+            LIMIT 25
+        """).fetchall()
+
+        if not scored_rows:
+            complete_pipeline_run(conn, run_id, "completed", signals_scored=0)
+            return {"status": "completed", "signals": 0, "message": "No scored signals found. Run Collect & Score first."}
+
+        # Build signal dicts with BU matches
+        scored_signals = []
+        for row in scored_rows:
+            sig = dict(row)
+            sig["composite_score"] = sig.get("score_composite", 0)
+            # Get BU matches
+            bu_rows = conn.execute(
+                "SELECT bu_id, relevance_score FROM signal_bus WHERE signal_id = ?",
+                (sig["id"],),
+            ).fetchall()
+            sig["bu_matches"] = [{"bu_id": b["bu_id"], "relevance_score": b["relevance_score"]} for b in bu_rows]
+            scored_signals.append(sig)
+
+        # Compose
+        html, subject, cid_images, pdf_path = stage_compose(scored_signals, pdf_mode=pdf_mode)
+        pipeline_control.check_point()
+
+        # Deliver
+        delivery_results = stage_deliver(html, subject, cid_images, pdf_path=pdf_path)
+
+        sent = sum(1 for r in delivery_results if r.get("status") == "sent")
+        complete_pipeline_run(
+            conn, run_id, "completed",
+            signals_scored=len(scored_signals),
+        )
+
+        logger.info("Compose & Deliver completed: %d signals, %d recipients", len(scored_signals), sent)
+        return {
+            "status": "completed",
+            "mode": "send-mail",
+            "signals_in_digest": len(scored_signals),
+            "recipients_sent": sent,
+            "delivery_results": delivery_results,
+            "pdf_generated": pdf_path is not None,
+        }
+
+    except PipelineCancelled:
+        logger.warning("Pipeline cancelled by user")
+        complete_pipeline_run(conn, run_id, "cancelled", error_message="Cancelled by user")
+        return {"status": "cancelled"}
+
+    except Exception as e:
+        logger.error("Compose & Deliver failed: %s", str(e), exc_info=True)
+        complete_pipeline_run(conn, run_id, "failed", error_message=str(e))
+        return {"status": "failed", "error": str(e)}
+
+    finally:
+        pipeline_control.current_stage = ""
+        conn.close()
+
+
 if __name__ == "__main__":
     run_full_pipeline()
