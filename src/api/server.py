@@ -18,9 +18,9 @@ from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse, FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -58,7 +58,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="VPG Intelligence Digest",
     description="Management UI for the VPG Weekly Intelligence Digest",
-    version="5.0.0",
+    version="6.0.0",
 )
 
 # CORS — allow the React dev server and local access
@@ -2196,6 +2196,191 @@ def uninstall_schedule():
     from src.scheduler import uninstall_cron
     success = uninstall_cron()
     return {"uninstalled": success}
+
+
+# ── Phase 6: Delivery Monitoring & Analytics ────────────────────────
+
+@app.get("/api/delivery/stats")
+def delivery_stats(days: int = 30):
+    """Get aggregate delivery statistics."""
+    from src.delivery.monitoring import get_delivery_stats
+    conn = get_connection()
+    try:
+        return get_delivery_stats(conn, days)
+    finally:
+        conn.close()
+
+
+@app.get("/api/delivery/logs")
+def delivery_logs(limit: int = 50, offset: int = 0, status: str = None, recipient: str = None):
+    """Get delivery logs with optional filtering."""
+    from src.delivery.monitoring import get_delivery_logs
+    conn = get_connection()
+    try:
+        return get_delivery_logs(conn, limit, offset, status, recipient)
+    finally:
+        conn.close()
+
+
+@app.get("/api/delivery/timeline")
+def delivery_timeline(days: int = 30):
+    """Get daily delivery counts for charting."""
+    from src.delivery.monitoring import get_delivery_timeline
+    conn = get_connection()
+    try:
+        return get_delivery_timeline(conn, days)
+    finally:
+        conn.close()
+
+
+@app.get("/api/recipients/{email}/delivery-history")
+def recipient_delivery_history(email: str, limit: int = 20):
+    """Get delivery history for a specific recipient."""
+    from src.delivery.monitoring import get_recipient_delivery_history
+    conn = get_connection()
+    try:
+        return get_recipient_delivery_history(conn, email, limit)
+    finally:
+        conn.close()
+
+
+# ── Phase 6: System Health & Alerting ───────────────────────────────
+
+@app.get("/api/system/health")
+def system_health():
+    """Comprehensive system health check."""
+    from src.delivery.health import get_full_health_check
+    conn = get_connection()
+    try:
+        return get_full_health_check(conn)
+    finally:
+        conn.close()
+
+
+# ── Phase 6: Feedback Submission (from email links) ─────────────────
+
+@app.get("/api/feedback/submit")
+def submit_feedback_via_email(signal_id: int, rating: str, email: str = "", digest_id: int = 0):
+    """Handle feedback from email thumbs-up/down links.
+
+    Returns an HTML page confirming the feedback was recorded.
+    """
+    if rating not in ("up", "down"):
+        raise HTTPException(400, "Rating must be 'up' or 'down'")
+
+    conn = get_connection()
+    try:
+        conn.execute(
+            """INSERT INTO feedback (signal_id, digest_id, recipient_email, rating)
+               VALUES (?, ?, ?, ?)""",
+            (signal_id, digest_id or None, email, rating),
+        )
+        conn.commit()
+
+        emoji = "&#x1F44D;" if rating == "up" else "&#x1F44E;"
+        html = f"""<!DOCTYPE html><html><head><title>Feedback Received</title></head>
+        <body style="font-family:Arial,sans-serif;text-align:center;padding:60px;background:#F7F9FC;">
+        <div style="max-width:400px;margin:0 auto;background:#fff;padding:40px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+        <p style="font-size:48px;margin:0;">{emoji}</p>
+        <h2 style="color:#1B2A4A;">Thank you!</h2>
+        <p style="color:#718096;">Your feedback has been recorded and will help improve future digests.</p>
+        <p style="color:#A0AEC0;font-size:12px;margin-top:24px;">Powered by VPG Strategic Intelligence</p>
+        </div></body></html>"""
+        return HTMLResponse(html)
+    finally:
+        conn.close()
+
+
+@app.get("/api/feedback/analytics")
+def feedback_analytics():
+    """Get feedback analytics summary."""
+    conn = get_connection()
+    try:
+        total = conn.execute("SELECT COUNT(*) FROM feedback").fetchone()[0]
+        up = conn.execute("SELECT COUNT(*) FROM feedback WHERE rating = 'up'").fetchone()[0]
+        down = conn.execute("SELECT COUNT(*) FROM feedback WHERE rating = 'down'").fetchone()[0]
+
+        # By signal type
+        by_type = conn.execute(
+            """SELECT sa.signal_type, f.rating, COUNT(*) as cnt
+               FROM feedback f
+               JOIN signal_analysis sa ON f.signal_id = sa.signal_id
+               GROUP BY sa.signal_type, f.rating
+               ORDER BY cnt DESC"""
+        ).fetchall()
+
+        type_stats = {}
+        for row in by_type:
+            st = row["signal_type"]
+            if st not in type_stats:
+                type_stats[st] = {"up": 0, "down": 0}
+            type_stats[st][row["rating"]] = row["cnt"]
+
+        # Recent feedback
+        recent = conn.execute(
+            """SELECT f.*, sa.headline, sa.signal_type
+               FROM feedback f
+               LEFT JOIN signal_analysis sa ON f.signal_id = sa.signal_id
+               ORDER BY f.created_at DESC LIMIT 20"""
+        ).fetchall()
+
+        return {
+            "total": total,
+            "thumbs_up": up,
+            "thumbs_down": down,
+            "approval_rate": round(up / total * 100, 1) if total else 0,
+            "by_signal_type": type_stats,
+            "recent": [dict(r) for r in recent],
+        }
+    finally:
+        conn.close()
+
+
+# ── Phase 6: Config Validation & Backup ─────────────────────────────
+
+@app.get("/api/admin/config/validate")
+def validate_config_endpoint():
+    """Validate all config files for completeness."""
+    from src.api.backup import validate_config
+    return validate_config()
+
+
+@app.post("/api/admin/backup")
+def create_backup_endpoint():
+    """Create a full backup of config and database."""
+    from src.api.backup import create_backup
+    return create_backup()
+
+
+@app.get("/api/admin/backups")
+def list_backups_endpoint():
+    """List available backups."""
+    from src.api.backup import list_backups
+    return list_backups()
+
+
+@app.post("/api/admin/restore")
+def restore_backup_endpoint(body: dict):
+    """Restore from a backup file."""
+    from src.api.backup import restore_backup
+    backup_path = body.get("backup_path", "")
+    if not backup_path:
+        raise HTTPException(400, "backup_path is required")
+    return restore_backup(backup_path)
+
+
+@app.get("/api/admin/backup/download/{backup_name}")
+def download_backup(backup_name: str):
+    """Download a backup file."""
+    from src.api.backup import BACKUP_DIR
+    path = BACKUP_DIR / f"{backup_name}.zip"
+    if not path.exists():
+        raise HTTPException(404, "Backup not found")
+    return FileResponse(
+        str(path),
+        media_type="application/zip",
+        filename=f"{backup_name}.zip",
+    )
 
 
 # ── Serve React Frontend ────────────────────────────────────────────

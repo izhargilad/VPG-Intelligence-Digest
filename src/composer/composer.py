@@ -298,8 +298,13 @@ def build_digest_context(signals: list[dict], bu_config: dict) -> dict:
     # Phase 5: Quick Stats
     quick_stats = _build_quick_stats(all_sorted, bu_config)
 
-    # Phase 4: Feedback base URL for thumbs-up/down links
-    feedback_base_url = ""  # Set when deployed, e.g. https://vpg-intel.example.com/api/feedback
+    # Phase 6: Feedback URL from environment or config
+    import os
+    feedback_base_url = os.getenv("FEEDBACK_BASE_URL", "")
+    if not feedback_base_url:
+        # Auto-detect from API server URL
+        api_host = os.getenv("VPG_API_HOST", "http://localhost:8000")
+        feedback_base_url = f"{api_host}/api/feedback/submit"
 
     return {
         "subject": subject,

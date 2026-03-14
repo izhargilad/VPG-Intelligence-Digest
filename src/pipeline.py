@@ -407,6 +407,14 @@ def stage_deliver(
     recipients_config = get_recipients()
     results = []
 
+    # Log deliveries to monitoring table
+    try:
+        from src.delivery.monitoring import log_delivery
+    except ImportError:
+        log_delivery = None
+
+    conn = get_connection()
+
     for recipient in recipients_config.get("recipients", []):
         if recipient.get("status") != "active":
             continue
@@ -422,6 +430,23 @@ def stage_deliver(
         )
         results.append(result)
         logger.info("Delivery to %s: %s", recipient["email"], result["status"])
+
+        # Record in delivery_log for monitoring
+        if log_delivery:
+            try:
+                log_delivery(
+                    conn,
+                    digest_id=None,
+                    recipient_email=recipient["email"],
+                    recipient_name=recipient.get("name", ""),
+                    status=result.get("status", "unknown"),
+                    gmail_message_id=result.get("gmail_message_id", ""),
+                    error_message=result.get("error", ""),
+                )
+            except Exception as e:
+                logger.warning("Failed to log delivery for %s: %s", recipient["email"], e)
+
+    conn.close()
 
     sent = sum(1 for r in results if r["status"] == "sent")
     logger.info("Delivered to %d/%d recipients", sent, len(results))

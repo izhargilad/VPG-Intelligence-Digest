@@ -25,10 +25,20 @@ RUN cd src/ui && npm run build
 COPY . .
 
 # Create required directories
-RUN mkdir -p data logs output config
+RUN mkdir -p data logs output config data/backups
+
+# Phase 6: Entrypoint script for env validation
+COPY scripts/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # Expose API port
 EXPOSE 8000
+
+# Health check: verify API is responding
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD curl -f http://localhost:8000/api/system/health || exit 1
+
+ENTRYPOINT ["/entrypoint.sh"]
 
 # Default: run the API server
 CMD ["python", "-m", "src.api.server"]
