@@ -1,27 +1,42 @@
 import React, { useEffect, useState } from 'react'
 
 const SIGNAL_TYPE_LABELS = {
-  'competitive-threat': { label: 'Competitive Threat', icon: '\u26A0', color: '#E53935' },
-  'revenue-opportunity': { label: 'Revenue Opportunity', icon: '\uD83D\uDCB0', color: '#43A047' },
-  'market-shift': { label: 'Market Shift', icon: '\uD83C\uDFAF', color: '#1E88E5' },
-  'partnership-signal': { label: 'Partnership', icon: '\uD83E\uDD1D', color: '#7B1FA2' },
-  'customer-intelligence': { label: 'Customer Intel', icon: '\uD83D\uDCCA', color: '#F57C00' },
-  'technology-trend': { label: 'Tech Trend', icon: '\uD83D\uDE80', color: '#0097A7' },
-  'trade-tariff': { label: 'Trade/Tariff', icon: '\uD83C\uDF0D', color: '#455A64' },
+  'competitive-threat': { label: 'Competitive Threat', icon: '⚠', color: '#E53935' },
+  'revenue-opportunity': { label: 'Revenue Opportunity', icon: '💰', color: '#43A047' },
+  'market-shift': { label: 'Market Shift', icon: '🎯', color: '#1E88E5' },
+  'partnership-signal': { label: 'Partnership', icon: '🤝', color: '#7B1FA2' },
+  'customer-intelligence': { label: 'Customer Intel', icon: '📊', color: '#F57C00' },
+  'technology-trend': { label: 'Tech Trend', icon: '🚀', color: '#0097A7' },
+  'trade-tariff': { label: 'Trade/Tariff', icon: '🌍', color: '#455A64' },
 }
 
-const TREND_ICONS = { up: '\u2191', down: '\u2193', stable: '\u2192' }
-const TREND_COLORS = { up: 'text-red-600', down: 'text-green-600', stable: 'text-gray-500' }
+const TREND_ARROWS = { up: '↑', down: '↓', stable: '→' }
+const PRIORITY_LABELS = { 1: 'CRITICAL', 2: 'HIGH', 3: 'MEDIUM' }
+const PRIORITY_COLORS = { 1: 'bg-red-600', 2: 'bg-orange-500', 3: 'bg-blue-500' }
 
-export default function Executive() {
+/** Map signal count to a blue intensity for the heatmap cards */
+function heatmapBg(count, maxCount) {
+  if (maxCount === 0) return '#EBF4FF'
+  const ratio = Math.min(count / maxCount, 1)
+  // Interpolate from #EBF4FF (light) to #2E75B6 (dark)
+  const r = Math.round(235 + (46 - 235) * ratio)
+  const g = Math.round(244 + (117 - 244) * ratio)
+  const b = Math.round(255 + (182 - 255) * ratio)
+  return `rgb(${r},${g},${b})`
+}
+
+function textColorForBg(count, maxCount) {
+  if (maxCount === 0) return 'text-vpg-navy'
+  const ratio = count / maxCount
+  return ratio > 0.55 ? 'text-white' : 'text-vpg-navy'
+}
+
+export default function Executive({ onNavigate }) {
   const [data, setData] = useState(null)
-  const [trends, setTrends] = useState(null)
-  const [competitors, setCompetitors] = useState(null)
   const [busUnits, setBusUnits] = useState([])
   const [industries, setIndustries] = useState([])
   const [loading, setLoading] = useState(true)
   const [exportError, setExportError] = useState(null)
-  const [compExpanded, setCompExpanded] = useState(false)
   const [filters, setFilters] = useState({ bu_id: '', industry_id: '', start_date: '', end_date: '' })
 
   const loadData = () => {
@@ -33,16 +48,10 @@ export default function Executive() {
     if (filters.end_date) fp.set('end_date', filters.end_date)
     const qs = fp.toString() ? `?${fp}` : ''
 
-    Promise.all([
-      fetch(`/api/executive/bu-summary`).then(r => r.json()),
-      fetch(`/api/trends?limit=10`).then(r => r.json()),
-      fetch(`/api/executive/competitor-pulse${qs}`).then(r => r.json()).catch(() => ({ competitors: [] })),
-    ])
-      .then(([buData, trendData, compData]) => {
-        setData(buData)
-        setTrends(trendData)
-        setCompetitors(compData)
-      })
+    fetch(`/api/executive/dashboard${qs}`)
+      .then(r => r.json())
+      .then(d => setData(d))
+      .catch(() => setData(null))
       .finally(() => setLoading(false))
   }
 
@@ -84,6 +93,10 @@ export default function Executive() {
     }
   }
 
+  const selectBU = (buId) => {
+    setFilters({ ...filters, bu_id: buId })
+  }
+
   if (loading) return <div className="text-center py-12 text-gray-500">Loading executive dashboard...</div>
 
   if (!data) return (
@@ -92,32 +105,28 @@ export default function Executive() {
     </div>
   )
 
-  const summaries = data.bu_summaries || []
-  const risingTrends = (trends?.rising || []).slice(0, 5)
-  const maxSignals = Math.max(...summaries.map(s => s.signal_count), 1)
-  const compList = competitors?.competitors || []
+  const isSingleBU = data.mode === 'single-bu'
 
   return (
     <div>
+      {/* Header + Export */}
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-2xl font-bold text-vpg-navy">Executive Dashboard</h2>
           <p className="text-sm text-gray-500 mt-1">
-            {data.total_signals} signals across {data.bus_with_signals} business units
+            {isSingleBU
+              ? `${data.bu_header?.bu_name} — strategic briefing`
+              : 'Cross-BU activity overview'}
           </p>
         </div>
         <div className="flex gap-2">
-          <button
-            onClick={() => handleExport('excel')}
-            className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-green-700"
-          >
+          <button onClick={() => handleExport('excel')}
+            className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-green-700">
             Export Excel
           </button>
-          <button
-            onClick={() => handleExport('pptx')}
-            className="bg-vpg-accent text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-orange-600"
-          >
-            Export PPTX
+          <button onClick={() => handleExport('pptx')}
+            className="bg-vpg-accent text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-orange-600">
+            Export PPT
           </button>
         </div>
       </div>
@@ -130,7 +139,7 @@ export default function Executive() {
       )}
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+      <div className="bg-white rounded-lg shadow-sm p-4 mb-5">
         <div className="grid grid-cols-4 gap-3">
           <div>
             <label className="block text-[10px] font-semibold text-gray-500 uppercase mb-1">Business Unit</label>
@@ -163,175 +172,425 @@ export default function Executive() {
         </div>
       </div>
 
-      {/* Top-level stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-lg shadow-sm p-5 border-l-4 border-vpg-navy">
-          <div className="text-3xl font-bold text-vpg-navy">{data.total_signals}</div>
-          <div className="text-xs text-gray-500 uppercase tracking-wide mt-1">Total Scored Signals</div>
-        </div>
-        <div className="bg-white rounded-lg shadow-sm p-5 border-l-4 border-vpg-blue">
-          <div className="text-3xl font-bold text-vpg-blue">{data.overall_avg_score}</div>
-          <div className="text-xs text-gray-500 uppercase tracking-wide mt-1">Average Score</div>
-        </div>
-        <div className="bg-white rounded-lg shadow-sm p-5 border-l-4 border-vpg-accent">
-          <div className="text-3xl font-bold text-vpg-accent">{data.bus_with_signals}/9</div>
-          <div className="text-xs text-gray-500 uppercase tracking-wide mt-1">BUs with Active Signals</div>
-        </div>
-      </div>
+      {isSingleBU ? <SingleBUView data={data} filters={filters} selectBU={selectBU} /> : <AllBUView data={data} selectBU={selectBU} />}
+    </div>
+  )
+}
 
-      {/* Competitor Pulse */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-vpg-navy">Competitor Pulse</h3>
-          {compList.length > 5 && (
-            <button onClick={() => setCompExpanded(!compExpanded)}
-              className="text-xs text-vpg-blue hover:underline">
-              {compExpanded ? 'Show top 5' : `Show all ${compList.length}`}
-            </button>
-          )}
-        </div>
-        {compList.length > 0 ? (
-          <div className="space-y-3">
-            {(compExpanded ? compList : compList.slice(0, 5)).map(comp => (
-              <div key={comp.competitor} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-                <div className="w-40 flex-shrink-0">
-                  <div className="text-sm font-medium text-vpg-navy">{comp.competitor}</div>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-gray-200 rounded-full h-4 overflow-hidden">
-                      <div className="h-full rounded-full bg-vpg-blue transition-all"
-                        style={{ width: `${Math.min((comp.signal_count / Math.max(...compList.map(c => c.signal_count), 1)) * 100, 100)}%` }} />
-                    </div>
-                    <span className="text-sm font-semibold text-vpg-navy w-8 text-right">{comp.signal_count}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 w-24 justify-end flex-shrink-0">
-                  <span className="text-xs text-gray-500">Avg {comp.avg_score}</span>
-                  <span className={`text-lg font-bold ${TREND_COLORS[comp.trend] || 'text-gray-500'}`}
-                    title={`Trend: ${comp.trend}`}>
-                    {TREND_ICONS[comp.trend] || '\u2192'}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ALL-BU OVERVIEW
+   ═══════════════════════════════════════════════════════════════════════ */
+
+function AllBUView({ data, selectBU }) {
+  const heatmap = data.bu_heatmap || []
+  const topActions = data.top_actions || []
+  const alerts = data.alerts || []
+  const competitors = data.competitor_pulse || []
+  const maxSignals = Math.max(...heatmap.map(h => h.signal_count), 1)
+
+  return (
+    <>
+      {/* ── BU Activity Heatmap (3×3 grid) ──────────────── */}
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold text-vpg-navy mb-3">BU Activity Heatmap</h3>
+        <div className="grid grid-cols-3 gap-3">
+          {heatmap.map(bu => {
+            const bg = heatmapBg(bu.signal_count, maxSignals)
+            const textCls = textColorForBg(bu.signal_count, maxSignals)
+            const stInfo = SIGNAL_TYPE_LABELS[bu.top_signal_type] || {}
+            return (
+              <button
+                key={bu.bu_id}
+                onClick={() => selectBU(bu.bu_id)}
+                className={`rounded-lg p-4 text-left transition-all hover:scale-[1.02] hover:shadow-md ${
+                  bu.has_critical ? 'ring-2 ring-red-600' : ''
+                }`}
+                style={{ backgroundColor: bg }}
+              >
+                <div className={`text-sm font-bold ${textCls} leading-tight`}>{bu.bu_short}</div>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className={`text-2xl font-bold ${textCls}`}>{bu.signal_count}</span>
+                  <span className={`text-xs font-semibold ${
+                    bu.trend === 'up' ? 'text-green-700' : bu.trend === 'down' ? 'text-red-700' : (textCls === 'text-white' ? 'text-blue-200' : 'text-gray-500')
+                  }`}>
+                    {TREND_ARROWS[bu.trend]} {bu.trend_pct !== 0 ? `${bu.trend_pct > 0 ? '+' : ''}${bu.trend_pct}%` : ''}
                   </span>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-4 text-gray-400 text-sm">
-            No competitor signals detected. Run the pipeline to collect data.
+                <div className="mt-2 flex items-center gap-1.5">
+                  {stInfo.icon && (
+                    <span className="text-xs px-1.5 py-0.5 rounded-full text-white"
+                      style={{ backgroundColor: stInfo.color }}>
+                      {stInfo.icon} {stInfo.label}
+                    </span>
+                  )}
+                </div>
+                {bu.has_critical && (
+                  <div className="mt-2 text-[10px] font-bold text-red-700 uppercase tracking-wide">
+                    Critical action needed
+                  </div>
+                )}
+              </button>
+            )
+          })}
+        </div>
+        {heatmap.length === 0 && (
+          <div className="text-center py-8 text-gray-400 text-sm bg-white rounded-lg">
+            No signal data. Run the pipeline to collect intelligence.
           </div>
         )}
       </div>
 
-      {/* BU Signal Breakdown */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <h3 className="text-lg font-semibold text-vpg-navy mb-4">Business Unit Signal Breakdown</h3>
-        <div className="space-y-4">
-          {summaries.map(bu => (
-            <div key={bu.bu_id} className="flex items-center gap-4">
-              <div className="w-36 flex-shrink-0">
-                <div className="text-sm font-medium text-vpg-navy">{bu.bu_short}</div>
-                <div className="text-[10px] text-gray-400">{bu.signal_count} signals</div>
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{
-                        width: `${(bu.signal_count / maxSignals) * 100}%`,
-                        backgroundColor: bu.color || '#2E75B6',
-                      }}
-                    />
+      {/* ── Top 5 Actions + Alerts (side by side) ───────── */}
+      <div className="grid grid-cols-5 gap-5 mb-6">
+        {/* Top 5 Actions */}
+        <div className="col-span-3 bg-white rounded-lg shadow-sm p-5">
+          <h3 className="text-lg font-semibold text-vpg-navy mb-3">Top 5 Actions Needed</h3>
+          {topActions.length > 0 ? (
+            <div className="space-y-2.5">
+              {topActions.map((a, i) => {
+                const st = SIGNAL_TYPE_LABELS[a.signal_type] || {}
+                return (
+                  <div key={a.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                      style={{ backgroundColor: st.color || '#64748B' }}>
+                      {st.icon || (i + 1)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-vpg-navy leading-snug truncate">{a.headline}</div>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        {a.bus.map(b => (
+                          <span key={b} className="text-[9px] px-1.5 py-0.5 rounded bg-vpg-navy text-white font-medium">
+                            {b.replace('vpg-', '').replace(/-/g, ' ')}
+                          </span>
+                        ))}
+                        {a.industries.slice(0, 2).map(ind => (
+                          <span key={ind} className="text-[9px] px-1.5 py-0.5 rounded bg-gray-200 text-gray-600">
+                            {ind.replace(/-/g, ' ')}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className={`flex-shrink-0 text-sm font-bold px-2 py-0.5 rounded ${
+                      a.score >= 8 ? 'bg-green-100 text-green-700' :
+                      a.score >= 7 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {a.score}
+                    </div>
                   </div>
-                  <span className={`text-sm font-bold w-10 text-right ${
-                    bu.avg_score >= 8 ? 'text-green-600' :
-                    bu.avg_score >= 6 ? 'text-vpg-blue' : 'text-gray-500'
-                  }`}>
-                    {bu.avg_score}
-                  </span>
-                </div>
-              </div>
-              <div className="w-48 flex gap-1 flex-shrink-0">
-                {bu.top_types.map((t, i) => {
-                  const config = SIGNAL_TYPE_LABELS[t.type] || { label: t.type, color: '#666' }
-                  return (
-                    <span key={i} className="text-[9px] px-1.5 py-0.5 rounded-full text-white"
-                      style={{ backgroundColor: config.color }}
-                      title={`${config.label}: ${t.count}`}
-                    >
-                      {config.icon} {t.count}
-                    </span>
-                  )
-                })}
-              </div>
+                )
+              })}
             </div>
-          ))}
-          {summaries.length === 0 && (
+          ) : (
             <div className="text-center py-6 text-gray-400 text-sm">
-              No signal data available. Run the pipeline to collect and score signals.
+              No signals with score &ge; 7.0 found in the selected period.
             </div>
           )}
         </div>
-      </div>
 
-      <div className="grid grid-cols-2 gap-6">
-        {/* Top Signals */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-vpg-navy mb-4">Top Signals by BU</h3>
-          <div className="space-y-3">
-            {summaries.filter(bu => bu.top_signal).map(bu => (
-              <div key={bu.bu_id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-3 h-3 rounded-full mt-1 flex-shrink-0"
-                  style={{ backgroundColor: bu.color || '#2E75B6' }} />
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-semibold text-gray-500 uppercase">{bu.bu_short}</div>
-                  <div className="text-sm text-vpg-navy mt-0.5 truncate">
-                    {bu.top_signal.headline}
-                  </div>
-                </div>
-                <div className={`text-sm font-bold flex-shrink-0 ${
-                  bu.top_signal.score >= 8 ? 'text-green-600' :
-                  bu.top_signal.score >= 6 ? 'text-vpg-blue' : 'text-gray-500'
-                }`}>
-                  {bu.top_signal.score}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Rising Trends */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-vpg-navy mb-4">Rising Trends</h3>
-          {risingTrends.length > 0 ? (
-            <div className="space-y-3">
-              {risingTrends.map(trend => (
-                <div key={trend.key} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold mr-2 ${
-                      trend.momentum === 'spike' ? 'bg-red-600 text-white' : 'bg-orange-500 text-white'
-                    }`}>
-                      {trend.momentum.toUpperCase()}
+        {/* Alerts */}
+        <div className="col-span-2 bg-white rounded-lg shadow-sm p-5">
+          <h3 className="text-lg font-semibold text-vpg-navy mb-3">Alerts</h3>
+          {alerts.length > 0 ? (
+            <div className="space-y-2.5">
+              {alerts.map((al, i) => (
+                <div key={i} className="p-3 bg-gray-50 rounded-lg border-l-3"
+                  style={{ borderLeftColor: al.priority === 1 ? '#DC2626' : '#F59E0B', borderLeftWidth: '3px' }}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded text-white font-bold ${PRIORITY_COLORS[al.priority] || 'bg-gray-500'}`}>
+                      {PRIORITY_LABELS[al.priority] || 'INFO'}
                     </span>
-                    <span className="text-sm font-medium text-vpg-navy">{trend.label}</span>
+                    <span className="text-[9px] text-gray-400 uppercase">{al.type.replace(/-/g, ' ')}</span>
                   </div>
-                  <div className="text-right">
-                    <div className="text-sm font-bold text-vpg-navy">{trend.count}</div>
-                    <div className="text-[10px] text-green-600">
-                      {trend.change_pct > 0 ? '+' : ''}{trend.change_pct}%
-                    </div>
-                  </div>
+                  <div className="text-xs font-medium text-vpg-navy leading-snug">{al.title}</div>
+                  {al.action && (
+                    <div className="text-[10px] text-gray-500 mt-1 line-clamp-2">{al.action}</div>
+                  )}
                 </div>
               ))}
             </div>
           ) : (
             <div className="text-center py-6 text-gray-400 text-sm">
-              No rising trends detected yet.
+              No critical or high-priority alerts.
             </div>
           )}
         </div>
       </div>
+
+      {/* ── Competitor Pulse (enhanced) ──────────────────── */}
+      <CompetitorPulse competitors={competitors} />
+    </>
+  )
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SINGLE-BU DEEP VIEW
+   ═══════════════════════════════════════════════════════════════════════ */
+
+function SingleBUView({ data, filters, selectBU }) {
+  const header = data.bu_header || {}
+  const industries = data.industry_breakdown || []
+  const topActions = data.top_actions || []
+  const competitors = data.competitor_pulse || []
+  const recs = data.bu_recommendations || []
+  const alerts = data.alerts || []
+
+  return (
+    <>
+      {/* ── BU Header ───────────────────────────────────── */}
+      <div className="rounded-lg p-5 mb-5 text-white" style={{ backgroundColor: header.color || '#1B2A4A' }}>
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-xl font-bold">{header.bu_name}</h3>
+            <div className="flex items-center gap-4 mt-2 text-sm opacity-90">
+              <span className="font-semibold text-lg">{header.signal_count} signals</span>
+              <span className={`font-bold ${
+                header.trend_pct > 0 ? 'text-green-300' : header.trend_pct < 0 ? 'text-red-300' : 'text-blue-200'
+              }`}>
+                {header.trend_pct > 0 ? '↑' : header.trend_pct < 0 ? '↓' : '→'}
+                {header.trend_pct !== 0 ? ` ${Math.abs(header.trend_pct)}% vs prior period` : ' stable'}
+              </span>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-xs opacity-70 uppercase">Avg Score</div>
+            <div className="text-2xl font-bold">{header.avg_score}</div>
+          </div>
+        </div>
+        {header.top_industries && header.top_industries.length > 0 && (
+          <div className="mt-3 flex items-center gap-2 text-sm">
+            <span className="opacity-70">Top industries:</span>
+            {header.top_industries.map(ind => (
+              <span key={ind.name} className="bg-white/20 rounded px-2 py-0.5 text-xs font-medium">
+                {ind.name} ({ind.count})
+              </span>
+            ))}
+          </div>
+        )}
+        <button onClick={() => selectBU('')}
+          className="mt-3 text-xs underline opacity-70 hover:opacity-100">
+          ← Back to All BUs
+        </button>
+      </div>
+
+      {/* ── Industry Breakdown ──────────────────────────── */}
+      {industries.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-vpg-navy mb-3">Industry Breakdown</h3>
+          <div className="grid grid-cols-3 gap-3">
+            {industries.map(ind => (
+              <div key={ind.industry_id}
+                className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow cursor-pointer border border-gray-100">
+                <div className="text-sm font-bold text-vpg-navy">{ind.industry_name}</div>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <span className="text-lg font-bold text-vpg-blue">{ind.signal_count}</span>
+                  <span className="text-xs text-gray-400">signals</span>
+                  <span className={`text-xs font-semibold ml-auto ${
+                    ind.trending === 'up' ? 'text-green-600' :
+                    ind.trending === 'down' ? 'text-red-600' : 'text-gray-400'
+                  }`}>
+                    {TREND_ARROWS[ind.trending]}
+                    {ind.trend_pct !== 0 ? ` ${ind.trend_pct > 0 ? '+' : ''}${ind.trend_pct}%` : ''}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 mt-2 text-[10px]">
+                  <span className={`${
+                    ind.trending === 'up' ? 'text-green-600' :
+                    ind.trending === 'down' ? 'text-red-600' : 'text-gray-400'
+                  }`}>
+                    {ind.trending === 'up' ? '🔥 Trending up' :
+                     ind.trending === 'down' ? '📉 Declining' : '→ Stable'}
+                  </span>
+                </div>
+                {ind.top_signal && (
+                  <div className="mt-2 text-[10px] text-gray-500 truncate" title={ind.top_signal}>
+                    Top: "{ind.top_signal}"
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── What Needs Attention + Competitor Moves (side by side) */}
+      <div className="grid grid-cols-2 gap-5 mb-6">
+        {/* What Needs Attention */}
+        <div className="bg-white rounded-lg shadow-sm p-5">
+          <h3 className="text-lg font-semibold text-vpg-navy mb-3">What Needs Attention</h3>
+          {topActions.length > 0 ? (
+            <div className="space-y-3">
+              {topActions.map(a => {
+                const st = SIGNAL_TYPE_LABELS[a.signal_type] || {}
+                return (
+                  <div key={a.id} className="p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <span className="text-xs px-1.5 py-0.5 rounded text-white flex-shrink-0"
+                        style={{ backgroundColor: st.color || '#64748B' }}>
+                        {st.icon}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-vpg-navy leading-snug">{a.headline}</div>
+                        {a.what_summary && (
+                          <div className="text-[10px] text-gray-500 mt-1 line-clamp-2">{a.what_summary}</div>
+                        )}
+                        {a.quick_win && (
+                          <div className="text-[10px] text-vpg-blue mt-1 font-medium">Quick win: {a.quick_win}</div>
+                        )}
+                      </div>
+                      <span className={`flex-shrink-0 text-sm font-bold ${
+                        a.score >= 8 ? 'text-green-600' : 'text-vpg-blue'
+                      }`}>{a.score}</span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-6 text-gray-400 text-sm">
+              No high-priority signals for this BU.
+            </div>
+          )}
+        </div>
+
+        {/* Competitor Moves */}
+        <div className="bg-white rounded-lg shadow-sm p-5">
+          <h3 className="text-lg font-semibold text-vpg-navy mb-3">This Period's Competitor Moves</h3>
+          {competitors.length > 0 ? (
+            <div className="space-y-2">
+              {competitors.map(c => (
+                <div key={c.competitor} className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-lg">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-vpg-navy flex items-center gap-2">
+                      {c.competitor}
+                      {c.is_new && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-green-100 text-green-700 font-bold">NEW</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-500">{c.signal_count} signals</div>
+                  <div className={`text-sm font-bold ${
+                    c.trend === 'up' ? 'text-red-600' : c.trend === 'down' ? 'text-green-600' : 'text-gray-400'
+                  }`}>
+                    {TREND_ARROWS[c.trend]}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-6 text-gray-400 text-sm">No competitor activity detected.</div>
+          )}
+        </div>
+      </div>
+
+      {/* ── AI Recommendations (filtered to BU) ─────────── */}
+      {recs.length > 0 && (
+        <div className="bg-white rounded-lg shadow-sm p-5 mb-6">
+          <h3 className="text-lg font-semibold text-vpg-navy mb-3">AI Recommendations</h3>
+          <div className="space-y-3">
+            {recs.map((r, i) => (
+              <div key={i} className="p-4 bg-gray-50 rounded-lg border-l-3"
+                style={{ borderLeftColor: r.priority === 1 ? '#DC2626' : r.priority === 2 ? '#F59E0B' : '#2E75B6', borderLeftWidth: '3px' }}>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded text-white font-bold ${PRIORITY_COLORS[r.priority] || 'bg-blue-500'}`}>
+                    {PRIORITY_LABELS[r.priority] || 'INFO'}
+                  </span>
+                  <span className="text-[9px] text-gray-400 uppercase">{r.type.replace(/-/g, ' ')}</span>
+                </div>
+                <div className="text-sm font-medium text-vpg-navy">{r.title}</div>
+                <div className="text-xs text-gray-500 mt-1">{r.description}</div>
+                {r.action && (
+                  <div className="text-xs text-vpg-blue font-medium mt-2">Action: {r.action}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Alerts ──────────────────────────────────────── */}
+      {alerts.length > 0 && (
+        <div className="bg-white rounded-lg shadow-sm p-5">
+          <h3 className="text-lg font-semibold text-vpg-navy mb-3">Alerts</h3>
+          <div className="space-y-2.5">
+            {alerts.map((al, i) => (
+              <div key={i} className="p-3 bg-gray-50 rounded-lg border-l-3"
+                style={{ borderLeftColor: al.priority === 1 ? '#DC2626' : '#F59E0B', borderLeftWidth: '3px' }}>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded text-white font-bold ${PRIORITY_COLORS[al.priority] || 'bg-gray-500'}`}>
+                    {PRIORITY_LABELS[al.priority] || 'INFO'}
+                  </span>
+                </div>
+                <div className="text-xs font-medium text-vpg-navy">{al.title}</div>
+                {al.action && <div className="text-[10px] text-gray-500 mt-1">{al.action}</div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   COMPETITOR PULSE (shared)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+function CompetitorPulse({ competitors }) {
+  const [expanded, setExpanded] = useState(false)
+  const visible = expanded ? competitors : competitors.slice(0, 5)
+  const maxCount = Math.max(...competitors.map(c => c.signal_count), 1)
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm p-5">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-lg font-semibold text-vpg-navy">Competitor Pulse</h3>
+        {competitors.length > 5 && (
+          <button onClick={() => setExpanded(!expanded)}
+            className="text-xs text-vpg-blue hover:underline">
+            {expanded ? 'Show top 5' : `Show all ${competitors.length}`}
+          </button>
+        )}
+      </div>
+      {competitors.length > 0 ? (
+        <div className="space-y-2">
+          {visible.map(comp => (
+            <div key={comp.competitor} className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-lg">
+              <div className="w-32 flex-shrink-0">
+                <div className="text-sm font-medium text-vpg-navy flex items-center gap-1.5">
+                  {comp.competitor}
+                  {comp.is_new && (
+                    <span className="text-[8px] px-1 py-0.5 rounded bg-green-100 text-green-700 font-bold">NEW</span>
+                  )}
+                </div>
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-gray-200 rounded-full h-3.5 overflow-hidden">
+                    <div className="h-full rounded-full bg-vpg-blue transition-all"
+                      style={{ width: `${Math.min((comp.signal_count / maxCount) * 100, 100)}%` }} />
+                  </div>
+                  <span className="text-sm font-semibold text-vpg-navy w-8 text-right">{comp.signal_count}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 w-20 justify-end flex-shrink-0">
+                <span className="text-xs text-gray-400">Avg {comp.avg_score}</span>
+                <span className={`text-sm font-bold ${
+                  comp.trend === 'up' ? 'text-red-600' : comp.trend === 'down' ? 'text-green-600' : 'text-gray-400'
+                }`}>
+                  {TREND_ARROWS[comp.trend]}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-4 text-gray-400 text-sm">
+          No competitor signals detected.
+        </div>
+      )}
     </div>
   )
 }

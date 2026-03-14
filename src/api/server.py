@@ -1058,6 +1058,392 @@ def bu_executive_summary():
         conn.close()
 
 
+# ── Executive Dashboard V2.4 ─────────────────────────────────────────
+
+@app.get("/api/executive/dashboard")
+def executive_dashboard(bu_id: str | None = None, industry_id: str | None = None,
+                        start_date: str | None = None, end_date: str | None = None):
+    """V2.4 Executive Dashboard — All-BU heatmap or Single-BU deep view.
+
+    Returns all data needed by the redesigned Executive Dashboard in one call.
+    """
+    from src.analyzer.recommendations import generate_recommendations
+
+    conn = get_connection()
+    try:
+        bu_config = get_business_units()
+        all_bus = {bu["id"]: bu for bu in bu_config.get("business_units", []) if bu.get("active", True)}
+        ind_config = get_industries()
+        all_industries = {ind["id"]: ind for ind in ind_config.get("industries", [])}
+
+        # Date filter helpers
+        date_where = ""
+        date_params: list = []
+        if start_date:
+            date_where += " AND COALESCE(s.published_at, s.collected_at) >= ?"
+            date_params.append(start_date)
+        if end_date:
+            date_where += " AND COALESCE(s.published_at, s.collected_at) <= ?"
+            date_params.append(end_date + " 23:59:59")
+
+        mode = "single-bu" if bu_id else "all-bu"
+        result: dict = {"mode": mode, "generated_at": datetime.now().isoformat()}
+
+        # ── BU Heatmap (All-BU mode) ────────────────────────────
+        if mode == "all-bu":
+            heatmap = []
+            for bid, binfo in all_bus.items():
+                # Signal count this period
+                q = """SELECT COUNT(*) FROM signals s
+                       JOIN signal_bus sb ON s.id = sb.signal_id
+                       JOIN signal_analysis sa ON s.id = sa.signal_id
+                       WHERE sb.bu_id = ? AND s.status IN ('scored','published')
+                         AND COALESCE(s.dismissed,0) = 0""" + date_where
+                cnt = conn.execute(q, [bid] + date_params).fetchone()[0]
+
+                # Prior period count (same duration shifted back)
+                prior_cnt = 0
+                if start_date and end_date:
+                    from datetime import timedelta
+                    d_start = datetime.strptime(start_date, "%Y-%m-%d")
+                    d_end = datetime.strptime(end_date, "%Y-%m-%d")
+                    delta = (d_end - d_start).days
+                    p_end = (d_start - timedelta(days=1)).strftime("%Y-%m-%d")
+                    p_start = (d_start - timedelta(days=delta + 1)).strftime("%Y-%m-%d")
+                    q2 = """SELECT COUNT(*) FROM signals s
+                            JOIN signal_bus sb ON s.id = sb.signal_id
+                            JOIN signal_analysis sa ON s.id = sa.signal_id
+                            WHERE sb.bu_id = ? AND s.status IN ('scored','published')
+                              AND COALESCE(s.dismissed,0) = 0
+                              AND COALESCE(s.published_at, s.collected_at) >= ?
+                              AND COALESCE(s.published_at, s.collected_at) <= ?"""
+                    prior_cnt = conn.execute(q2, [bid, p_start, p_end + " 23:59:59"]).fetchone()[0]
+                else:
+                    # Default: compare last 14 days vs prior 14 days
+                    q_recent = """SELECT COUNT(*) FROM signals s
+                                  JOIN signal_bus sb ON s.id = sb.signal_id
+                                  WHERE sb.bu_id = ? AND s.status IN ('scored','published')
+                                    AND COALESCE(s.dismissed,0) = 0
+                                    AND s.collected_at >= date('now', '-14 days')"""
+                    q_prior = """SELECT COUNT(*) FROM signals s
+                                 JOIN signal_bus sb ON s.id = sb.signal_id
+                                 WHERE sb.bu_id = ? AND s.status IN ('scored','published')
+                                   AND COALESCE(s.dismissed,0) = 0
+                                   AND s.collected_at >= date('now', '-28 days')
+                                   AND s.collected_at < date('now', '-14 days')"""
+                    cnt_r = conn.execute(q_recent, [bid]).fetchone()[0]
+                    prior_cnt = conn.execute(q_prior, [bid]).fetchone()[0]
+                    if not start_date and not end_date:
+                        # Use total for display, recent for trend
+                        pass
+
+                # Trend arrow
+                if cnt > prior_cnt:
+                    trend = "up"
+                elif cnt < prior_cnt:
+                    trend = "down"
+                else:
+                    trend = "stable"
+
+                trend_pct = 0
+                if prior_cnt > 0:
+                    trend_pct = round(((cnt - prior_cnt) / prior_cnt) * 100)
+
+                # Top signal type
+                top_type_row = conn.execute("""
+                    SELECT sa.signal_type, COUNT(*) as c FROM signal_bus sb
+                    JOIN signal_analysis sa ON sb.signal_id = sa.signal_id
+                    JOIN signals s ON sb.signal_id = s.id
+                    WHERE sb.bu_id = ? AND s.status IN ('scored','published')
+                      AND COALESCE(s.dismissed,0) = 0
+                    GROUP BY sa.signal_type ORDER BY c DESC LIMIT 1
+                """, (bid,)).fetchone()
+
+                heatmap.append({
+                    "bu_id": bid,
+                    "bu_name": binfo.get("name", bid),
+                    "bu_short": binfo.get("short_name", bid),
+                    "color": binfo.get("color", "#2E75B6"),
+                    "signal_count": cnt,
+                    "trend": trend,
+                    "trend_pct": trend_pct,
+                    "top_signal_type": top_type_row[0] if top_type_row else None,
+                    "has_critical": False,  # Set below after recs
+                })
+
+            result["bu_heatmap"] = heatmap
+
+        # ── Top 5 Actions (score >= 7.0) ────────────────────────
+        actions_q = """
+            SELECT s.id, sa.headline, sa.signal_type, sa.score_composite,
+                   sa.what_summary, sa.quick_win, sa.suggested_owner,
+                   sa.estimated_impact, sa.validation_level
+            FROM signals s
+            JOIN signal_analysis sa ON s.id = sa.signal_id
+            WHERE s.status IN ('scored','published')
+              AND COALESCE(s.dismissed,0) = 0
+              AND sa.score_composite >= 7.0
+        """ + date_where
+        actions_params = list(date_params)
+        if bu_id:
+            actions_q += " AND s.id IN (SELECT signal_id FROM signal_bus WHERE bu_id = ?)"
+            actions_params.append(bu_id)
+        if industry_id:
+            actions_q += " AND s.id IN (SELECT signal_id FROM signal_industries WHERE industry_id = ?)"
+            actions_params.append(industry_id)
+        actions_q += " ORDER BY sa.score_composite DESC LIMIT 5"
+
+        action_rows = conn.execute(actions_q, actions_params).fetchall()
+        top_actions = []
+        for r in action_rows:
+            sig_id = r[0]
+            bus = [b[0] for b in conn.execute(
+                "SELECT bu_id FROM signal_bus WHERE signal_id = ?", (sig_id,)
+            ).fetchall()]
+            inds = [i[0] for i in conn.execute(
+                "SELECT industry_id FROM signal_industries WHERE signal_id = ?", (sig_id,)
+            ).fetchall()]
+            top_actions.append({
+                "id": sig_id, "headline": r[1], "signal_type": r[2],
+                "score": round(r[3] or 0, 1), "what_summary": r[4],
+                "quick_win": r[5], "owner": r[6], "impact": r[7],
+                "validation": r[8], "bus": bus, "industries": inds,
+            })
+        result["top_actions"] = top_actions
+
+        # ── Alerts (critical/high recs + persistent signals) ────
+        try:
+            recs_data = generate_recommendations(conn, max_recommendations=20)
+            all_recs = recs_data.get("recommendations", [])
+        except Exception:
+            all_recs = []
+
+        alerts = []
+        for rec in all_recs:
+            if rec.get("priority", 3) <= 2:  # critical or high
+                rec_bu = rec.get("bu_id") or rec.get("bu_ids", "")
+                if bu_id and rec_bu and bu_id not in str(rec_bu):
+                    continue
+                alerts.append({
+                    "type": rec.get("type", "recommendation"),
+                    "priority": rec.get("priority", 2),
+                    "title": rec.get("title", ""),
+                    "description": rec.get("description", ""),
+                    "action": rec.get("action", ""),
+                    "score": rec.get("score", 0),
+                    "bu_id": rec_bu,
+                })
+
+        result["alerts"] = alerts[:8]
+
+        # Mark BUs with critical alerts in heatmap
+        if mode == "all-bu":
+            critical_bus = set()
+            for a in alerts:
+                if a["priority"] == 1 and a.get("bu_id"):
+                    critical_bus.add(a["bu_id"])
+            for card in result["bu_heatmap"]:
+                if card["bu_id"] in critical_bus:
+                    card["has_critical"] = True
+
+        # ── Competitor Pulse (enhanced) ──────────────────────────
+        comp_results = []
+        for comp in MONITORED_COMPETITORS:
+            cq = """SELECT COUNT(*), AVG(sa.score_composite)
+                    FROM signals s
+                    JOIN signal_analysis sa ON s.id = sa.signal_id
+                    WHERE s.status IN ('scored','published')
+                      AND COALESCE(s.dismissed,0) = 0
+                      AND (LOWER(s.title) LIKE ? OR LOWER(s.raw_content) LIKE ?
+                           OR LOWER(sa.headline) LIKE ? OR LOWER(sa.what_summary) LIKE ?)
+                    """ + date_where
+            like = f"%{comp.lower()}%"
+            cp = [like, like, like, like] + date_params
+            if bu_id:
+                cq += " AND s.id IN (SELECT signal_id FROM signal_bus WHERE bu_id = ?)"
+                cp.append(bu_id)
+            row = conn.execute(cq, cp).fetchone()
+            count = row[0] or 0
+            if count == 0:
+                continue
+
+            # Check if this competitor is new this period
+            is_new = False
+            if start_date:
+                prior_check = conn.execute(
+                    "SELECT COUNT(*) FROM signals s JOIN signal_analysis sa ON s.id = sa.signal_id "
+                    "WHERE s.status IN ('scored','published') AND COALESCE(s.dismissed,0) = 0 "
+                    "AND (LOWER(s.title) LIKE ? OR LOWER(sa.headline) LIKE ?) "
+                    "AND COALESCE(s.published_at, s.collected_at) < ?",
+                    (like, like, start_date)
+                ).fetchone()[0]
+                is_new = prior_check == 0
+
+            # Trend
+            recent = conn.execute(
+                "SELECT COUNT(*) FROM signals s JOIN signal_analysis sa ON s.id = sa.signal_id "
+                "WHERE s.status IN ('scored','published') AND COALESCE(s.dismissed,0)=0 "
+                "AND (LOWER(s.title) LIKE ? OR LOWER(sa.headline) LIKE ?) "
+                "AND s.collected_at >= date('now', '-14 days')",
+                (like, like)
+            ).fetchone()[0]
+            older = conn.execute(
+                "SELECT COUNT(*) FROM signals s JOIN signal_analysis sa ON s.id = sa.signal_id "
+                "WHERE s.status IN ('scored','published') AND COALESCE(s.dismissed,0)=0 "
+                "AND (LOWER(s.title) LIKE ? OR LOWER(sa.headline) LIKE ?) "
+                "AND s.collected_at >= date('now', '-28 days') AND s.collected_at < date('now', '-14 days')",
+                (like, like)
+            ).fetchone()[0]
+
+            trend = "up" if recent > older else ("down" if recent < older else "stable")
+
+            comp_results.append({
+                "competitor": comp, "signal_count": count,
+                "avg_score": round(row[1] or 0, 1), "trend": trend,
+                "is_new": is_new, "recent_signals": recent,
+            })
+
+        comp_results.sort(key=lambda x: x["signal_count"], reverse=True)
+        result["competitor_pulse"] = comp_results[:10]
+
+        # ── Single-BU Deep View extras ──────────────────────────
+        if mode == "single-bu" and bu_id:
+            binfo = all_bus.get(bu_id, {})
+
+            # BU header stats
+            total_q = """SELECT COUNT(*), AVG(sa.score_composite)
+                         FROM signals s JOIN signal_bus sb ON s.id = sb.signal_id
+                         JOIN signal_analysis sa ON s.id = sa.signal_id
+                         WHERE sb.bu_id = ? AND s.status IN ('scored','published')
+                           AND COALESCE(s.dismissed,0) = 0""" + date_where
+            hdr = conn.execute(total_q, [bu_id] + date_params).fetchone()
+
+            # Prior period for trend
+            if start_date and end_date:
+                from datetime import timedelta
+                d_start = datetime.strptime(start_date, "%Y-%m-%d")
+                d_end = datetime.strptime(end_date, "%Y-%m-%d")
+                delta = (d_end - d_start).days
+                p_end = (d_start - timedelta(days=1)).strftime("%Y-%m-%d")
+                p_start = (d_start - timedelta(days=delta + 1)).strftime("%Y-%m-%d")
+                prior_total = conn.execute(
+                    """SELECT COUNT(*) FROM signals s JOIN signal_bus sb ON s.id = sb.signal_id
+                       WHERE sb.bu_id = ? AND s.status IN ('scored','published')
+                         AND COALESCE(s.dismissed,0) = 0
+                         AND COALESCE(s.published_at, s.collected_at) >= ?
+                         AND COALESCE(s.published_at, s.collected_at) <= ?""",
+                    [bu_id, p_start, p_end + " 23:59:59"]
+                ).fetchone()[0]
+            else:
+                prior_total = conn.execute(
+                    """SELECT COUNT(*) FROM signals s JOIN signal_bus sb ON s.id = sb.signal_id
+                       WHERE sb.bu_id = ? AND s.status IN ('scored','published')
+                         AND COALESCE(s.dismissed,0) = 0
+                         AND s.collected_at >= date('now', '-28 days')
+                         AND s.collected_at < date('now', '-14 days')""",
+                    [bu_id]
+                ).fetchone()[0]
+
+            current_total = hdr[0] or 0
+            trend_pct = round(((current_total - prior_total) / prior_total) * 100) if prior_total > 0 else 0
+
+            result["bu_header"] = {
+                "bu_id": bu_id,
+                "bu_name": binfo.get("name", bu_id),
+                "bu_short": binfo.get("short_name", bu_id),
+                "color": binfo.get("color", "#2E75B6"),
+                "signal_count": current_total,
+                "avg_score": round(hdr[1] or 0, 1),
+                "trend_pct": trend_pct,
+            }
+
+            # Top industries for this BU
+            ind_rows = conn.execute("""
+                SELECT si.industry_id, COUNT(*) as cnt, AVG(sa.score_composite) as avg_s
+                FROM signal_industries si
+                JOIN signal_bus sb ON si.signal_id = sb.signal_id
+                JOIN signals s ON si.signal_id = s.id
+                JOIN signal_analysis sa ON si.signal_id = sa.signal_id
+                WHERE sb.bu_id = ? AND s.status IN ('scored','published')
+                  AND COALESCE(s.dismissed,0) = 0
+                GROUP BY si.industry_id ORDER BY cnt DESC
+            """, (bu_id,)).fetchall()
+
+            industry_breakdown = []
+            for ir in ind_rows:
+                ind_id = ir[0]
+                ind_info = all_industries.get(ind_id, {})
+
+                # Top signal for this industry+BU
+                top_sig = conn.execute("""
+                    SELECT sa.headline, sa.score_composite FROM signals s
+                    JOIN signal_analysis sa ON s.id = sa.signal_id
+                    JOIN signal_bus sb ON s.id = sb.signal_id
+                    JOIN signal_industries si ON s.id = si.signal_id
+                    WHERE sb.bu_id = ? AND si.industry_id = ?
+                      AND s.status IN ('scored','published')
+                      AND COALESCE(s.dismissed,0) = 0
+                    ORDER BY sa.score_composite DESC LIMIT 1
+                """, (bu_id, ind_id)).fetchone()
+
+                # Trend for this industry
+                ind_recent = conn.execute("""
+                    SELECT COUNT(*) FROM signals s
+                    JOIN signal_bus sb ON s.id = sb.signal_id
+                    JOIN signal_industries si ON s.id = si.signal_id
+                    WHERE sb.bu_id = ? AND si.industry_id = ?
+                      AND s.status IN ('scored','published')
+                      AND COALESCE(s.dismissed,0) = 0
+                      AND s.collected_at >= date('now', '-14 days')
+                """, (bu_id, ind_id)).fetchone()[0]
+                ind_older = conn.execute("""
+                    SELECT COUNT(*) FROM signals s
+                    JOIN signal_bus sb ON s.id = sb.signal_id
+                    JOIN signal_industries si ON s.id = si.signal_id
+                    WHERE sb.bu_id = ? AND si.industry_id = ?
+                      AND s.status IN ('scored','published')
+                      AND COALESCE(s.dismissed,0) = 0
+                      AND s.collected_at >= date('now', '-28 days')
+                      AND s.collected_at < date('now', '-14 days')
+                """, (bu_id, ind_id)).fetchone()[0]
+
+                ind_trend_pct = round(((ind_recent - ind_older) / ind_older) * 100) if ind_older > 0 else 0
+
+                industry_breakdown.append({
+                    "industry_id": ind_id,
+                    "industry_name": ind_info.get("name", ind_id),
+                    "signal_count": ir[1],
+                    "avg_score": round(ir[2] or 0, 1),
+                    "trend_pct": ind_trend_pct,
+                    "trending": "up" if ind_recent > ind_older else ("down" if ind_recent < ind_older else "stable"),
+                    "top_signal": top_sig[0] if top_sig else None,
+                })
+
+            result["industry_breakdown"] = industry_breakdown
+
+            # Top industries for header
+            result["bu_header"]["top_industries"] = [
+                {"name": ib["industry_name"], "count": ib["signal_count"]}
+                for ib in industry_breakdown[:5]
+            ]
+
+            # BU-specific recommendations
+            bu_recs = [r for r in all_recs if bu_id in str(r.get("bu_id", "")) or bu_id in str(r.get("bu_ids", ""))]
+            result["bu_recommendations"] = [{
+                "type": r.get("type", ""),
+                "priority": r.get("priority", 3),
+                "title": r.get("title", ""),
+                "description": r.get("description", ""),
+                "action": r.get("action", ""),
+                "score": r.get("score", 0),
+            } for r in bu_recs[:5]]
+
+        return result
+
+    finally:
+        conn.close()
+
+
 # ── Pipeline Control ─────────────────────────────────────────────────
 
 def _run_pipeline_bg(dry_run: bool = False, pdf_mode: bool = False):
