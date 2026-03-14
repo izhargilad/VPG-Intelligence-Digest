@@ -789,6 +789,86 @@ def trend_history(trend_key: str, weeks: int = 12):
     return {"trend_key": trend_key, "history": get_trend_history(trend_key, weeks)}
 
 
+@app.get("/api/trends/alerts")
+def list_trend_alerts(bu_code: str | None = None, industry: str | None = None,
+                      limit: int = 5):
+    """Get AI-generated 'What's Moving' trend alert cards."""
+    from src.trends.tracker import get_trend_alerts
+    return {"alerts": get_trend_alerts(bu_code=bu_code, industry=industry, limit=limit)}
+
+
+@app.post("/api/trends/alerts/generate")
+def generate_alerts(bu_code: str | None = None, start_date: str | None = None,
+                    end_date: str | None = None):
+    """Generate new trend alerts from current signal data."""
+    from src.trends.tracker import generate_trend_alerts
+    alerts = generate_trend_alerts(bu_code=bu_code, start_date=start_date, end_date=end_date)
+    return {"generated": len(alerts), "alerts": alerts}
+
+
+@app.get("/api/trends/industry-momentum")
+def industry_momentum(bu_code: str | None = None, start_date: str | None = None,
+                      end_date: str | None = None):
+    """Get industry momentum cards with sparkline data, sentiment, and scores."""
+    from src.trends.tracker import get_industry_momentum
+    return {"industries": get_industry_momentum(bu_code=bu_code, start_date=start_date,
+                                                 end_date=end_date)}
+
+
+@app.get("/api/trends/signal-volume")
+def signal_volume_over_time(bu_code: str | None = None, weeks: int = 12):
+    """Get weekly signal volume data for multi-line chart."""
+    from src.trends.tracker import get_signal_volume_over_time
+    return get_signal_volume_over_time(bu_code=bu_code, weeks=weeks)
+
+
+@app.get("/api/trends/competitor-trends")
+def competitor_trends(bu_code: str | None = None, start_date: str | None = None,
+                      end_date: str | None = None):
+    """Get competitor signal trends with period-over-period comparison."""
+    from src.trends.tracker import get_competitor_trends
+    return {"competitors": get_competitor_trends(bu_code=bu_code, start_date=start_date,
+                                                  end_date=end_date)}
+
+
+@app.get("/api/export/trends/excel")
+def export_trends_excel(bu_code: str | None = None, start_date: str | None = None,
+                        end_date: str | None = None):
+    """Export Trends data as Excel workbook with specialized tabs."""
+    try:
+        import openpyxl  # noqa: F401
+    except ImportError:
+        raise HTTPException(422, detail="Excel export requires openpyxl. pip install openpyxl")
+    from src.export.trends_export import export_trends_excel as _export
+    from fastapi.responses import StreamingResponse
+    buffer = _export(bu_code=bu_code, start_date=start_date, end_date=end_date)
+    filename = f"vpg-trends-{datetime.now().strftime('%Y%m%d')}.xlsx"
+    return StreamingResponse(
+        buffer,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@app.get("/api/export/trends/pptx")
+def export_trends_pptx(bu_code: str | None = None, start_date: str | None = None,
+                       end_date: str | None = None):
+    """Export Trends data as PowerPoint presentation."""
+    try:
+        import pptx  # noqa: F401
+    except ImportError:
+        raise HTTPException(422, detail="PowerPoint export requires python-pptx. pip install python-pptx")
+    from src.export.trends_export import export_trends_pptx as _export
+    from fastapi.responses import StreamingResponse
+    buffer = _export(bu_code=bu_code, start_date=start_date, end_date=end_date)
+    filename = f"vpg-trends-{datetime.now().strftime('%Y%m%d')}.pptx"
+    return StreamingResponse(
+        buffer,
+        media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
 # ── Scoring ──────────────────────────────────────────────────────────
 
 @app.get("/api/scoring")

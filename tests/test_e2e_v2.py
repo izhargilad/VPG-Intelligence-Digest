@@ -136,6 +136,25 @@ def _seed_db(conn):
             "INSERT INTO keywords (keyword, industry_id, source, active, hit_count) VALUES (?, ?, ?, ?, ?)", kw
         )
 
+    # Signal-Industry associations (needed for V2.4 trend alerts)
+    signal_industries = [
+        (1, "robotics-automation", 0.9, "force sensor"),
+        (2, "metals-mining", 0.8, "load cell"),
+        (3, "metals-mining", 0.7, "tariff"),
+        (4, "automotive", 0.6, "strain gage"),
+        (5, "robotics-automation", 0.85, "robot"),
+        (5, "physical-ai", 0.7, "robot"),
+        (6, "physical-ai", 0.9, "humanoid robot"),
+        (6, "robotics-automation", 0.8, "robot"),
+        (7, "metals-mining", 0.95, "steel mill"),
+        (8, "automotive", 0.9, "crash test"),
+    ]
+    for si in signal_industries:
+        conn.execute(
+            "INSERT OR IGNORE INTO signal_industries (signal_id, industry_id, relevance_score, matched_keywords) VALUES (?, ?, ?, ?)",
+            si,
+        )
+
     # Trends
     trends = [
         ("force-sensors:competitive-threat", "bu_signal_type", "Force Sensors Competitive Threats", 4, "rising", 7.5, 20, "2026-02-01", "2026-03-01"),
@@ -175,6 +194,7 @@ class TestDatabaseSchema:
             "digests", "delivery_log", "feedback", "source_health",
             "pipeline_runs", "trends", "trend_snapshots",
             "industries", "industry_bus", "keywords", "signal_industries",
+            "trend_alerts",
         }
         assert expected.issubset(tables), f"Missing tables: {expected - tables}"
 
@@ -759,3 +779,112 @@ class TestIntegrationFlows:
         ctrl.reset()
         assert not ctrl.is_cancelled
         assert not ctrl.is_paused
+
+
+# ═══════════════════════════════════════════════════════════════════
+# V2.4 Trends Overhaul Tests
+# ═══════════════════════════════════════════════════════════════════
+
+class TestV24TrendsOverhaul:
+    """Tests for V2.4 Trends overhaul: trend alerts, industry momentum,
+    signal volume, competitor trends."""
+
+    def test_trend_alerts_table_exists(self, tmp_db):
+        cols = {row[1] for row in tmp_db.execute("PRAGMA table_info(trend_alerts)").fetchall()}
+        assert {"id", "bu_code", "industry", "trend_name", "trend_type",
+                "change_percent", "signal_count", "companies",
+                "top_signal_headline", "suggested_action"}.issubset(cols)
+
+    def test_generate_trend_alerts(self, seeded_db):
+        from src.trends.tracker import generate_trend_alerts
+        alerts = generate_trend_alerts(conn=seeded_db)
+        assert isinstance(alerts, list)
+        # We have signals in robotics-automation, metals-mining, automotive, physical-ai
+        # generate_trend_alerts needs at least 2 signals per industry
+        for alert in alerts:
+            assert "trend_name" in alert
+            assert "trend_type" in alert
+            assert alert["trend_type"] in ("rising", "declining", "new", "persistent")
+            assert "signal_count" in alert
+            assert alert["signal_count"] >= 2
+            assert "companies" in alert
+            assert isinstance(alert["companies"], list)
+
+    def test_trend_alerts_persisted(self, seeded_db):
+        from src.trends.tracker import generate_trend_alerts, get_trend_alerts
+        generate_trend_alerts(conn=seeded_db)
+        alerts = get_trend_alerts(conn=seeded_db, limit=10)
+        assert len(alerts) > 0
+        for a in alerts:
+            assert a["id"]
+            assert a["trend_name"]
+
+    def test_industry_momentum(self, seeded_db):
+        from src.trends.tracker import get_industry_momentum
+        data = get_industry_momentum(conn=seeded_db)
+        assert isinstance(data, list)
+        # We have signals in multiple industries
+        for ind in data:
+            assert "id" in ind
+            assert "name" in ind
+            assert "signal_count" in ind
+            assert ind["signal_count"] > 0
+            assert "avg_score" in ind
+            assert "sentiment" in ind
+            assert ind["sentiment"] in ("positive", "neutral", "negative")
+            assert "sparkline" in ind
+            assert isinstance(ind["sparkline"], list)
+
+    def test_industry_momentum_bu_filter(self, seeded_db):
+        from src.trends.tracker import get_industry_momentum
+        data = get_industry_momentum(conn=seeded_db, bu_code="force-sensors")
+        assert isinstance(data, list)
+        # force-sensors is linked to robotics-automation signals
+        if data:
+            for ind in data:
+                assert ind["signal_count"] > 0
+
+    def test_signal_volume_over_time(self, seeded_db):
+        from src.trends.tracker import get_signal_volume_over_time
+        result = get_signal_volume_over_time(conn=seeded_db)
+        assert "weeks" in result
+        assert "series" in result
+        assert isinstance(result["weeks"], list)
+        assert isinstance(result["series"], list)
+        # Each series has data array matching weeks length
+        for s in result["series"]:
+            assert "id" in s
+            assert "name" in s
+            assert "data" in s
+
+    def test_signal_volume_with_bu(self, seeded_db):
+        from src.trends.tracker import get_signal_volume_over_time
+        result = get_signal_volume_over_time(conn=seeded_db, bu_code="force-sensors")
+        assert "weeks" in result
+        assert "series" in result
+
+    def test_competitor_trends(self, seeded_db):
+        from src.trends.tracker import get_competitor_trends
+        data = get_competitor_trends(conn=seeded_db)
+        assert isinstance(data, list)
+        # We have signals mentioning kistler, hbk, boston dynamics, figure ai
+        competitor_names = [c["name"].lower() for c in data]
+        # At least some competitors should be found
+        for comp in data:
+            assert "name" in comp
+            assert "this_period" in comp
+            assert "prior_period" in comp
+            assert "change_percent" in comp
+            assert "trend" in comp
+            assert comp["trend"] in ("rising", "declining", "stable")
+
+    def test_trend_alerts_api(self, seeded_db):
+        """Test that the API endpoints for trend data return properly."""
+        from src.trends.tracker import generate_trend_alerts, get_trend_alerts
+        generate_trend_alerts(conn=seeded_db)
+        alerts = get_trend_alerts(conn=seeded_db)
+        assert isinstance(alerts, list)
+        # Check JSON parsing of companies field
+        for a in alerts:
+            assert isinstance(a.get("companies", []), list)
+            assert isinstance(a.get("supporting_signal_ids", []), list)

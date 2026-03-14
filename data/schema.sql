@@ -229,6 +229,31 @@ CREATE INDEX IF NOT EXISTS idx_snapshots_trend ON trend_snapshots(trend_id);
 CREATE INDEX IF NOT EXISTS idx_snapshots_week ON trend_snapshots(week_number, year);
 
 -- ============================================================
+-- AI-generated trend alerts for "What's Moving" section (V2.4)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS trend_alerts (
+    id TEXT PRIMARY KEY,
+    created_at DATETIME NOT NULL DEFAULT (datetime('now')),
+    bu_code TEXT,
+    industry TEXT,
+    trend_name TEXT NOT NULL,
+    trend_type TEXT NOT NULL DEFAULT 'rising',  -- rising, declining, new, persistent
+    change_percent REAL DEFAULT 0,
+    signal_count INTEGER NOT NULL DEFAULT 0,
+    period_weeks INTEGER DEFAULT 1,
+    companies JSON,                             -- Array of company names
+    top_signal_id INTEGER REFERENCES signals(id),
+    top_signal_headline TEXT,
+    description TEXT,
+    suggested_action TEXT,
+    supporting_signal_ids JSON                  -- Array of signal IDs
+);
+
+CREATE INDEX IF NOT EXISTS idx_trend_alerts_bu ON trend_alerts(bu_code);
+CREATE INDEX IF NOT EXISTS idx_trend_alerts_industry ON trend_alerts(industry);
+CREATE INDEX IF NOT EXISTS idx_trend_alerts_created ON trend_alerts(created_at);
+
+-- ============================================================
 -- Industries — master industry definitions (V2.1)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS industries (
