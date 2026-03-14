@@ -21,6 +21,8 @@ import MeetingPrep from './components/MeetingPrep'
 import BattleCards from './components/BattleCards'
 import CustomerTriggers from './components/CustomerTriggers'
 import KeywordExpansion from './components/KeywordExpansion'
+import CrossBU from './components/CrossBU'
+import SourceHealth from './components/SourceHealth'
 
 const NAV_SECTIONS = [
   {
@@ -36,6 +38,7 @@ const NAV_SECTIONS = [
   {
     label: 'Advanced',
     items: [
+      { id: 'cross-bu', label: 'Cross-BU Opps', icon: '🔀' },
       { id: 'battle-cards', label: 'Battle Cards', icon: '⚔' },
       { id: 'customer-triggers', label: 'Customer Triggers', icon: '🎯' },
       { id: 'keyword-expansion', label: 'Keyword Expansion', icon: '🔄' },
@@ -52,6 +55,7 @@ const NAV_SECTIONS = [
       { id: 'pipeline', label: 'Run Digest', icon: '▶' },
       { id: 'recipients', label: 'Recipients', icon: '📧' },
       { id: 'sources', label: 'Sources', icon: '🔗' },
+      { id: 'source-health', label: 'Source Health', icon: '🩺' },
       { id: 'digests', label: 'Digest History', icon: '📰' },
     ],
   },
@@ -94,6 +98,8 @@ export default function App() {
       case 'battle-cards': return <BattleCards />
       case 'customer-triggers': return <CustomerTriggers />
       case 'keyword-expansion': return <KeywordExpansion />
+      case 'cross-bu': return <CrossBU />
+      case 'source-health': return <SourceHealth />
       default: return <Dashboard />
     }
   }
@@ -108,7 +114,7 @@ export default function App() {
             <p className="text-sm text-blue-300">Management Console</p>
           </div>
           <div className="text-xs text-blue-400">
-            v4.0
+            v5.0
           </div>
         </div>
       </header>

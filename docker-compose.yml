@@ -1,0 +1,37 @@
+version: "3.8"
+
+services:
+  vpg-intel:
+    build: .
+    container_name: vpg-intelligence-digest
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./output:/app/output
+      - ./config:/app/config
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+
+  # Optional: scheduled pipeline runner (runs weekly)
+  vpg-scheduler:
+    build: .
+    container_name: vpg-scheduler
+    command: >
+      sh -c "echo '0 4 * * 1 cd /app && python src/scheduler.py --now >> /app/logs/scheduler.log 2>&1' | crontab - && cron -f"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./output:/app/output
+      - ./config:/app/config
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    depends_on:
+      - vpg-intel

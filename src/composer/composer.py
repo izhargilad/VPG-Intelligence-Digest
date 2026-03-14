@@ -280,6 +280,24 @@ def build_digest_context(signals: list[dict], bu_config: dict) -> dict:
     except Exception:
         pass
 
+    # Phase 5: Cross-BU opportunities
+    cross_bu_opportunities = []
+    try:
+        from src.analyzer.cross_bu import get_cross_bu_for_digest
+        cross_bu_opportunities = get_cross_bu_for_digest(signals, bu_config)
+    except Exception:
+        pass
+
+    # Phase 5: ROI links enrichment
+    try:
+        from src.analyzer.roi_links import enrich_signals_with_roi
+        enrich_signals_with_roi(signals)
+    except Exception:
+        pass
+
+    # Phase 5: Quick Stats
+    quick_stats = _build_quick_stats(all_sorted, bu_config)
+
     # Phase 4: Feedback base URL for thumbs-up/down links
     feedback_base_url = ""  # Set when deployed, e.g. https://vpg-intel.example.com/api/feedback
 
@@ -296,6 +314,8 @@ def build_digest_context(signals: list[dict], bu_config: dict) -> dict:
         "competitive_signals": competitive_signals,
         "trade_signals": trade_signals,
         "upcoming_events": upcoming_events,
+        "cross_bu_opportunities": cross_bu_opportunities,
+        "quick_stats": quick_stats,
         "feedback_base_url": feedback_base_url,
         "branding": branding,
         "cid_images": cid_images,
@@ -304,6 +324,49 @@ def build_digest_context(signals: list[dict], bu_config: dict) -> dict:
             "blue": "#2E75B6",
         },
     }
+
+
+def _build_quick_stats(signals: list[dict], bu_config: dict) -> list[dict]:
+    """Build quick stats for the digest footer.
+
+    Extracts key numbers from the week's signals.
+    """
+    from collections import Counter
+
+    stats = []
+
+    # Total signals
+    stats.append({"label": "Signals Analyzed", "value": str(len(signals))})
+
+    # BUs covered
+    bus_seen = set()
+    for sig in signals:
+        for m in sig.get("bu_matches", []):
+            bus_seen.add(m.get("bu_id", ""))
+    stats.append({"label": "BUs Covered", "value": f"{len(bus_seen)} of 9"})
+
+    # Signal type breakdown
+    types = Counter(s.get("signal_type", "") for s in signals)
+    top_type = types.most_common(1)
+    if top_type:
+        stats.append({"label": "Top Signal Type", "value": top_type[0][0].replace("-", " ").title()})
+
+    # Avg score
+    scores = [s.get("composite_score", 0) for s in signals if s.get("composite_score")]
+    if scores:
+        stats.append({"label": "Avg Signal Score", "value": f"{sum(scores)/len(scores):.1f}"})
+
+    # High-priority count
+    high = sum(1 for s in scores if s >= 8.0)
+    if high:
+        stats.append({"label": "High-Priority Signals", "value": str(high)})
+
+    # Competitive threats
+    threats = types.get("competitive-threat", 0)
+    if threats:
+        stats.append({"label": "Competitive Threats", "value": str(threats)})
+
+    return stats[:6]  # Max 6 stats
 
 
 def render_digest(context: dict) -> str:

@@ -326,6 +326,50 @@
           </tr>
           {% endif %}
 
+          <!-- CROSS-BU OPPORTUNITIES -->
+          {% if cross_bu_opportunities %}
+          <tr>
+            <td style="padding:24px 40px 20px;">
+              <h2 style="font-family:Georgia,'Times New Roman',serif;color:#2E75B6;font-size:20px;margin:0 0 6px;font-weight:700;">&#x1F4A1; Cross-BU Opportunities</h2>
+              <p style="font-size:13px;color:#6B7280;margin:0 0 14px;">Signals spanning multiple business units — combined VPG advantage</p>
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                {% for opp in cross_bu_opportunities %}
+                <tr>
+                  <td style="padding:12px 16px;background-color:#EBF5FF;border-left:4px solid #2E75B6;border-radius:4px;margin-bottom:8px;">
+                    <p style="font-size:14px;font-weight:700;color:#1B2A4A;margin:0 0 4px;">{{ opp.headline }}</p>
+                    <p style="font-size:12px;color:#6B7280;margin:0 0 6px;">
+                      {% for bu in opp.bus %}<span style="display:inline-block;background:#2E75B6;color:#fff;padding:1px 8px;border-radius:10px;font-size:11px;margin-right:4px;">{{ bu }}</span>{% endfor %}
+                    </p>
+                    <p style="font-size:13px;color:#E8792F;font-weight:600;margin:0 0 2px;">&#x1F4A1; Did You Know? {{ opp.did_you_know }}</p>
+                    <p style="font-size:12px;color:#4B5563;margin:0;">{{ opp.value_prop }}</p>
+                  </td>
+                </tr>
+                <tr><td style="height:8px;font-size:1px;line-height:1px;">&nbsp;</td></tr>
+                {% endfor %}
+              </table>
+            </td>
+          </tr>
+          {% endif %}
+
+          <!-- QUICK STATS -->
+          {% if quick_stats %}
+          <tr>
+            <td style="padding:20px 40px;">
+              <h2 style="font-family:Georgia,'Times New Roman',serif;color:#1B2A4A;font-size:18px;margin:0 0 14px;font-weight:700;">&#x1F4CA; This Week at a Glance</h2>
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  {% for stat in quick_stats %}
+                  <td style="text-align:center;padding:12px 8px;{% if not loop.last %}border-right:1px solid #E5E7EB;{% endif %}">
+                    <p style="font-size:20px;font-weight:700;color:#2E75B6;margin:0;">{{ stat.value }}</p>
+                    <p style="font-size:11px;color:#6B7280;margin:4px 0 0;text-transform:uppercase;">{{ stat.label }}</p>
+                  </td>
+                  {% endfor %}
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endif %}
+
           <!-- FOOTER -->
           <tr>
             <td style="background-color:#1B2A4A;padding:30px 40px;text-align:center;">

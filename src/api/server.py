@@ -58,7 +58,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="VPG Intelligence Digest",
     description="Management UI for the VPG Weekly Intelligence Digest",
-    version="4.0.0",
+    version="5.0.0",
 )
 
 # CORS — allow the React dev server and local access
@@ -2050,6 +2050,152 @@ def get_battle_card(competitor_key: str):
         return result
     finally:
         conn.close()
+
+
+# ── Phase 5: Cross-BU Opportunity Matching ─────────────────────────
+
+@app.get("/api/cross-bu")
+def get_cross_bu_opportunities():
+    """Find signals spanning multiple BUs with cross-sell briefs."""
+    from src.analyzer.cross_bu import find_cross_bu_opportunities
+    conn = get_connection()
+    try:
+        return find_cross_bu_opportunities(conn)
+    finally:
+        conn.close()
+
+
+# ── Phase 5: Source Health Dashboard ───────────────────────────────
+
+@app.get("/api/sources/health")
+def source_health():
+    """Get health status for all configured sources."""
+    from src.collector.source_health import get_source_health
+    conn = get_connection()
+    try:
+        return get_source_health(conn)
+    finally:
+        conn.close()
+
+
+# ── Phase 5: Test Digest Per Recipient ─────────────────────────────
+
+@app.post("/api/recipients/{recipient_id}/test")
+def send_test_digest(recipient_id: str):
+    """Send a test digest to a specific recipient."""
+    config = get_recipients()
+    recipient = None
+    for r in config.get("recipients", []):
+        if r["id"] == recipient_id:
+            recipient = r
+            break
+    if not recipient:
+        raise HTTPException(404, f"Recipient {recipient_id} not found")
+
+    from src.composer.composer import build_digest_context, render_digest
+    from src.config import get_business_units
+
+    # Build a test digest with whatever signals we have
+    conn = get_connection()
+    try:
+        rows = conn.execute("""
+            SELECT s.id, s.title, s.url, s.source_name, sa.signal_type,
+                   sa.headline, sa.what_summary, sa.why_it_matters,
+                   sa.quick_win, sa.score_composite, sa.owner_role,
+                   sa.est_impact
+            FROM signals s
+            JOIN signal_analysis sa ON s.id = sa.signal_id
+            WHERE s.status IN ('scored', 'published')
+            ORDER BY sa.score_composite DESC LIMIT 10
+        """).fetchall()
+
+        signals = []
+        for row in rows:
+            sig_id = row[0]
+            bus = conn.execute(
+                "SELECT bu_id FROM signal_bus WHERE signal_id = ?", (sig_id,)
+            ).fetchall()
+            signals.append({
+                "id": sig_id, "title": row[1], "url": row[2],
+                "source_name": row[3], "signal_type": row[4],
+                "headline": row[5], "what_summary": row[6],
+                "why_it_matters": row[7], "quick_win": row[8],
+                "composite_score": row[9], "owner_role": row[10],
+                "est_impact": row[11],
+                "bu_matches": [{"bu_id": b[0]} for b in bus],
+                "sources": [],
+            })
+    finally:
+        conn.close()
+
+    if not signals:
+        return {
+            "status": "no_signals",
+            "message": "No scored signals available. Run the pipeline first.",
+            "recipient": recipient["email"],
+        }
+
+    bu_config = get_business_units()
+    context = build_digest_context(signals, bu_config)
+    html = render_digest(context)
+
+    # Save test digest
+    test_filename = f"test-digest-{recipient_id}-{datetime.now().strftime('%Y%m%d-%H%M%S')}.html"
+    output_path = MOCK_OUTPUT_DIR / test_filename
+    MOCK_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(html, encoding="utf-8")
+
+    # Try to send via delivery module
+    try:
+        from src.delivery.gmail_client import GmailClient
+        client = GmailClient()
+        if client.available:
+            client.send_html_email(
+                to=recipient["email"],
+                subject=f"[TEST] {context.get('subject', 'VPG Intel Test')}",
+                html_body=html,
+            )
+            return {
+                "status": "sent",
+                "recipient": recipient["email"],
+                "subject": context.get("subject", ""),
+                "preview_url": f"/api/digests/{test_filename}/preview",
+            }
+    except Exception as e:
+        logger.warning("Could not send test email: %s", e)
+
+    return {
+        "status": "saved",
+        "message": "Test digest saved (email delivery not configured)",
+        "recipient": recipient["email"],
+        "preview_url": f"/api/digests/{test_filename}/preview",
+    }
+
+
+# ── Phase 5: Scheduling ───────────────────────────────────────────
+
+@app.get("/api/schedule")
+def get_schedule():
+    """Get current pipeline scheduling status."""
+    from src.scheduler import get_schedule_status
+    return get_schedule_status()
+
+
+@app.post("/api/schedule/install")
+def install_schedule(body: dict = None):
+    """Install crontab entry for automated weekly pipeline runs."""
+    from src.scheduler import install_cron, DEFAULT_CRON
+    schedule = (body or {}).get("schedule", DEFAULT_CRON)
+    success = install_cron(schedule)
+    return {"installed": success, "schedule": schedule}
+
+
+@app.post("/api/schedule/uninstall")
+def uninstall_schedule():
+    """Remove automated pipeline schedule."""
+    from src.scheduler import uninstall_cron
+    success = uninstall_cron()
+    return {"uninstalled": success}
 
 
 # ── Serve React Frontend ────────────────────────────────────────────
