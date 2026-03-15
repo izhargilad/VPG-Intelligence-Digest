@@ -7,6 +7,7 @@ const SOURCE_TYPES = ['rss', 'scrape', 'api']
 export default function Sources() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({
@@ -20,9 +21,20 @@ export default function Sources() {
   })
 
   const load = () => {
+    setError(null)
     fetch('/api/sources')
-      .then(r => r.json())
-      .then(setData)
+      .then(r => {
+        if (!r.ok) throw new Error(`Server returned ${r.status}`)
+        return r.json()
+      })
+      .then(d => {
+        setData(d)
+        setError(null)
+      })
+      .catch(err => {
+        console.error('Failed to load sources:', err)
+        setError(err.message || 'Failed to load sources')
+      })
       .finally(() => setLoading(false))
   }
 
@@ -75,6 +87,16 @@ export default function Sources() {
   }
 
   if (loading) return <div className="text-center py-12 text-gray-500">Loading...</div>
+
+  if (error) return (
+    <div className="text-center py-12">
+      <p className="text-red-600 font-medium mb-2">Failed to load sources</p>
+      <p className="text-gray-500 text-sm mb-4">{error}</p>
+      <button onClick={() => { setLoading(true); load() }} className="text-vpg-blue hover:underline text-sm">
+        Retry
+      </button>
+    </div>
+  )
 
   const sources = data?.sources || []
   const grouped = { 1: [], 2: [], 3: [] }
@@ -172,6 +194,15 @@ export default function Sources() {
             {saving ? 'Adding...' : 'Add Source'}
           </button>
         </form>
+      )}
+
+      {sources.length === 0 && (
+        <div className="text-center py-12 bg-white rounded-lg shadow-sm">
+          <p className="text-gray-500 mb-2">No data sources configured yet.</p>
+          <button onClick={() => setShowForm(true)} className="text-vpg-blue hover:underline text-sm">
+            Add your first source
+          </button>
+        </div>
       )}
 
       {[1, 2, 3].map(tier => (
