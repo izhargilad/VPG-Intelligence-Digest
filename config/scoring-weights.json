@@ -132,6 +132,70 @@
       }
     }
   },
+  "source_type_overrides": {
+    "government_procurement": {
+      "description": "Scoring adjustments for government and public procurement portal signals",
+      "scoring_adjustments": {
+        "revenue_impact": {
+          "bonus": 1,
+          "rationale": "Government contracts are typically higher-value and longer-term than commercial one-off orders; design-in locks in multi-year revenue"
+        },
+        "time_sensitivity": {
+          "use_solicitation_deadline": true,
+          "urgency_thresholds": {
+            "high": 30,
+            "medium": 60,
+            "low": 90
+          },
+          "rationale": "Procurement portals publish response deadlines; agent calculates days remaining (< 30 days = high urgency)"
+        },
+        "strategic_alignment": {
+          "agency_weights": {
+            "NASA": 1.2,
+            "DoD": 1.2,
+            "DOE": 1.0,
+            "DHS": 0.9,
+            "civilian": 0.8
+          },
+          "rationale": "NASA/DoD score higher than civilian agencies; space programs score highest due to EEE-INST-002 qualification advantage"
+        },
+        "competitive_pressure": {
+          "sole_source_flag": true,
+          "sole_source_priority": "highest",
+          "rationale": "Sole-source notices naming a competitor are the highest-priority competitive signal; requires immediate review"
+        }
+      },
+      "validation_override": {
+        "single_source_sufficient": true,
+        "validation_level": "verified",
+        "source_label": "official_government",
+        "rationale": "Government procurement portals are inherently validated (official government publication); exempt from 3-source requirement"
+      },
+      "deduplication": {
+        "key_field": "solicitation_id",
+        "description": "SAM.gov Contract Opportunities and Contract Awards share solicitation IDs (PIID); use as deduplication key"
+      }
+    },
+    "space_qualification_registry": {
+      "description": "Scoring adjustments for space qualification registry signals (ESCC, NEPP)",
+      "scoring_adjustments": {
+        "revenue_impact": {
+          "bonus": 1,
+          "rationale": "Qualification changes directly impact product positioning on multi-million dollar space programs"
+        },
+        "strategic_alignment": {
+          "bonus": 1,
+          "rationale": "Space qualification is a core VPG Foil Resistors differentiator"
+        }
+      },
+      "validation_override": {
+        "single_source_sufficient": true,
+        "validation_level": "verified",
+        "source_label": "official_government",
+        "rationale": "Space agency qualification registries are authoritative sources; exempt from 3-source requirement"
+      }
+    }
+  },
   "validation_levels": [
     {
       "id": "verified",

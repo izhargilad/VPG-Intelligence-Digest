@@ -1,0 +1,167 @@
+{
+  "description": "Classification codes for automated procurement portal scanning — VPG Foil Resistors",
+  "bu": "vpg-foil-resistors",
+  "naics_codes": [
+    {
+      "code": "334413",
+      "description": "Semiconductor and Related Device Manufacturing",
+      "signal_relevance": "ATE demand — precision resistor design-in for test equipment boards"
+    },
+    {
+      "code": "334416",
+      "description": "Capacitor, Resistor, Coil, Transformer, and Other Inductor Manufacturing",
+      "signal_relevance": "Direct component category — includes precision resistor manufacturing"
+    },
+    {
+      "code": "334419",
+      "description": "Other Electronic Component Manufacturing",
+      "signal_relevance": "Broader passive component procurement including foil resistors"
+    },
+    {
+      "code": "334515",
+      "description": "Instrument Manufacturing for Measuring and Testing Electricity",
+      "signal_relevance": "Test & measurement instruments using precision resistors"
+    },
+    {
+      "code": "334511",
+      "description": "Search, Detection, Navigation, Guidance, Aeronautical Systems",
+      "signal_relevance": "Avionics, radar, guidance systems requiring space/mil-grade resistors"
+    },
+    {
+      "code": "334220",
+      "description": "Radio and Television Broadcasting and Wireless Communications Equipment",
+      "signal_relevance": "5G, telecom infrastructure using precision passives"
+    },
+    {
+      "code": "336414",
+      "description": "Guided Missile and Space Vehicle Manufacturing",
+      "signal_relevance": "Space vehicles and weapons systems with EEE-INST-002 qualified parts"
+    },
+    {
+      "code": "336415",
+      "description": "Guided Missile and Space Vehicle Propulsion Unit Manufacturing",
+      "signal_relevance": "Propulsion electronics, control systems"
+    },
+    {
+      "code": "336419",
+      "description": "Other Guided Missile and Space Vehicle Parts Manufacturing",
+      "signal_relevance": "Subsystem electronics requiring precision components"
+    },
+    {
+      "code": "334510",
+      "description": "Electromedical and Electrotherapeutic Apparatus Manufacturing",
+      "signal_relevance": "Medical devices with precision instrumentation needs"
+    },
+    {
+      "code": "541715",
+      "description": "R&D in Physical, Engineering, and Life Sciences",
+      "signal_relevance": "Research programs developing instrumentation that specs foil resistors"
+    }
+  ],
+  "psc_fsc_codes": [
+    {
+      "code": "5905",
+      "description": "Resistors",
+      "signal_relevance": "Direct resistor procurement — rare at federal level but high-signal when found"
+    },
+    {
+      "code": "5910",
+      "description": "Capacitors",
+      "signal_relevance": "Adjacent passive component; often procured alongside resistors"
+    },
+    {
+      "code": "5961",
+      "description": "Semiconductor Devices and Associated Hardware",
+      "signal_relevance": "Semiconductor equipment and test electronics"
+    },
+    {
+      "code": "5962",
+      "description": "Microcircuits, Electronic",
+      "signal_relevance": "Integrated circuit procurement signaling board-level component needs"
+    },
+    {
+      "code": "6625",
+      "description": "Electrical and Electronic Properties Measuring Instruments",
+      "signal_relevance": "Precision instruments that embed foil resistors"
+    },
+    {
+      "code": "6630",
+      "description": "Chemical Property Measuring Instruments",
+      "signal_relevance": "Process instrumentation with precision analog front-ends"
+    },
+    {
+      "code": "1410",
+      "description": "Guided Missiles",
+      "signal_relevance": "Weapons systems requiring mil-qualified precision passives"
+    },
+    {
+      "code": "1420",
+      "description": "Guided Missile Components",
+      "signal_relevance": "Direct subsystem components including EEE parts"
+    },
+    {
+      "code": "1430",
+      "description": "Space Vehicle Components",
+      "signal_relevance": "Space-grade EEE component procurement"
+    }
+  ],
+  "cpv_codes": [
+    {
+      "code": "31700000",
+      "description": "Electronic, electromechanical and electrotechnical supplies",
+      "signal_relevance": "Broad electronic component procurement"
+    },
+    {
+      "code": "31711000",
+      "description": "Electronic supplies",
+      "signal_relevance": "Passive and active electronic components"
+    },
+    {
+      "code": "31730000",
+      "description": "Electrotechnical equipment",
+      "signal_relevance": "Power and precision electronic equipment"
+    },
+    {
+      "code": "38500000",
+      "description": "Checking and testing apparatus",
+      "signal_relevance": "Test & measurement instruments"
+    },
+    {
+      "code": "38540000",
+      "description": "Machines and apparatus for testing and measuring",
+      "signal_relevance": "Precision instruments with foil resistor content"
+    },
+    {
+      "code": "38300000",
+      "description": "Measuring instruments",
+      "signal_relevance": "Metrology and precision measurement equipment"
+    },
+    {
+      "code": "35600000",
+      "description": "Military air vehicles, missiles and spacecraft",
+      "signal_relevance": "Defense/space electronics"
+    },
+    {
+      "code": "33100000",
+      "description": "Medical equipments",
+      "signal_relevance": "Medical device procurement with precision electronics"
+    }
+  ],
+  "nsn_classes": [
+    {
+      "class": "5905",
+      "description": "Resistors",
+      "signal_relevance": "Direct reorder signals and sustainment procurement for VPG NSN-listed products"
+    },
+    {
+      "class": "5961",
+      "description": "Semiconductor Devices",
+      "signal_relevance": "Upstream demand for semiconductor test equipment components"
+    },
+    {
+      "class": "6625",
+      "description": "Electrical Measuring Instruments",
+      "signal_relevance": "Upstream demand for precision measurement equipment components"
+    }
+  ]
+}

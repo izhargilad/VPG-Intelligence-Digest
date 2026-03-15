@@ -61,7 +61,43 @@
         "nearshoring electronics", "reshoring passive components",
         "CHIPS Act passive", "semiconductor supply chain passive",
         "Israel electronics manufacturing", "Japan electronics passive"
-      ]
+      ],
+      "procurement_signals": {
+        "direct_component": [
+          "precision resistor procurement", "foil resistor mil-spec",
+          "MIL-PRF-55342 procurement", "EEE-INST-002 resistor",
+          "QPL resistor", "DSCC drawing resistor", "bulk metal foil",
+          "AEC-Q200 resistor qualification", "space-grade resistor",
+          "hermetic resistor procurement", "precision passive component",
+          "current sense shunt procurement", "low-TCR resistor"
+        ],
+        "upstream_program": [
+          "avionics upgrade program", "satellite bus electronics",
+          "spacecraft EEE parts", "precision instrumentation procurement",
+          "ATE test system", "semiconductor test equipment",
+          "radar subsystem electronics", "electronic warfare system",
+          "guided missile electronics", "space launch vehicle avionics",
+          "battery management system BMS procurement", "EV powertrain electronics",
+          "precision weighing system", "metrology laboratory equipment",
+          "calibration standard procurement", "MRI electronics",
+          "medical instrument precision", "data acquisition system"
+        ],
+        "contract_vehicle": [
+          "GWAC electronics", "BPA passive components",
+          "IDIQ electronic parts", "blanket purchase agreement resistor",
+          "GSA Schedule 56", "DLA long-term contract",
+          "sole source precision resistor", "DPAS rated order",
+          "priority rated electronic parts"
+        ],
+        "agency_specific": [
+          "NASA GSFC procurement", "NASA JPL instrumentation",
+          "US Army CECOM", "US Navy NAVAIR", "US Air Force AFLCMC",
+          "DARPA precision", "DLA Land and Maritime",
+          "NIST equipment", "NOAA instrumentation",
+          "DOE national lab", "Sandia National Lab",
+          "Oak Ridge", "Los Alamos", "Lawrence Livermore"
+        ]
+      }
     }
   }
 }
