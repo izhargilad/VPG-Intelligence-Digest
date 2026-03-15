@@ -2233,6 +2233,43 @@ def delete_subreddit(sub_id: int):
         conn.close()
 
 
+@app.post("/api/reddit/test-collection/{subreddit_name}")
+def test_reddit_collection(subreddit_name: str):
+    """Test Reddit collection for a single subreddit. Returns detailed results.
+
+    Used by the 'Test Collection' button in the UI for debugging.
+    """
+    from src.collector.reddit_collector import test_single_subreddit
+    result = test_single_subreddit(subreddit_name)
+    return result
+
+
+@app.get("/api/reddit/status")
+def reddit_status():
+    """Check Reddit API credential and connection status."""
+    import os
+    status = {
+        "praw_installed": False,
+        "credentials_configured": False,
+        "credential_hint": "",
+    }
+    try:
+        import praw  # noqa: F401
+        status["praw_installed"] = True
+    except ImportError:
+        pass
+
+    client_id = os.getenv("REDDIT_CLIENT_ID", "")
+    client_secret = os.getenv("REDDIT_CLIENT_SECRET", "")
+    if client_id and client_secret and not client_id.startswith("your-"):
+        status["credentials_configured"] = True
+        status["credential_hint"] = f"{client_id[:4]}...{client_id[-3:]}"
+    else:
+        status["credential_hint"] = "Not configured"
+
+    return status
+
+
 # ── Recommendations Export (V2.3) ───────────────────────────────────
 
 @app.get("/api/export/recommendations/excel")
