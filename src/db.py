@@ -30,8 +30,19 @@ def init_db(db_path: Path | None = None) -> None:
     try:
         conn.executescript(schema_sql)
         conn.commit()
+        _migrate_v24(conn)
     finally:
         conn.close()
+
+
+def _migrate_v24(conn: sqlite3.Connection) -> None:
+    """Add V2.4 columns to existing signals table (safe to re-run)."""
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(signals)").fetchall()}
+    if "version" not in cols:
+        conn.execute("ALTER TABLE signals ADD COLUMN version INTEGER NOT NULL DEFAULT 1")
+    if "first_seen_at" not in cols:
+        conn.execute("ALTER TABLE signals ADD COLUMN first_seen_at DATETIME DEFAULT (datetime('now'))")
+    conn.commit()
 
 
 def insert_signal(conn: sqlite3.Connection, signal: dict) -> int:

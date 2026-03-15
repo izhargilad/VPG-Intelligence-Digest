@@ -888,3 +888,251 @@ class TestV24TrendsOverhaul:
         for a in alerts:
             assert isinstance(a.get("companies", []), list)
             assert isinstance(a.get("supporting_signal_ids", []), list)
+
+
+# ═══════════════════════════════════════════════════════════════════
+# V2.4 Scan/Send Split Tests
+# ═══════════════════════════════════════════════════════════════════
+
+class TestV24ScanSendSplit:
+    """Tests for V2.4 Enhancement #4: Run Digest split (Scan vs Email)."""
+
+    def test_scan_log_table_exists(self, tmp_db):
+        """Verify scan_log table was created by schema."""
+        tables = {row[0] for row in tmp_db.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+        ).fetchall()}
+        assert "scan_log" in tables
+
+    def test_scan_log_columns(self, tmp_db):
+        """Verify scan_log table has all required columns."""
+        cols = {row[1] for row in tmp_db.execute("PRAGMA table_info(scan_log)").fetchall()}
+        expected = {"id", "started_at", "completed_at", "date_from", "date_to",
+                    "sources_used", "signals_new", "signals_updated",
+                    "signals_unchanged", "errors", "status"}
+        assert expected.issubset(cols), f"Missing columns: {expected - cols}"
+
+    def test_signals_version_column(self, tmp_db):
+        """Verify signals table has version and first_seen_at columns."""
+        cols = {row[1] for row in tmp_db.execute("PRAGMA table_info(signals)").fetchall()}
+        assert "version" in cols
+        assert "first_seen_at" in cols
+
+    def test_signals_version_default(self, tmp_db):
+        """Verify new signals get version=1 by default."""
+        tmp_db.execute(
+            """INSERT INTO signals (external_id, title, url, source_id, source_name)
+               VALUES ('ver-test-1', 'Test Signal', 'https://example.com', 's1', 'Test')"""
+        )
+        tmp_db.commit()
+        row = tmp_db.execute("SELECT version FROM signals WHERE external_id = 'ver-test-1'").fetchone()
+        assert row["version"] == 1
+
+    def test_headline_similarity(self):
+        """Test headline similarity detection for dedup."""
+        from src.pipeline import _headline_similarity
+        # Very similar
+        sim = _headline_similarity(
+            "Kistler launches new force sensor for robotics",
+            "Kistler launches new force sensor for robotics applications",
+        )
+        assert sim > 0.85
+
+        # Different
+        sim2 = _headline_similarity(
+            "Kistler launches new force sensor",
+            "Boston Dynamics expands sensor procurement",
+        )
+        assert sim2 < 0.5
+
+    def test_dedup_signal_new(self, tmp_db):
+        """Test that a truly new signal is inserted."""
+        from src.pipeline import _dedup_signal
+        result = _dedup_signal(tmp_db, {
+            "external_id": "dedup-new-1",
+            "title": "Brand new unique signal for dedup test",
+            "url": "https://example.com/dedup-new",
+            "source_id": "s1",
+            "source_name": "Test Source",
+            "source_tier": 1,
+        })
+        assert result == "new"
+
+    def test_dedup_signal_url_match(self, tmp_db):
+        """Test that URL-matching signal is marked as updated."""
+        from src.pipeline import _dedup_signal
+        # Insert original
+        tmp_db.execute(
+            """INSERT INTO signals (external_id, title, url, source_id, source_name, version)
+               VALUES ('dedup-url-1', 'Original Title', 'https://example.com/dedup-url', 's1', 'Test', 1)"""
+        )
+        tmp_db.commit()
+
+        result = _dedup_signal(tmp_db, {
+            "external_id": "dedup-url-2",
+            "title": "Updated Title",
+            "url": "https://example.com/dedup-url",
+            "source_id": "s1",
+            "source_name": "Test Source",
+            "source_tier": 1,
+        })
+        assert result == "updated"
+        # Version should be incremented
+        row = tmp_db.execute("SELECT version FROM signals WHERE external_id = 'dedup-url-1'").fetchone()
+        assert row["version"] == 2
+
+    def test_dedup_signal_headline_match(self, tmp_db):
+        """Test that similar headline is detected and merged."""
+        from src.pipeline import _dedup_signal
+        # Insert original
+        tmp_db.execute(
+            """INSERT INTO signals (external_id, title, url, source_id, source_name, version)
+               VALUES ('dedup-hl-1', 'Kistler launches new precision force sensor', 'https://a.com/1', 's1', 'Test', 1)"""
+        )
+        tmp_db.commit()
+
+        result = _dedup_signal(tmp_db, {
+            "external_id": "dedup-hl-2",
+            "title": "Kistler launches new precision force sensor for industry",
+            "url": "https://b.com/2",
+            "source_id": "s2",
+            "source_name": "Test Source 2",
+            "source_tier": 1,
+        })
+        assert result == "updated"
+
+    def test_scan_log_insert_and_query(self, tmp_db):
+        """Test scan_log CRUD operations."""
+        import json
+        scan_id = "test-scan-001"
+        tmp_db.execute(
+            """INSERT INTO scan_log (id, date_from, date_to, sources_used, status,
+               signals_new, signals_updated, signals_unchanged)
+               VALUES (?, '2026-03-01', '2026-03-07', ?, 'completed', 10, 3, 5)""",
+            (scan_id, json.dumps(["rss", "reddit"])),
+        )
+        tmp_db.commit()
+
+        row = tmp_db.execute("SELECT * FROM scan_log WHERE id = ?", (scan_id,)).fetchone()
+        assert row is not None
+        assert row["signals_new"] == 10
+        assert row["signals_updated"] == 3
+        assert row["signals_unchanged"] == 5
+        assert row["status"] == "completed"
+        sources = json.loads(row["sources_used"])
+        assert "rss" in sources
+        assert "reddit" in sources
+
+    def test_run_send_only_no_signals(self, seeded_db):
+        """Test run_send_only with no matching signals returns properly."""
+        from src.pipeline import run_send_only
+        # Use a future date range so no signals match
+        with patch("src.pipeline.get_connection", return_value=seeded_db):
+            with patch("src.pipeline.init_db"):
+                result = run_send_only(date_from="2099-01-01", date_to="2099-12-31")
+                assert result["status"] == "completed"
+                assert result["signals"] == 0
+
+    def test_run_send_only_with_signals(self, seeded_db):
+        """Test run_send_only finds scored signals and composes digest."""
+        from src.pipeline import run_send_only
+        with patch("src.pipeline.get_connection", return_value=seeded_db):
+            with patch("src.pipeline.init_db"):
+                result = run_send_only(min_score=7.0, preview_only=True)
+                assert result["status"] == "completed"
+                assert result["preview"] is True
+                assert result["signals_scored"] > 0
+
+    def test_run_send_only_bu_filter(self, seeded_db):
+        """Test run_send_only with BU filter limits signals."""
+        from src.pipeline import run_send_only
+        with patch("src.pipeline.get_connection", return_value=seeded_db):
+            with patch("src.pipeline.init_db"):
+                result = run_send_only(bu_filter="kelk", min_score=5.0, preview_only=True)
+                assert result["status"] == "completed"
+                # KELK has signal 7 (score 8.0)
+                assert result["signals_scored"] >= 1
+
+    def test_run_send_only_industry_filter(self, seeded_db):
+        """Test run_send_only with industry filter."""
+        from src.pipeline import run_send_only
+        with patch("src.pipeline.get_connection", return_value=seeded_db):
+            with patch("src.pipeline.init_db"):
+                result = run_send_only(industry_filter="robotics-automation", min_score=5.0, preview_only=True)
+                assert result["status"] == "completed"
+                assert result["signals_scored"] >= 1
+
+    @pytest.fixture
+    def api_db_path(self, tmp_path):
+        """Create and seed a temp DB file for API tests."""
+        from src.db import get_connection, init_db
+        db_path = tmp_path / "scan_send_api_test.db"
+        init_db(db_path)
+        conn = get_connection(db_path)
+        _seed_db(conn)
+        conn.close()
+        return db_path
+
+    @pytest.fixture
+    def client(self, api_db_path):
+        from fastapi.testclient import TestClient
+        from src.api.server import app
+        from src.db import get_connection as real_get_connection
+
+        def _make_conn():
+            return real_get_connection(api_db_path)
+
+        with patch("src.api.server.get_connection", side_effect=_make_conn):
+            with patch("src.api.server.init_db"):
+                yield TestClient(app)
+
+    def test_api_scan_endpoint(self, client, api_db_path):
+        """Test POST /api/pipeline/scan returns correctly."""
+        with patch("src.api.server._run_scan_bg") as mock_bg:
+            resp = client.post("/api/pipeline/scan",
+                json={"sources": ["rss"], "date_from": "2026-03-01"})
+            assert resp.status_code == 200
+            data = resp.json()
+            assert "message" in data
+            assert data["message"] == "Scan started"
+
+    def test_api_send_endpoint(self, client, api_db_path):
+        """Test POST /api/pipeline/send returns correctly."""
+        with patch("src.api.server._run_send_bg") as mock_bg:
+            resp = client.post("/api/pipeline/send",
+                json={"min_score": 7.0, "preview_only": True})
+            assert resp.status_code == 200
+            data = resp.json()
+            assert "message" in data
+            assert "Preview" in data["message"]
+
+    def test_api_scan_log_endpoint(self, client, api_db_path):
+        """Test GET /api/pipeline/scan-log returns empty list initially."""
+        from src.db import get_connection as real_get_connection
+        with patch("src.api.server.get_connection",
+                   side_effect=lambda: real_get_connection(api_db_path)):
+            resp = client.get("/api/pipeline/scan-log")
+            assert resp.status_code == 200
+            data = resp.json()
+            assert "scans" in data
+            assert isinstance(data["scans"], list)
+
+    def test_api_scan_rejects_when_running(self, client):
+        """Test that scan rejects when pipeline already running."""
+        from src.api.server import _pipeline_status
+        _pipeline_status["running"] = True
+        try:
+            resp = client.post("/api/pipeline/scan", json={})
+            assert resp.status_code == 409
+        finally:
+            _pipeline_status["running"] = False
+
+    def test_api_send_rejects_when_running(self, client):
+        """Test that send rejects when pipeline already running."""
+        from src.api.server import _pipeline_status
+        _pipeline_status["running"] = True
+        try:
+            resp = client.post("/api/pipeline/send", json={})
+            assert resp.status_code == 409
+        finally:
+            _pipeline_status["running"] = False

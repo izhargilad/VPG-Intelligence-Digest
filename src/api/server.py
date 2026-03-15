@@ -1626,6 +1626,118 @@ def pipeline_status():
     return _pipeline_status
 
 
+# ── Scan / Send Split (V2.4) ────────────────────────────────────────
+
+def _run_scan_bg(sources: list[str] | None, date_from: str | None, date_to: str | None):
+    """Run scan-only pipeline in background thread."""
+    _pipeline_status["running"] = True
+    _pipeline_status["paused"] = False
+    _pipeline_status["current_stage"] = ""
+    _pipeline_status["last_run"] = datetime.now().isoformat()
+    try:
+        from src.pipeline import run_scan_only
+        result = run_scan_only(sources=sources, date_from=date_from, date_to=date_to)
+        _pipeline_status["last_result"] = result
+    except Exception as e:
+        _pipeline_status["last_result"] = {"status": "failed", "error": str(e)}
+    finally:
+        _pipeline_status["running"] = False
+        _pipeline_status["paused"] = False
+        _pipeline_status["current_stage"] = ""
+
+
+def _run_send_bg(date_from, date_to, bu_filter, industry_filter, min_score,
+                 recipient_emails, pdf_mode, preview_only):
+    """Run send-only pipeline in background thread."""
+    _pipeline_status["running"] = True
+    _pipeline_status["paused"] = False
+    _pipeline_status["current_stage"] = ""
+    _pipeline_status["last_run"] = datetime.now().isoformat()
+    try:
+        from src.pipeline import run_send_only
+        result = run_send_only(
+            date_from=date_from, date_to=date_to, bu_filter=bu_filter,
+            industry_filter=industry_filter, min_score=min_score,
+            recipient_emails=recipient_emails, pdf_mode=pdf_mode,
+            preview_only=preview_only,
+        )
+        _pipeline_status["last_result"] = result
+    except Exception as e:
+        _pipeline_status["last_result"] = {"status": "failed", "error": str(e)}
+    finally:
+        _pipeline_status["running"] = False
+        _pipeline_status["paused"] = False
+        _pipeline_status["current_stage"] = ""
+
+
+class ScanRequest(BaseModel):
+    sources: list[str] | None = None
+    date_from: str | None = None
+    date_to: str | None = None
+
+
+@app.post("/api/pipeline/scan")
+def run_scan(req: ScanRequest = ScanRequest()):
+    """Run scan only (collect + validate + score). No email delivery."""
+    if _pipeline_status["running"]:
+        raise HTTPException(409, "Pipeline is already running")
+
+    thread = threading.Thread(
+        target=_run_scan_bg,
+        args=(req.sources, req.date_from, req.date_to),
+        daemon=True,
+    )
+    thread.start()
+    return {
+        "message": "Scan started",
+        "sources": req.sources or ["rss", "reddit", "trends"],
+        "status_url": "/api/pipeline/status",
+    }
+
+
+class SendRequest(BaseModel):
+    date_from: str | None = None
+    date_to: str | None = None
+    bu_filter: str | None = None
+    industry_filter: str | None = None
+    min_score: float = 5.0
+    recipient_emails: list[str] | None = None
+    pdf_mode: bool = False
+    preview_only: bool = False
+
+
+@app.post("/api/pipeline/send")
+def run_send(req: SendRequest = SendRequest()):
+    """Compose and send digest from already-scored signals."""
+    if _pipeline_status["running"]:
+        raise HTTPException(409, "Pipeline is already running")
+
+    thread = threading.Thread(
+        target=_run_send_bg,
+        args=(req.date_from, req.date_to, req.bu_filter, req.industry_filter,
+              req.min_score, req.recipient_emails, req.pdf_mode, req.preview_only),
+        daemon=True,
+    )
+    thread.start()
+    return {
+        "message": f"{'Preview' if req.preview_only else 'Send'} started",
+        "status_url": "/api/pipeline/status",
+    }
+
+
+@app.get("/api/pipeline/scan-log")
+def get_scan_log(limit: int = 20):
+    """Get scan run history."""
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            "SELECT * FROM scan_log ORDER BY started_at DESC LIMIT ?", (limit,)
+        ).fetchall()
+        return {"scans": [dict(r) for r in rows]}
+    finally:
+        conn.close()
+
+
 # ── Digest History ───────────────────────────────────────────────────
 
 @app.get("/api/digests")

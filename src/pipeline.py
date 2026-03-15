@@ -6,11 +6,14 @@ Collection -> Validation -> Analysis -> Scoring -> Composition -> Delivery
 Supports pause/resume/cancel via shared state and PDF delivery mode.
 """
 
+import json
 import logging
 import os
 import sys
 import threading
-from datetime import datetime
+import uuid
+from datetime import datetime, timedelta
+from difflib import SequenceMatcher
 from pathlib import Path
 
 from src.analyzer.client import AnalysisClient
@@ -498,6 +501,420 @@ def run_full_pipeline(pdf_mode: bool = False) -> dict:
 
     except Exception as e:
         logger.error("Pipeline failed: %s", str(e), exc_info=True)
+        complete_pipeline_run(conn, run_id, "failed", error_message=str(e))
+        return {"status": "failed", "error": str(e)}
+
+    finally:
+        pipeline_control.current_stage = ""
+        conn.close()
+
+
+# ── Scan / Send split (V2.4) ──────────────────────────────────────
+
+
+def _headline_similarity(a: str, b: str) -> float:
+    """Return 0-1 similarity ratio between two headlines."""
+    return SequenceMatcher(None, a.lower(), b.lower()).ratio()
+
+
+def _dedup_signal(conn, signal: dict) -> str:
+    """Check if a signal is a duplicate and handle accordingly.
+
+    Returns:
+        'new'       – inserted as new signal
+        'updated'   – existing signal updated with new info
+        'unchanged' – exact duplicate, no action needed
+    """
+    url = signal.get("url", "")
+    title = signal.get("title", "")
+
+    # 1. URL-based dedup
+    if url:
+        existing = conn.execute(
+            "SELECT id, title, version FROM signals WHERE url = ?", (url,)
+        ).fetchone()
+        if existing:
+            # Update metadata if newer
+            conn.execute(
+                "UPDATE signals SET version = version + 1, status = 'new' WHERE id = ?",
+                (existing["id"],),
+            )
+            conn.commit()
+            return "updated"
+
+    # 2. Headline similarity dedup (>85%)
+    if title:
+        recent = conn.execute(
+            "SELECT id, title, version FROM signals ORDER BY collected_at DESC LIMIT 500"
+        ).fetchall()
+        for row in recent:
+            if _headline_similarity(title, row["title"]) > 0.85:
+                # Merge: update version, re-score
+                conn.execute(
+                    "UPDATE signals SET version = version + 1, status = 'new' WHERE id = ?",
+                    (row["id"],),
+                )
+                conn.commit()
+                return "updated"
+
+    # 3. Standard external_id dedup via insert_signal
+    row_id = insert_signal(conn, signal)
+    if row_id:
+        return "new"
+
+    # external_id matched — reset to 'new' for re-scoring
+    conn.execute(
+        "UPDATE signals SET status = 'new' WHERE external_id = ?",
+        (signal["external_id"],),
+    )
+    conn.commit()
+    return "updated"
+
+
+def run_scan_only(
+    sources: list[str] | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+) -> dict:
+    """Run collection + validation + scoring stages only (no email).
+
+    Args:
+        sources: Optional list of source types to include ('rss', 'reddit', 'trends').
+                 Default: all sources.
+        date_from: Start date for collection window (YYYY-MM-DD).
+        date_to: End date for collection window (YYYY-MM-DD).
+
+    Returns:
+        Dict with scan results and scan_id.
+    """
+    setup_logging()
+    pipeline_control.reset()
+    logger.info("Starting SCAN ONLY pipeline")
+
+    conn = get_connection()
+    init_db()
+
+    scan_id = str(uuid.uuid4())
+    enabled = sources or ["rss", "reddit", "trends"]
+
+    # Create scan_log entry
+    conn.execute(
+        "INSERT INTO scan_log (id, date_from, date_to, sources_used, status) VALUES (?, ?, ?, ?, 'running')",
+        (scan_id, date_from, date_to, json.dumps(enabled)),
+    )
+    conn.commit()
+
+    run_id = insert_pipeline_run(conn, "scan")
+    stats = {"signals_new": 0, "signals_updated": 0, "signals_unchanged": 0}
+    errors = []
+
+    try:
+        # Stage 1: Collection
+        logger.info("=== Stage 1: Collection (scan-only) ===")
+        pipeline_control.current_stage = "collection"
+
+        all_signals = []
+        if "rss" in enabled:
+            try:
+                all_signals += collect_all_rss()
+            except Exception as e:
+                errors.append({"source": "rss", "error": str(e)})
+                logger.warning("RSS collection failed: %s", e)
+            pipeline_control.check_point()
+
+            try:
+                all_signals += collect_all_scraped()
+            except Exception as e:
+                errors.append({"source": "web", "error": str(e)})
+                logger.warning("Web scraping failed: %s", e)
+            pipeline_control.check_point()
+
+        if "reddit" in enabled:
+            try:
+                all_signals += collect_all_reddit()
+            except Exception as e:
+                errors.append({"source": "reddit", "error": str(e)})
+                logger.warning("Reddit collection failed: %s", e)
+            pipeline_control.check_point()
+
+        if "trends" in enabled:
+            try:
+                all_signals += collect_google_trends()
+            except Exception as e:
+                errors.append({"source": "trends", "error": str(e)})
+                logger.warning("Google Trends collection failed: %s", e)
+
+        # Dedup and insert
+        for signal in all_signals:
+            result = _dedup_signal(conn, signal)
+            if result == "new":
+                stats["signals_new"] += 1
+            elif result == "updated":
+                stats["signals_updated"] += 1
+            else:
+                stats["signals_unchanged"] += 1
+
+        logger.info(
+            "Collection complete: %d new, %d updated, %d unchanged",
+            stats["signals_new"], stats["signals_updated"], stats["signals_unchanged"],
+        )
+        pipeline_control.check_point()
+
+        # Stage 2: Validation
+        validated = stage_validate(conn)
+        pipeline_control.check_point()
+
+        # Stage 3-4: Scoring
+        scored_signals = stage_score(conn)
+        pipeline_control.check_point()
+
+        # Trend analysis
+        logger.info("=== Trend Analysis ===")
+        pipeline_control.current_stage = "trends"
+        try:
+            trend_result = update_trends(conn)
+            logger.info("Trends: %d updated", trend_result["trends_updated"])
+        except Exception as e:
+            logger.warning("Trend analysis failed (non-blocking): %s", e)
+
+        # Keyword discovery
+        try:
+            from src.analyzer.keyword_discovery import auto_import_discovered, update_keyword_hit_counts
+            auto_import_discovered(conn, auto_activate=False)
+            update_keyword_hit_counts(conn)
+        except Exception as e:
+            logger.warning("Keyword discovery failed (non-blocking): %s", e)
+
+        # Update scan_log
+        conn.execute(
+            """UPDATE scan_log SET completed_at = datetime('now'), status = 'completed',
+               signals_new = ?, signals_updated = ?, signals_unchanged = ?, errors = ?
+               WHERE id = ?""",
+            (stats["signals_new"], stats["signals_updated"], stats["signals_unchanged"],
+             json.dumps(errors) if errors else None, scan_id),
+        )
+        conn.commit()
+
+        complete_pipeline_run(
+            conn, run_id, "completed",
+            signals_collected=stats["signals_new"] + stats["signals_updated"],
+            signals_validated=validated,
+            signals_scored=len(scored_signals),
+        )
+
+        logger.info("Scan completed successfully")
+        return {
+            "status": "completed",
+            "scan_id": scan_id,
+            "signals_new": stats["signals_new"],
+            "signals_updated": stats["signals_updated"],
+            "signals_unchanged": stats["signals_unchanged"],
+            "signals_validated": validated,
+            "signals_scored": len(scored_signals),
+            "errors": errors,
+        }
+
+    except PipelineCancelled:
+        logger.warning("Scan cancelled by user")
+        conn.execute(
+            "UPDATE scan_log SET completed_at = datetime('now'), status = 'cancelled' WHERE id = ?",
+            (scan_id,),
+        )
+        conn.commit()
+        complete_pipeline_run(conn, run_id, "cancelled", error_message="Cancelled by user")
+        return {"status": "cancelled", "scan_id": scan_id}
+
+    except Exception as e:
+        logger.error("Scan failed: %s", str(e), exc_info=True)
+        conn.execute(
+            "UPDATE scan_log SET completed_at = datetime('now'), status = 'failed', errors = ? WHERE id = ?",
+            (json.dumps([{"error": str(e)}]), scan_id),
+        )
+        conn.commit()
+        complete_pipeline_run(conn, run_id, "failed", error_message=str(e))
+        return {"status": "failed", "scan_id": scan_id, "error": str(e)}
+
+    finally:
+        pipeline_control.current_stage = ""
+        conn.close()
+
+
+def run_send_only(
+    date_from: str | None = None,
+    date_to: str | None = None,
+    bu_filter: str | None = None,
+    industry_filter: str | None = None,
+    min_score: float = 5.0,
+    recipient_emails: list[str] | None = None,
+    pdf_mode: bool = False,
+    preview_only: bool = False,
+) -> dict:
+    """Compose and send digest email from already-scored signals.
+
+    Args:
+        date_from: Start date filter for signals.
+        date_to: End date filter for signals.
+        bu_filter: Optional BU id to filter signals.
+        industry_filter: Optional industry id to filter signals.
+        min_score: Minimum composite score (default 5.0).
+        recipient_emails: Optional list of specific emails. None = all active.
+        pdf_mode: If True, generate PDF attachment.
+        preview_only: If True, compose but don't send.
+
+    Returns:
+        Dict with send results.
+    """
+    setup_logging()
+    pipeline_control.reset()
+    logger.info("Starting SEND ONLY pipeline (preview=%s)", preview_only)
+
+    conn = get_connection()
+    init_db()
+
+    run_id = insert_pipeline_run(conn, "send")
+
+    try:
+        # Build query for scored signals
+        query = """
+            SELECT s.*, sa.signal_type, sa.headline, sa.what_summary,
+                   sa.why_it_matters, sa.quick_win, sa.suggested_owner,
+                   sa.estimated_impact, sa.outreach_template,
+                   sa.score_revenue_impact, sa.score_time_sensitivity,
+                   sa.score_strategic_alignment, sa.score_competitive_pressure,
+                   sa.score_composite, sa.validation_level, sa.source_count
+            FROM signals s
+            JOIN signal_analysis sa ON s.id = sa.signal_id
+            WHERE s.status = 'scored'
+              AND sa.score_composite >= ?
+        """
+        params: list = [min_score]
+
+        if date_from:
+            query += " AND s.collected_at >= ?"
+            params.append(date_from)
+        if date_to:
+            query += " AND s.collected_at <= ?"
+            params.append(date_to + " 23:59:59")
+
+        query += " ORDER BY sa.score_composite DESC"
+
+        rows = conn.execute(query, params).fetchall()
+        scored_signals = [dict(r) for r in rows]
+
+        # Apply BU filter
+        if bu_filter:
+            bu_signal_ids = {
+                r["signal_id"]
+                for r in conn.execute(
+                    "SELECT signal_id FROM signal_bus WHERE bu_id = ?", (bu_filter,)
+                ).fetchall()
+            }
+            scored_signals = [s for s in scored_signals if s["id"] in bu_signal_ids]
+
+        # Apply industry filter
+        if industry_filter:
+            ind_signal_ids = {
+                r["signal_id"]
+                for r in conn.execute(
+                    "SELECT signal_id FROM signal_industries WHERE industry_id = ?",
+                    (industry_filter,),
+                ).fetchall()
+            }
+            scored_signals = [s for s in scored_signals if s["id"] in ind_signal_ids]
+
+        # Enrich signals with BU matches for composer
+        for sig in scored_signals:
+            bu_rows = conn.execute(
+                "SELECT bu_id, relevance_score FROM signal_bus WHERE signal_id = ?",
+                (sig["id"],),
+            ).fetchall()
+            sig["bu_matches"] = [{"bu_id": r["bu_id"], "relevance_score": r["relevance_score"]} for r in bu_rows]
+            sig["composite_score"] = sig.get("score_composite", sig.get("composite_score", 0))
+            sig["composite"] = sig["composite_score"]
+            sig["scores"] = {
+                "revenue_impact": sig.get("score_revenue_impact", 0),
+                "time_sensitivity": sig.get("score_time_sensitivity", 0),
+                "strategic_alignment": sig.get("score_strategic_alignment", 0),
+                "competitive_pressure": sig.get("score_competitive_pressure", 0),
+            }
+
+        if not scored_signals:
+            logger.warning("No scored signals found matching filters")
+            complete_pipeline_run(conn, run_id, "completed", signals_scored=0)
+            return {
+                "status": "completed",
+                "signals": 0,
+                "message": "No signals match the selected filters",
+            }
+
+        # Cap at 25
+        thresholds = get_scoring_weights().get("thresholds", {})
+        max_signals = thresholds.get("max_signals_per_digest", 25)
+        scored_signals = scored_signals[:max_signals]
+
+        # Stage 5: Compose
+        html, subject, cid_images, pdf_path = stage_compose(scored_signals, pdf_mode=pdf_mode)
+        pipeline_control.check_point()
+
+        if preview_only:
+            complete_pipeline_run(conn, run_id, "completed", signals_scored=len(scored_signals))
+            return {
+                "status": "completed",
+                "preview": True,
+                "signals_scored": len(scored_signals),
+                "subject": subject,
+                "pdf_generated": pdf_path is not None,
+            }
+
+        # Stage 6: Deliver
+        recipients_config = get_recipients()
+        all_recipients = recipients_config.get("recipients", [])
+
+        if recipient_emails:
+            # Filter to specific recipients
+            all_recipients = [r for r in all_recipients if r["email"] in recipient_emails]
+        else:
+            # All active recipients
+            all_recipients = [r for r in all_recipients if r.get("status") == "active"]
+
+        delivery_results = []
+        for recipient in all_recipients:
+            pipeline_control.check_point()
+            result = send_email(
+                to=recipient["email"],
+                subject=subject,
+                html_content=html,
+                cid_images=cid_images,
+                pdf_path=pdf_path,
+            )
+            delivery_results.append(result)
+            logger.info("Delivery to %s: %s", recipient["email"], result["status"])
+
+        sent = sum(1 for r in delivery_results if r["status"] == "sent")
+        logger.info("Delivered to %d/%d recipients", sent, len(delivery_results))
+
+        complete_pipeline_run(
+            conn, run_id, "completed",
+            signals_scored=len(scored_signals),
+        )
+
+        return {
+            "status": "completed",
+            "signals_scored": len(scored_signals),
+            "recipients_sent": sent,
+            "recipients_total": len(delivery_results),
+            "delivery_results": delivery_results,
+            "pdf_generated": pdf_path is not None,
+            "subject": subject,
+        }
+
+    except PipelineCancelled:
+        logger.warning("Send cancelled by user")
+        complete_pipeline_run(conn, run_id, "cancelled", error_message="Cancelled by user")
+        return {"status": "cancelled"}
+
+    except Exception as e:
+        logger.error("Send failed: %s", str(e), exc_info=True)
         complete_pipeline_run(conn, run_id, "failed", error_message=str(e))
         return {"status": "failed", "error": str(e)}
 

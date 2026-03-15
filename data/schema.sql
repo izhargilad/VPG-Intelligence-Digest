@@ -28,7 +28,9 @@ CREATE TABLE IF NOT EXISTS signals (
     dismissed_at DATETIME,                  -- When it was dismissed
     handled INTEGER NOT NULL DEFAULT 0,     -- 1 = marked as read/actioned (V2.3)
     handled_at DATETIME,                    -- When it was handled
-    handled_by TEXT DEFAULT ''              -- Who handled it (role/name)
+    handled_by TEXT DEFAULT '',             -- Who handled it (role/name)
+    version INTEGER NOT NULL DEFAULT 1,     -- Incremented on re-scan update (V2.4)
+    first_seen_at DATETIME DEFAULT (datetime('now'))  -- When signal was first collected (V2.4)
 );
 
 CREATE INDEX IF NOT EXISTS idx_signals_status ON signals(status);
@@ -327,3 +329,23 @@ CREATE TABLE IF NOT EXISTS reddit_subreddits (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_reddit_subs_name ON reddit_subreddits(name);
+
+-- ============================================================
+-- Scan log — tracks each scan run independently from digests (V2.4)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS scan_log (
+    id TEXT PRIMARY KEY,
+    started_at DATETIME NOT NULL DEFAULT (datetime('now')),
+    completed_at DATETIME,
+    date_from DATE,
+    date_to DATE,
+    sources_used JSON,
+    signals_new INTEGER DEFAULT 0,
+    signals_updated INTEGER DEFAULT 0,
+    signals_unchanged INTEGER DEFAULT 0,
+    errors JSON,
+    status TEXT NOT NULL DEFAULT 'running'  -- running, completed, failed
+);
+
+CREATE INDEX IF NOT EXISTS idx_scan_log_status ON scan_log(status);
+CREATE INDEX IF NOT EXISTS idx_scan_log_started ON scan_log(started_at);
