@@ -41,7 +41,8 @@ def _migrate_v24(conn: sqlite3.Connection) -> None:
     if "version" not in cols:
         conn.execute("ALTER TABLE signals ADD COLUMN version INTEGER NOT NULL DEFAULT 1")
     if "first_seen_at" not in cols:
-        conn.execute("ALTER TABLE signals ADD COLUMN first_seen_at DATETIME DEFAULT (datetime('now'))")
+        conn.execute("ALTER TABLE signals ADD COLUMN first_seen_at DATETIME DEFAULT NULL")
+        conn.execute("UPDATE signals SET first_seen_at = collected_at WHERE first_seen_at IS NULL")
     conn.commit()
 
 
